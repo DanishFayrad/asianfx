@@ -1,0 +1,538 @@
+body {
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+  background: black;
+}
+
+.trade-section {
+  padding: 80px 0;
+  background: black;
+  color: white;
+}
+
+.container {
+  width: 1200px;
+  margin: auto;
+  text-align: center;
+}
+
+/* Heading */
+.trade-section h2 {
+  font-size: 32px;
+  margin-bottom: 10px;
+}
+
+.trade-section h2 span {
+  color: gold;
+}
+
+.subtitle {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 14px;
+  margin-bottom: 50px;
+  font-weight: 200;
+}
+
+/* Cards */
+.cards {
+  display: flex;
+  gap: 30px;
+  justify-content: center;
+}
+.card-header {
+  display: flex;
+  align-items: center;   /* vertical center */
+  gap: 10px;             /* icon aur text ka gap */
+}
+
+.card {
+  width: 400px;
+  height: 350px;
+background: linear-gradient(
+    180deg,
+    rgba(0,0,0,0.80),   /* top moderately dark */
+    rgba(0,0,0,0.9)     /* bottom stronger dark */
+  ),
+url('images/stockk.jpg');
+  background-size: cover;
+  background-position: center;
+  border-radius: 15px;
+  padding: 25px;
+  text-align: left;
+  border:1px solid rgba(212, 175, 55, 0.2)
+
+}
+
+.card h3 {
+  color: rgba(212, 175, 55, 1);
+  margin-bottom: 10px;
+}
+
+.card p {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 13px;
+  font-weight: 50;
+}
+
+.card ul {
+  padding-left: 18px;
+  margin: 15px 0;
+  font-weight: 5s0;
+}
+
+.card ul li {
+  margin-bottom: 8px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.8);
+}
+.custom-list {
+  list-style: none;   /* default bullets remove */
+  padding-left: 0;
+  margin: 15px 0;
+}
+
+.custom-list li {
+  position: relative;
+  padding-left: 30px;  /* space for icon */
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* Card 1 list icons */
+.card1 .custom-list li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  background-image: url('images/SVG.png');  /* Card 1 icon */
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+/* Card 2 list icons */
+.card2 .custom-list li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  background-image: url('images/SVG_margin.png');  /* Card 2 icon */
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+.stats {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 30px;    /* pehle 20px tha, ab thoda aur gap */
+  color: rgba(212, 175, 55, 1);
+  font-size: 16px;     /* thoda bada text */
+  font-weight: 500;    /* slightly bolder */
+  border-top: 1px solid rgba(212, 175, 55, 0.3);  /* line above stats */
+  padding-top: 15px;   /* line aur stats ke bich me gap */
+}
+.stats {
+  display: flex;
+  justify-content: flex-start; /* horizontal layout */
+  gap: 140px;                   /* spacing between each stat */
+  margin-top: 20px;
+}
+
+.stats span {
+  font-size: 13px;       /* same as card text */
+  font-weight: 400;      /* normal weight for label text */
+  color: rgba(255, 255, 255, 0.85);           /* same as list items */
+}
+
+.stats span strong {
+  color: gold;           /* number highlighted */
+  font-weight: 500; 
+  font-size: 18px;     /* bold number */
+}
+.icon-box {
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 215, 0, 0.1);
+  border: 1px solid gold;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-box img {
+  width: 40px;
+  height: 40px;
+ 
+}
+
+/* Bottom Box */
+.bottom-box {
+  width: 900px;            /* same as cards total */
+  margin: 50px auto 0;     /* center align */
+  padding:  15px 30px;
+  border-radius: 15px;
+  background: linear-gradient(90deg, rgba(212, 175, 55, 0.1) 0%, rgba(184, 148, 31, 0.1) 100%);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  text-align: center;
+  height: 170px;
+   display: flex;            /* flex to align content */
+  flex-direction: column;   
+  justify-content: center;  /* vertically center content */
+  gap: 5px;
+
+}
+
+.bottom-box h3 {
+  padding-top: 20px;
+  color: gold;
+  font-size: 22px;        /* adjust to fit height */
+  margin: 0;
+  font-weight: 600;
+}
+
+.bottom-box p {
+  font-family: Inter;
+font-weight: 50;
+font-style: Regular;
+font-size: 15px;
+line-height: 26px;
+letter-spacing: 0%;
+text-align: center;
+vertical-align: middle;
+color: rgba(255, 255, 255, 0.85);
+}
+
+.tags span {
+  display: inline-block;
+  padding-bottom: 10px;
+  padding-top: 2px;
+  padding: 4px 10px;
+border: 1px solid rgba(212, 175, 55, 0.3);
+  border-radius: 33554400px;
+  margin: 2px;
+  font-size: 12px;
+  background: rgba(0, 0, 0, 0.5);
+color: rgba(255, 255, 255, 0.8)
+}
+
+/* SECTION */
+.system {
+  width: 100%;
+  background: #1a1a1a;
+  padding: 96px 0;
+}
+
+/* CONTAINER */
+.container {
+  max-width: 1200px;
+  margin: auto;
+  padding: 0 20px;
+}
+
+/* HEADING */
+.system h2 {
+  font-size: 36px;
+  text-align: center;
+  color: #fff;
+}
+
+.system h2 span {
+  color: #d4af37;
+}
+
+.desc {
+  color: #aaa;
+  text-align: center;
+  margin-top: 12px;
+  margin-bottom: 50px;
+}
+
+/* STEPS */
+.steps {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0; /* no extra gap, lines connect directly */
+  flex-wrap: wrap;
+}
+
+/* BOXES */
+.box {
+  width: 170px;
+  background: #0d0d0d;
+  border-radius: 12px;
+  padding: 20px;
+  position: relative;
+  text-align: left; /* paragraphs left-aligned */
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+/* NUMBER CIRCLE */
+.num {
+  position: absolute;
+  top: -12px;
+  right: -12px;
+  background: #d4af37;
+  color: #000;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+/* ICON IMAGE */
+.icon {
+  width: 40px;
+  height: 40px;
+  margin-bottom: 12px;
+}
+
+/* BOX TEXT */
+.box h3 {
+  color: #fff;
+  font-size: 15px;
+  margin-bottom: 8px;
+}
+
+.box p {
+  color: #aaa;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+/* CONNECTOR LINE */
+.line {
+  width: 30px; /* short line */
+  height: 0.2px;
+  background: #d4af37;
+  align-self:first baseline;
+  margin-top: 80px;
+}
+
+/* CTA */
+/* CTA width adjusted to match 4 boxes + lines */
+.cta {
+  width: 920px; /* 4 boxes (160px) + 3 lines (60px) */
+  max-width: 100%; /* responsive ke liye */
+  margin: 50px auto 0; /* horizontally center */
+  padding: 20px 30px; /* height same as before */
+  background: linear-gradient(90deg, rgba(212, 175, 55, 0.1) 0%, rgba(184, 148, 31, 0.1) 100%);
+  border-radius: 12px;
+  text-align: center;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+}
+.cta h3 {
+  color: rgba(212, 175, 55, 1);
+  margin-bottom: 10px;
+}
+
+.cta p {
+  color: rgba(255, 255, 255, 0.85);
+  margin-bottom: 15px;
+  font-weight: 50;
+}
+
+.cta button {
+  background: #d4af37;
+  border: none;
+  padding: 12px 25px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+/* RESPONSIVE */
+@media (max-width: 992px) {
+  .steps {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .line {
+    display: none; /* hide lines on small screens */
+  }
+  .box {
+    width: 90%;
+    margin-bottom: 20px;
+  }
+  .cta {
+    width: 90%; /* responsive width */
+  }
+}
+/* =========================
+   TABLET (<= 992px)
+========================= */
+@media (max-width: 992px) {
+
+  .container {
+    width: 90%;
+  }
+
+  /* Trade Section Cards */
+  .cards {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .card {
+    width: 90%;
+    height: auto;
+  }
+
+  .stats {
+    justify-content: space-between;
+    gap: 20px;
+  }
+
+  /* Bottom Box */
+  .bottom-box {
+    width: 90%;
+    height: auto;
+    padding: 20px;
+  }
+
+  .bottom-box p br {
+    display: none; /* remove forced line breaks */
+  }
+
+  /* System Steps */
+  .steps {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+  }
+
+  .box {
+    width: 45%;
+  }
+
+  .line {
+    display: none; /* hide connecting lines */
+  }
+
+  .cta {
+    width: 90%;
+  }
+}
+
+
+/* =========================
+   MOBILE (<= 576px)
+========================= */
+@media (max-width: 576px) {
+
+  h2 {
+    font-size: 24px;
+  }
+
+  .subtitle,
+  .desc {
+    font-size: 13px;
+    padding: 0 10px;
+  }
+
+  /* Cards */
+  .card {
+    width: 100%;
+    padding: 20px;
+  }
+
+  .card h3 {
+    font-size: 16px;
+  }
+
+  .card p,
+  .custom-list li {
+    font-size: 12px;
+  }
+
+  .stats {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .stats span strong {
+    font-size: 16px;
+  }
+
+  /* Bottom Box */
+  .bottom-box {
+    width: 100%;
+    padding: 15px;
+  }
+
+  .bottom-box h3 {
+    font-size: 18px;
+  }
+
+  .bottom-box p {
+    font-size: 13px;
+    line-height: 22px;
+  }
+
+  .tags span {
+    font-size: 11px;
+    padding: 4px 8px;
+  }
+
+  /* System Section */
+  .system {
+    padding: 60px 0;
+  }
+
+  .box {
+    width: 100%;
+  }
+
+  .box h3 {
+    font-size: 14px;
+  }
+
+  .box p {
+    font-size: 12px;
+  }
+
+  .num {
+    width: 26px;
+    height: 26px;
+    font-size: 12px;
+  }
+
+  .icon {
+    width: 35px;
+    height: 35px;
+  }
+
+  /* CTA */
+  .cta {
+    width: 100%;
+    padding: 15px;
+  }
+
+  .cta h3 {
+    font-size: 18px;
+  }
+
+  .cta p {
+    font-size: 13px;
+  }
+
+  .cta button {
+    width: 100%;
+    padding: 10px;
+  }
+}
