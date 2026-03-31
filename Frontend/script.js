@@ -4,7 +4,6 @@ const navLinks = document.getElementById("navLinks");
 hamburger.addEventListener("click", () => {
   navLinks.classList.toggle("active");
 });
-// =============================================
 
 document.addEventListener('DOMContentLoaded', function () {
 
@@ -118,4 +117,35 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
+});
+// FORM SUBMIT HANDLE
+const form = document.getElementById("consultForm");
+
+form.addEventListener("submit", function (e) {
+  e.preventDefault();
+
+  const fullName = document.getElementById("fullName").value;
+  const email = document.getElementById("emailAddress").value;
+  const phone = document.getElementById("phoneNumber").value;
+  const message = document.getElementById("message").value;
+
+  fetch("http://127.0.0.1:8000/consultation/", {  // <-- trailing slash
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+        full_name: fullName,
+        email: email,
+        phone: phone,
+        message: message
+    })
+})
+    .then((res) => res.json())
+    .then((data) => {
+      alert("Form Submitted Successfully ✅");
+      form.reset();
+    })
+    .catch((err) => {
+      console.log(err);
+      alert("Error submitting form ❌");
+    });
 });
