@@ -9,3 +9,4 @@ class Consultation(Base):
     email = Column(String, nullable=False)
     phone = Column(String, nullable=False)
     message = Column(Text)
+  

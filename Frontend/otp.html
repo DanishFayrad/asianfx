@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>OTP Verification</title>
+  <link rel="stylesheet" href="otp.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div class="otp-container">
+
+  <div class="otp-card">
+
+    <div class="icon-circle">
+      <img src="images/i.png">
+    </div>
+
+    <!-- Heading forced into 2 lines -->
+    <h2>Two-Factor<br>Authentication</h2>
+
+    <!-- Subtitle forced into 2 lines -->
+    <p class="subtitle">
+      Enter the 6-digit code from your
+      authenticator <br>app
+    </p>
+
+    <div class="otp-inputs">
+      <input maxlength="1">
+      <input maxlength="1">
+      <input maxlength="1">
+      <input maxlength="1">
+      <input maxlength="1">
+      <input maxlength="1">
+    </div>
+
+    <button class="verify-btn">
+      <img src="images/svg (13).png">
+      Verify Code
+    </button>
+
+    <!-- Resend -->
+    <div class="action-link">
+      <img src="images/i (1).png">
+      <span>Resend Code</span>
+    </div>
+
+    <div class="divider"><span>OR</span></div>
+
+    <!-- Backup -->
+    <div class="action-link">
+      <img src="images/i@3x.png">
+      <span>Use Backup Code</span>
+    </div>
+
+    <div class="secure-box">
+      <img src="images/svg (14).png">
+      <div>
+        <strong>Secured Connection</strong>
+        <p>Your account security is protected with industry-standard encryption</p>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<script src="otp.js"></script>
+</body>
+</html>

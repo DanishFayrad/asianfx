@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Transaction History</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="transaction.css">
+</head>
+
+<body>
+
+<div class="layout">
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="logo">
+    <img src="images/div (3).png" class="logo-icon">
+    Wallet
+  </div>
+
+  <div class="menu" onclick="goTo('wallet.html')">
+  <img src="images/i (5).png">
+  <span>Dashboard</span>
+</div>
+
+<div class="menu active" onclick="goTo('transactions.html')">
+  <img src="images/svg (15).png">
+  <span>Transactions</span>
+</div>
+</div>
+<!-- MAIN -->
+<div class="main">
+
+<!-- HEADER -->
+<div class="header-box">
+  <div class="header">
+<div class="hamburger" onclick="toggleSidebar()">
+  ☰
+</div>
+    <div class="header-left">
+      <h2>Transaction History</h2>
+      <p>Track your transactions</p>
+    </div>
+
+    <div class="header-right">
+      <div class="wallet-badge">
+        <img src="images/i (2).png">
+      </div>
+
+      <button class="balance">$100.00</button>
+
+      <div class="live">
+        <span class="dot"></span> Live
+      </div>
+
+      <img src="images/i (3).png" class="icon">
+      <img src="images/img.png" class="avatar">
+    </div>
+
+  </div>
+</div>
+
+<!-- CARD -->
+
+<div class="card">
+
+<div class="card-header">
+
+<h3>Transaction History</h3>
+
+<div class="filters">
+
+<select>
+<option>All Types</option>
+</select>
+
+<input type="date" class="date-input" placeholder="mm/dd/yyyy">
+
+<button class="filter-btn">Filter</button>
+
+</div>
+
+</div>
+
+<table>
+
+<thead>
+
+<tr>
+<th>Date</th>
+<th>Type</th>
+<th>Amount</th>
+<th>Status</th>
+<th>Action</th>
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr>
+
+<td class="date">
+Dec 28, 2024
+<small>10:32 AM</small>
+</td>
+
+<td>
+  <div style="display:flex; align-items:center; gap:10px;">
+    
+    <img src="images/div (19).png" style="width:29px; height:42px;">
+
+    <div>
+      <div style="font-weight:600;">Trade</div>
+      
+    </div>
+
+  </div>
+</td>
+
+<td class="profit">+$2,450.00</td>
+
+<td class="completed">Completed</td>
+
+<td class="view">View</td>
+
+</tr>
+
+<tr>
+
+<td class="date">
+Dec 27, 2024
+<small>03:15 PM</small>
+</td>
+
+<td>
+  <div style="display:flex; align-items:center; gap:10px;">
+    
+    <img src="images/arrow purple.png" style="width:29px; height:42px;">
+
+    <div>
+      <div style="font-weight:600;">Withdrawl</div>
+      
+    </div>
+
+  </div>
+</td>
+
+<td class="loss">-$5,000.00</td>
+
+<td class="pending">Pending</td>
+
+<td class="view">View</td>
+
+</tr>
+
+<tr>
+
+<td class="date">
+Dec 26, 2024
+<small>11:48 AM</small>
+</td>
+
+<td>
+  <div style="display:flex; align-items:center; gap:10px;">
+    
+    <img src="images/arrow blue.png" style="width:29px; height:42px;">
+
+    <div>
+      <div style="font-weight:600;">Deposit</div>
+      
+    </div>
+
+  </div>
+</td>
+
+<td class="profit">+$10,000.00</td>
+
+<td class="completed">Completed</td>
+
+<td class="view">View</td>
+
+</tr>
+<tr>
+  <td class="date">
+    Dec 25, 2024
+    <small>09:22 AM</small>
+  </td>
+  <td>
+  <div style="display:flex; align-items:center; gap:10px;">
+  
+    <img src="images/arrow green.png" style="width:29px; height:42px;">
+    <div>
+      <div style="font-weight:600;">Trade</div>
+      
+    </div>
+
+  </div>
+</td>
+  <td class="loss">-$1,320.00</td>
+  <td class="completed">Completed</td>
+  <td class="view">View</td>
+</tr>
+
+
+
+</tbody>
+
+</table>
+
+<div class="footer">
+
+<span>Showing 1-5 of 200 transactions</span>
+
+<div class="pagination">
+
+<button>Previous</button>
+<button class="active">1</button>
+<button>2</button>
+<button>3</button>
+<button>Next</button>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+</div>
+<script src="wallet.js"></script>
+</body>
+</html>

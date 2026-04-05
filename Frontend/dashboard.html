@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Trading Dashboard</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="dashboard.css">
+
+</head>
+<body>
+
+<!-- NAVBAR -->
+
+<div class="container-nav">
+<header class="navbar">
+  <div class="nav-left">
+    <div class="logo">
+      <div class="logo-box"><img src="images/i (9).png"></div>
+      <span>TradePro</span>
+    </div>
+
+    <nav>
+      <a class="active" href="#">Signals</a>
+    </nav>
+  </div>
+
+  <!-- HAMBURGER -->
+  <div class="hamburger" id="hamburger">☰</div>
+
+  <!-- RIGHT SIDE MENU -->
+  <div class="nav-right" id="mobileMenu">
+ <button class="wallet" id="walletBtn">
+  <img src="images/i (2).png">
+</button>
+    <button class="wallet">$100.00</button>
+    <img src="images/i (3).png">
+    <img src="images/img.png">
+  </div>
+</header>
+<!-- MAIN -->
+<div class="container">
+
+
+
+
+<div class="top-bar">
+    <h1 class="page-title">Trading Signals</h1>
+
+    <div class="right-actions">
+        <button class="deposit">Deposit</button>
+        <button class="deposit">+ New Signal</button>
+        <span class="live-updates">Live Updates</span>
+    </div>
+</div>
+
+<p class="subtitle">Real-time signals for Gold, Silver, and Forex markets</p>
+
+
+
+
+<!-- STATS -->
+<div class="stats">
+
+    <div class="card">
+        <img src="images/div (9).png" style="margin-bottom:10px;">
+        <span class="card-label">Today</span>
+        <h3>24</h3>
+        <p>Active Signals</p>
+    </div>
+
+    <div class="card">
+        <img src="images/div (10).png" style="margin-bottom:10px;">
+        <span class="card-label">This Week</span>
+        <h3>87%</h3>
+        <p>Success Rate</p>
+    </div>
+
+    <div class="card">
+        <img src="images/div (11).png" style="margin-bottom:10px;">
+        <span class="card-label">This Month</span>
+        <h3>156</h3>
+        <p>Targets Hit</p>
+    </div>
+
+    <div class="card">
+        <img src="images/div (12).png" style="margin-bottom:10px;">
+        <span class="card-label">Total</span>
+        <h3>$24.5K</h3>
+        <p>Total Profit</p>
+    </div>
+
+</div>
+
+   <!-- FILTERS -->
+<div class="filters-card">
+
+  <div class="filter-item">
+    <label>Search Symbol</label>
+    <div class="input-icon">
+      <span> <img src="images/svg (17).png"></span>
+      <input type="text" placeholder="Search XAUUSD, XAGUSD...">
+    </div>
+  </div>
+
+  <div class="filter-item">
+    <label>Type</label>
+    <select>
+      <option>All Types</option>
+    </select>
+  </div>
+
+  <div class="filter-item">
+    <label>Status</label>
+    <select>
+      <option>All Status</option>
+    </select>
+  </div>
+
+  <div class="filter-item">
+    <label>Sort By</label>
+    <select>
+      <option>Latest First</option>
+    </select>
+  </div>
+
+</div>
+
+
+<!-- TABLE -->
+<div class="table-box">
+
+<table>
+
+<thead>
+<tr>
+<th>Symbol</th>
+<th>Type</th>
+<th>Entry</th>
+<th>Target</th>
+<th>Stop Loss</th>
+<th>Status</th>
+<th>Time</th>
+<th>Action</th>
+</tr>
+</thead>
+
+<tbody>
+
+<tr>
+<td>
+  <div style="display:flex; align-items:center; gap:10px;">
+    
+    <img src="images/div (13).png" style="width:42px; height:42px;">
+
+    <div>
+      <div style="font-weight:600;">XAUUSD</div>
+      <div style="font-size:12px; color:#9ca3af; margin-top:2px;">Gold</div>
+    </div>
+
+  </div>
+</td>
+<td>
+  <span class="buy">
+    <img src="images/i (11).png">
+    Buy
+  </span>
+</td>
+<td>2045.50</td>
+<td class="green">2065.00</td>
+<td class="red">2038.00</td>
+<td>
+  <span class="badge status active">
+    Active
+  </span>
+</td>
+<td class="time">2 hours ago</td>
+<td class="Action"><img src="images/i (10).png" alt="Action Icon"></td>
+
+</tr>
+
+<tr>
+<td>
+  <div style="display:flex; align-items:center; gap:10px;">
+    
+    <img src="images/div (14).png" style="width:42px; height:42px;">
+
+    <div>
+      <div style="font-weight:600;">XAGUSD</div>
+      <div style="font-size:12px; color:#9ca3af; margin-top:2px;">Silver</div>
+    </div>
+
+  </div>
+</td>
+<td>
+  <span class="sell">
+    <img src="images/svg (18).png">
+    Sell
+  </span>
+</td>
+<td>24.85</td>
+<td class="green">23.50</td>
+<td class="red">25.20</td>
+<td><span class="badge status hit">
+  <img src="images/svg (19).png">
+  Hit Target
+</span></td>
+<td class="time">5 hours ago</td>
+<td class="Action"><img src="images/i (10).png" alt="Action Icon"></td>
+</tr>
+
+<tr>
+<td>
+  <div style="display:flex; align-items:center; gap:10px;">
+    
+    <img src="images/div (15).png" style="width:42px; height:42px;">
+
+    <div>
+      <div style="font-weight:600;">EURUSD</div>
+      <div style="font-size:12px; color:#9ca3af; margin-top:2px;">Forex</div>
+    </div>
+
+  </div>
+</td>
+<td>
+  <span class="buy">
+    <img src="images/i (11).png">
+    Buy
+  </span>
+</td>
+<td>1.0850</td>
+<td class="green">1.0920</td>
+<td class="red">1.0820</td>
+<td>
+  <span class="badge status active">
+    Active
+  </span>
+</td>
+<td class="time">8 hours ago</td>
+<td class="Action"><img src="images/i (10).png" alt="Action Icon"></td>
+</tr>
+
+<tr>
+<td>
+  <div style="display:flex; align-items:center; gap:10px;">
+    
+    <img src="images/div (16).png" style="width:42px; height:42px;">
+
+    <div>
+      <div style="font-weight:600;">GBPUSD</div>
+      <div style="font-size:12px; color:#9ca3af; margin-top:2px;">Forex</div>
+    </div>
+
+  </div>
+</td>
+<td>
+  <span class="sell">
+    <img src="images/svg (18).png">
+    Sell
+  </span>
+</td>
+<td>1.2650</td>
+<td class="green">1.2550</td>
+<td class="red">1.2700</td>
+<td><span class="badge status loss">
+  <img src="images/svg (20).png">
+  Stop Loss Hit
+</span></td>
+<td class="time">12 hours ago</td>
+<td class="Action"><img src="images/i (10).png" alt="Action Icon"></td>
+</tr>
+
+<tr>
+<td>
+  <div style="display:flex; align-items:center; gap:10px;">
+    
+    <img src="images/div (17).png" style="width:42px; height:42px;">
+
+    <div>
+      <div style="font-weight:600;">XAUUSD</div>
+      <div style="font-size:12px; color:#9ca3af; margin-top:2px;">Gold</div>
+    </div>
+
+  </div>
+</td>
+<td>
+  <span class="sell">
+    <img src="images/svg (18).png">
+    Sell
+  </span>
+</td>
+<td>2,058.00</td>
+<td class="green">2,040.00</td>
+<td class="red">2,068.00</td>
+<td>
+<span class="badge status close">
+  <img src="images/i (12).png">
+  Closed
+</span></td>
+<td class="time">1 day ago</td>
+<td class="Action"><img src="images/i (10).png" alt="Action Icon"></td>
+</tr>
+
+<tr>
+<td>
+  <div style="display:flex; align-items:center; gap:10px;">
+    
+    <img src="images/div (18).png" style="width:42px; height:42px;">
+
+    <div>
+      <div style="font-weight:600;">USDJPY</div>
+      <div style="font-size:12px; color:#9ca3af; margin-top:2px;">Forex</div>
+    </div>
+
+  </div>
+</td>
+<td>
+  <span class="buy">
+    <img src="images/i (11).png">
+    Buy
+  </span>
+</td>
+<td>148.50</td>
+<td class="green">150.20</td>
+<td class="red">147.80</td>
+<td>
+  <span class="badge status active">
+    Active
+  </span>
+</td>
+<td class="time">1 day ago</td>
+<td class="Action"><img src="images/i (10).png" alt="Action Icon"></td>
+</tr>
+
+
+<tr>
+<td>
+  <div style="display:flex; align-items:center; gap:10px;">
+    
+    <img src="images/div (19).png" style="width:42px; height:42px;">
+
+    <div>
+      <div style="font-weight:600;">XAUUSD</div>
+      <div style="font-size:12px; color:#9ca3af; margin-top:2px;">Gold</div>
+    </div>
+
+  </div>
+</td>
+<td>
+  <span class="buy">
+    <img src="images/i (11).png">
+    Buy
+  </span>
+</td>
+<td>148.50</td>
+<td class="green">150.20</td>
+<td class="red">147.80</td>
+<td class="active"><img src="span.png"></td>
+<td class="time">1 day ago</td>
+<td class="Action"><img src="images/i (10).png" alt="Action Icon"></td>
+</tr>
+</tbody>
+
+</table>
+
+
+<!-- TABLE FOOTER -->
+<div class="table-footer">
+  <div class="showing-text">
+    Showing 1-6 of 24 signals
+  </div>
+
+  <div class="pagination">
+    <button class="page-btn prev">‹</button>
+    <button class="page-number active" data-page="1">1</button>
+    <button class="page-number" data-page="2">2</button>
+    <button class="page-number" data-page="3">3</button>
+    <button class="page-btn next">›</button>
+  </div>
+</div>
+
+
+<!-- javascript -->
+ <script>
+// Select all rows
+const rows = document.querySelectorAll("tbody tr");
+const rowsPerPage = 6;
+const showingText = document.querySelector(".showing-text");
+const pagination = document.querySelector(".pagination");
+let currentPage = 1;
+
+// Calculate total pages
+const totalPages = Math.ceil(rows.length / rowsPerPage);
+
+// Function to show specific page
+function showPage(page) {
+  currentPage = page;
+  const start = (page - 1) * rowsPerPage;
+  const end = start + rowsPerPage;
+
+  // Show/hide rows
+  rows.forEach((row, index) => {
+    row.style.display = index >= start && index < end ? "" : "none";
+  });
+
+  // Update active page number
+  document.querySelectorAll(".page-number").forEach(btn => btn.classList.remove("active"));
+  const activeBtn = document.querySelector(`.page-number[data-page="${page}"]`);
+  if (activeBtn) activeBtn.classList.add("active");
+
+  // Update showing text
+  showingText.innerText = `Showing ${start + 1}-${Math.min(end, rows.length)} of ${rows.length} signals`;
+}
+
+// Dynamically create page number buttons
+function createPageNumbers() {
+  // Remove existing page-number buttons
+  document.querySelectorAll(".page-number").forEach(btn => btn.remove());
+
+  for (let i = 1; i <= totalPages; i++) {
+    const btn = document.createElement("button");
+    btn.className = "page-number";
+    btn.dataset.page = i;
+    btn.innerText = i;
+    if (i === 1) btn.classList.add("active");
+    btn.addEventListener("click", () => showPage(i));
+    pagination.insertBefore(btn, document.querySelector(".next"));
+  }
+}
+
+// Next button
+document.querySelector(".next").addEventListener("click", () => {
+  if (currentPage < totalPages) {
+    showPage(currentPage + 1);
+  }
+});
+
+// Prev button
+document.querySelector(".prev").addEventListener("click", () => {
+  if (currentPage > 1) {
+    showPage(currentPage - 1);
+  }
+});
+
+// Initialize
+createPageNumbers();
+showPage(1);
+function toggleMenu() {
+  document.getElementById("mobileMenu").classList.toggle("show");
+}
+const hamburger = document.getElementById('hamburger');
+const mobileMenu = document.getElementById('mobileMenu');
+
+hamburger.addEventListener('click', () => {
+    mobileMenu.classList.toggle('show');
+});
+document.getElementById("walletBtn").addEventListener("click", function () {
+  window.location.href = "wallet.html";
+});
+</script>
+</body> 
+</html>

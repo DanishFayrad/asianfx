@@ -128,24 +128,35 @@ form.addEventListener("submit", function (e) {
   const email = document.getElementById("emailAddress").value;
   const phone = document.getElementById("phoneNumber").value;
   const message = document.getElementById("message").value;
+  const password = document.getElementById("password").value; // 👈 add this
 
-  fetch("http://127.0.0.1:8000/consultation/", {  // <-- trailing slash
+  fetch("http://127.0.0.1:8000/consultation/", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
         full_name: fullName,
         email: email,
         phone: phone,
-        message: message
+        message: message,
+        password: password   // 👈 add this
     })
-})
-    .then((res) => res.json())
-    .then((data) => {
-      alert("Form Submitted Successfully ✅");
-      form.reset();
-    })
-    .catch((err) => {
-      console.log(err);
-      alert("Error submitting form ❌");
-    });
+  })
+  .then((res) => res.json())
+  .then((data) => {
+    alert("Form Submitted Successfully ✅");
+
+    // localStorage yahan rakho
+    localStorage.setItem("email", email);
+    localStorage.setItem("password", password);
+
+    form.reset();
+  })
+  .catch((err) => {
+    console.log(err);
+    alert("Error submitting form ❌");
+  });
+});
+document.getElementById("consultForm").addEventListener("submit", function (e) {
+  e.preventDefault(); // form submit rokta hai
+  window.location.href = "verify.html";
 });

@@ -2636,3 +2636,65 @@ display: flex;
         font-size: 14px;
       }
     }
+    /* box on book your consultation */
+    .fee-box {
+  width: 100%;
+  max-width: 900px;
+  margin: 8px auto 20px auto; /* center + spacing */
+  background: #111;
+  border: 1px solid #D4AF37;
+  padding: 10px;
+  border-radius: 10px;
+  color: #fff;
+  text-align: center;
+}
+
+.fee-box h3 {
+  color: #D4AF37;
+  margin-bottom: 10px;
+}
+
+.fee-box p {
+  font-size: 14px;
+  margin: 5px 0;
+}
+
+/* for buttons */
+.nav-buttons {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
+.btn-get-started {
+  background: #D4AF37;
+  color: black;
+  padding: 10px 18px;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.btn-login {
+  border: 1px solid #D4AF37;
+  color: #D4AF37;
+  padding: 10px 18px;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 600;
+}
+.nav-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nav-link {
+  color: #D4AF37;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.divider {
+  color: #aaa;
+}
