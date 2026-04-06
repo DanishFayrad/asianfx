@@ -1,33 +1,34 @@
+# utils/email.py
 from fastapi_mail import FastMail, MessageSchema, ConnectionConfig
-from config import MAIL_USERNAME, MAIL_PASSWORD, MAIL_FROM, MAIL_PORT, MAIL_SERVER
+from config import settings
 from itsdangerous import URLSafeTimedSerializer
-from config import SECRET_KEY
 
-# Email configuration
+# Email server configuration
 conf = ConnectionConfig(
-    MAIL_USERNAME=MAIL_USERNAME,
-    MAIL_PASSWORD=MAIL_PASSWORD,
-    MAIL_FROM=MAIL_FROM,
-    MAIL_PORT=MAIL_PORT,
-    MAIL_SERVER=MAIL_SERVER,
+    MAIL_USERNAME=settings.MAIL_USERNAME,
+    MAIL_PASSWORD=settings.MAIL_PASSWORD,
+    MAIL_FROM=settings.MAIL_FROM,
+    MAIL_PORT=settings.MAIL_PORT,
+    MAIL_SERVER=settings.MAIL_SERVER,
     MAIL_STARTTLS=True,
     MAIL_SSL_TLS=False,
     USE_CREDENTIALS=True,
     VALIDATE_CERTS=True
 )
 
-# Token serializer
-serializer = URLSafeTimedSerializer(SECRET_KEY)
+# Token serializer for email verification
+serializer = URLSafeTimedSerializer(settings.SECRET_KEY)
 
+# -----------------------------
+# Function 1: Generate & verify token
+# -----------------------------
 def generate_verification_token(email: str):
-    """Generate token for email verification"""
     return serializer.dumps(email, salt="email-verification")
 
 def verify_token(token: str, expiration: int = 3600):
-    """Verify email token"""
     try:
         email = serializer.loads(
-            token, 
+            token,
             salt="email-verification",
             max_age=expiration
         )
@@ -35,41 +36,50 @@ def verify_token(token: str, expiration: int = 3600):
     except Exception:
         return None
 
+# -----------------------------
+# Function 2: Send verification email
+# -----------------------------
 async def send_verification_email(email: str, name: str, token: str):
-    """Send real verification email"""
-    
     verification_link = f"http://localhost:8000/verify-email?token={token}"
     
     html_content = f"""
-    <!DOCTYPE html>
     <html>
-    <head>
-        <style>
-            body {{ font-family: Arial, sans-serif; }}
-            .container {{ max-width: 600px; margin: auto; padding: 20px; }}
-            .button {{ background: #4CAF50; color: white; padding: 10px 20px; 
-                      text-decoration: none; border-radius: 5px; display: inline-block; }}
-        </style>
-    </head>
     <body>
-        <div class="container">
-            <h2>Welcome {name}!</h2>
-            <p>Thank you for registering with Asian FX Signals.</p>
-            <p>Click the button below to verify your email:</p>
-            <p><a href="{verification_link}" class="button">Verify Email</a></p>
-            <p>Or copy this link: {verification_link}</p>
-            <p>This link expires in 24 hours.</p>
-        </div>
+        <h2>Welcome {name}!</h2>
+        <p>Thank you for registering.</p>
+        <p>Click the link below to verify your email:</p>
+        <a href="{verification_link}">Verify Email</a>
+        <p>Or copy this link: {verification_link}</p>
     </body>
     </html>
     """
-    
+
     message = MessageSchema(
-        subject="Verify Your Email - Asian FX Signals",
+        subject="Verify Your Email",
         recipients=[email],
         body=html_content,
         subtype="html"
     )
-    
+    fm = FastMail(conf)
+    await fm.send_message(message)
+
+# -----------------------------
+# Function 3: Send signal notification
+# -----------------------------
+async def send_signal_notification(email: str, signal_info: str):
+    html_content = f"""
+    <html>
+      <body>
+        <h3>New Signal Added!</h3>
+        <p>{signal_info}</p>
+      </body>
+    </html>
+    """
+    message = MessageSchema(
+        subject="New Signal Notification",
+        recipients=[email],
+        body=html_content,
+        subtype="html"
+    )
     fm = FastMail(conf)
     await fm.send_message(message)

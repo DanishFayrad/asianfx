@@ -23,3 +23,29 @@ class Signal(Base):
     total_losses = Column(Integer, default=0)
     description = Column(Text, nullable=True)
     image_url = Column(String(500), nullable=True)
+    # routes/signal.py
+
+from fastapi import APIRouter, Depends
+from utils.email import send_signal_notification
+from sqlalchemy.orm import Session
+from database import get_db
+from models.signal import Signal
+from utils.email import send_signal_notification
+
+router = APIRouter()
+
+@router.post("/signals")
+async def create_signal(signal_data: dict, user_email: str, db: Session = Depends(get_db)):
+    # 1. DB me signal save karo
+    new_signal = Signal(**signal_data)
+    db.add(new_signal)
+    db.commit()
+    db.refresh(new_signal)
+    
+    # 2. Email notification bhejo
+    await send_signal_notification(
+        email=user_email,
+        signal_info=f"Signal: {signal_data.get('title', 'No Title')}"
+    )
+    
+    return {"message": "Signal created and notification sent", "signal": new_signal}

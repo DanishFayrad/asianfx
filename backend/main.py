@@ -1,12 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from database import engine, Base
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from database import engine, Base
-from config import settings
 
-# ========== IMPORT ALL MODELS HERE ==========
+# ========== IMPORT MODELS ==========
 from models.user import User
 from models.transaction import Transaction
 from models.signal import Signal
@@ -16,45 +12,63 @@ from models.usersignal import UserSignal
 Base.metadata.create_all(bind=engine)
 
 # ========== IMPORT ROUTES ==========
-from routes import auth_routes
-from routes import dashboard_routes
-from routes import user_routes
-from routes import wallet_routes
-from routes import admin_routes
-from routes import signal_routes
+from routes import auth
+from routes import dashboard
+from routes import user
+from routes import wallet
+from routes import admin
+from routes import signal
 
-app.include_router(auth_routes.router)
-app.include_router(dashboard_routes.router)
-app.include_router(user_routes.router)
-app.include_router(wallet_routes.router)
-app.include_router(admin_routes.router)
-app.include_router(signal_routes.router)
+# ========== CREATE APP ==========
 app = FastAPI(
-    title="Asian FX Trading API - Person B",
-    description="Signal Management and Admin Panel APIs",
-    version="2.0.0",
+    title="Asian FX Trading API",
+    description="Merged Backend (User + Admin + Signals)",
+    version="1.0.0"
 )
 
-# CORS middleware
+# ========== CORS ==========
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # frontend connect ho jaye
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Include routers
-app.include_router(signals_router)
-app.include_router(admin_router)
+# ========== INCLUDE ROUTERS ==========
+app.include_router(auth.router)
+app.include_router(dashboard.router)
+app.include_router(user.router)
+app.include_router(wallet.router)
+app.include_router(admin.router)
+app.include_router(signal.router)
 
+# ========== ROOT ==========
 @app.get("/")
 def root():
     return {
-        "message": "Asian FX API - Person B (Signals & Admin)",
-        "version": "2.0.0",
+        "message": "Asian FX API is running 🚀",
+        "modules": [
+            "Auth",
+            "Dashboard",
+            "User",
+            "Wallet",
+            "Signals",
+            "Admin"
+        ]
     }
 
+# ========== HEALTH CHECK ==========
 @app.get("/health")
 def health_check():
-    return {"status": "healthy", "service": "person-b-backend"}
+    return {
+        "status": "healthy",
+        "backend": "merged",
+    }
+from fastapi import FastAPI
+from routes import user  # ye import karo
+
+app = FastAPI()
+
+# ab user router include karo
+app.include_router(user.router)
