@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Buy Signal Dashboard</title>
+  <link rel="stylesheet" href="buysignal.css">
+</head>
+<body>
+
+<div class="dashboard">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+
+    <!-- TOP LOGO AREA -->
+      <div class="sidebar-top">
+  <img src="images/trade.png" class="logo-img">
+  <div class="brand-text">
+    <h2 class="brand-title">TradeSignal</h2>
+    <p class="brand-subtitle">Pro Trading</p>
+  </div>
+</div>
+
+    <ul class="menu">
+      <li>
+        <img src="images/i (16).png"> Dashboard
+      </li>
+      <li class="active">
+        <img src="images/i (17).png"> Buy Signals
+      </li>
+      <li>
+        <img src="images/i (18).png"> Signal History
+      </li>
+      <li>
+        <img src="images/i (19).png"> Wallet
+      </li>
+      <li>
+        <img src="images/i (20).png"> Analytics
+      </li>
+      <li>
+        <img src="images/i (21).png"> Settings
+      </li>
+    </ul>
+
+    <div class="user">
+
+  <!-- LEFT IMAGE -->
+  <img src="images/img (1).png" alt="user" class="pic">
+
+  <!-- CENTER TEXT -->
+  <div class="user-info">
+    <p class="name">John Trader</p>
+    <span class="role">Premium Account</span>
+  </div>
+
+  <!-- RIGHT ICON -->
+  <img src="images/i (22).png" class="arrow1">
+
+</div>
+
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- HEADER -->
+    <div class="header-box">
+
+      <div class="header-left">
+        <h2>Buy Signal Dashboard</h2>
+        <p>Select and purchase trading signals</p>
+      </div>
+
+      <div class="header-right">
+
+        <div class="wallet">
+          <img src="images/i (13).png">
+          <div>
+            <span>Ethereum</span>
+            <h4>$12,450</h4>
+          </div>
+        </div>
+
+        <div class="bell">
+          <img src="images/i (14).png">
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- MAIN BOX -->
+    <div class="main-box">
+        <div class="top-row">
+
+  <div>
+    <h3>Purchase New Signal</h3>
+    <p>Select trading asset to continue</p>
+  </div>
+
+  <div class="top-action">
+    <button class="btn">+ New Signal</button>
+  </div>
+
+</div>
+      <div class="content-row">
+      <div class="left">
+        <!-- CARDS -->
+        <div class="cards-box">
+          <div class="asset-header">
+
+  <div class="asset-left">
+    <h4>Select Trading Asset</h4>
+  </div>
+
+  <div class="search-bar">
+    <img src="images/i (23).png">
+    <input type="text"  id="searchInput" placeholder="Search coins...">
+  </div>
+
+</div>
+        <div class="grid">
+
+  <!-- CARD -->
+  <div class="card" data-name="Ethereum" data-price="125">
+    
+    <!-- LEFT -->
+    <div class="card-left">
+      
+      <!-- TOP -->
+      <div class="top">
+        <img src="images/container (2).png">
+        <div>
+          <h4>Ethereum</h4>
+          <p class="sub">ETH/USDT</p>
+        </div>
+      </div>
+
+      <!-- BOTTOM -->
+      <p class="label">Signal Price</p>
+
+    </div>
+
+    <!-- RIGHT -->
+    <div class="card-right">
+      <input type="radio" name="asset" class="select-radio">
+      <p class="price">$125.00</p>
+    </div>
+
+  </div>
+
+
+  <!-- BITCOIN -->
+  <div class="card" data-name="Bitcoin" data-price="150">
+    
+    <div class="card-left">
+      <div class="top">
+        <img src="images/container (3).png">
+        <div>
+          <h4>Bitcoin</h4>
+          <p class="sub">BTC/USDT</p>
+        </div>
+      </div>
+      <p class="label">Signal Price</p>
+    </div>
+
+    <div class="card-right">
+      <input type="radio" name="asset" class="select-radio">
+      <p class="price">$150.00</p>
+    </div>
+
+  </div>
+
+
+  <!-- GOLD -->
+  <div class="card" data-name="Gold" data-price="200">
+    
+    <div class="card-left">
+      <div class="top">
+        <img src="images/container (4).png">
+        <div>
+          <h4>Gold</h4>
+          <p class="sub">XAU/USD</p>
+        </div>
+      </div>
+      <p class="label">Signal Price</p>
+    </div>
+
+    <div class="card-right">
+      <input type="radio" name="asset" class="select-radio">
+      <p class="price">$200.00</p>
+    </div>
+
+  </div>
+
+
+  <!-- SILVER -->
+  <div class="card" data-name="Silver" data-price="100">
+    
+    <div class="card-left">
+      <div class="top">
+        <img src="images/container (5).png">
+        <div>
+          <h4>Silver</h4>
+          <p class="sub">XAG/USD</p>
+        </div>
+      </div>
+      <p class="label">Signal Price</p>
+    </div>
+
+    <div class="card-right">
+      <input type="radio" name="asset" class="select-radio">
+      <p class="price">$100.00</p>
+    </div>
+
+  </div>
+
+
+  <!-- EUR/USD -->
+  <div class="card" data-name="EUR/USD" data-price="90">
+    
+    <div class="card-left">
+      <div class="top">
+        <img src="images/container (6).png">
+        <div>
+          <h4>EUR/USD</h4>
+          <p class="sub">Forex Pair</p>
+        </div>
+      </div>
+      <p class="label">Signal Price</p>
+    </div>
+
+    <div class="card-right">
+      <input type="radio" name="asset" class="select-radio">
+      <p class="price">$90.00</p>
+    </div>
+
+  </div>
+
+
+  <!-- OIL -->
+  <div class="card" data-name="Shell Oil" data-price="175">
+    
+    <div class="card-left">
+      <div class="top">
+        <img src="images/container (7).png">
+        <div>
+          <h4>Shell Oil</h4>
+          <p class="sub">Commodity</p>
+        </div>
+      </div>
+      <p class="label">Signal Price</p>
+    </div>
+
+    <div class="card-right">
+      <input type="radio" name="asset" class="select-radio">
+      <p class="price">$175.00</p>
+    </div>
+
+  </div>
+
+</div>
+        </div>
+
+        <!-- RECENT -->
+        <div class="recent">
+          <h3>Recent Signal Purchases</h3>
+
+          <div class="recent-cards">
+
+            <div class="r-card">
+              <!-- LEFT: icon + name + time -->
+  <div class="r-card-left">
+    <img src="images/container (2).png">
+    <div>
+      <h4>  Ethereum</h4>
+      <p>2 hours ago</p>
+    </div>
+  </div>
+
+  <!-- RIGHT TOP: Active / Expired badge -->
+  <div class="r-card-badge active">Active</div>
+
+  <!-- BOTTOM ROW: price + qty -->
+  <div class="r-card-bottom">
+    <span class="price">Price: $125.00</span>
+    <span class="qty">Qty: 1</span>
+  </div>
+</div>
+
+    <div class="r-card">
+  <!-- LEFT: icon + name + time -->
+  <div class="r-card-left">
+    <img src="images/container (3).png">
+    <div>
+      <h4>  Bitcoin</h4>
+      <p>1 day ago</p>
+    </div>
+  </div>
+
+  <!-- RIGHT TOP: Active / Expired badge -->
+  <div class="r-card-badge expired">Expired</div>
+
+  <!-- BOTTOM ROW: price + qty -->
+  <div class="r-card-bottom">
+    <span class="price">Price: $150.00</span>
+    <span class="qty">Qty: 1</span>
+  </div>
+</div>
+
+            <div class="r-card">
+  <!-- LEFT: icon + name + time -->
+  <div class="r-card-left">
+    <img src="images/container (4).png">
+    <div>
+      <h4>Gold</h4>
+      <p>3 days ago</p>
+    </div>
+  </div>
+
+  <!-- RIGHT TOP: Active / Expired badge -->
+  <div class="r-card-badge active">Active</div>
+
+  <!-- BOTTOM ROW: price + qty -->
+  <div class="r-card-bottom">
+    <span class="price">Price: $200.00</span>
+    <span class="qty">Qty: 1</span>
+  </div>
+</div>
+
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT SIDE -->
+      <div class="right">
+
+        <div class="summary">
+
+  <h3>Purchase Summary</h3>
+
+  <div class="summary-details">
+
+    <div class="row">
+      <span>Selected Asset</span>
+      <p id="assetName">Ethereum</p>
+    </div>
+
+    <div class="row">
+      <span>Quantity</span>
+      <div class="qty">
+        <p>1</p>
+        <span class="fixed">Fixed</span>
+      </div>
+    </div>
+
+    <div class="row">
+      <span>Signal Price</span>
+      <p id="price">$125.00</p>
+    </div>
+
+  </div>
+
+  <!-- BALANCE BOX -->
+  <div class="balance-box">
+    <div class="balance-row">
+      <span>Available Balance</span>
+      <p>$12,450.00</p>
+    </div>
+    <div class="balance-row">
+      <span>After Purchase</span>
+      <p id="afterBalance" class="green">$12,325.00</p>
+    </div>
+  </div>
+
+  <!-- TOTAL -->
+  <div class="total">
+    <span>Total Amount</span>
+    <h2 id="total">$125.00</h2>
+  </div>
+
+<button class="buy">
+  <img src="images/svg (21).png" class="btn-icon">
+  Buy Signal
+</button>
+
+  <p class="note">Only one signal allowed per transaction</p>
+
+</div>
+        <div class="transaction">
+
+  <div class="t-icon">
+    <img src="images/transaction (1).png">
+  </div>
+
+  <div class="t-text">
+    <h4>Secure Transaction</h4>
+    <p>
+      All purchases are encrypted and processed securely.
+      Your signal will be activated immediately after payment.
+    </p>
+  </div>
+
+</div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+</div>
+</div>
+<script src="buysignal.js"></script>
+</body>
+</html>
