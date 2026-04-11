@@ -8,16 +8,18 @@ options.forEach(option => {
 });
 
 document.querySelector(".continue-btn").addEventListener("click", () => {
-  const selected = document.querySelector(".verify-option.active h4").innerText;
+  const selectedHeader = document.querySelector(".verify-option.active h4");
+  const selected = selectedHeader ? selectedHeader.innerText : null;
 
   if (!selected) {
     alert("Please select a method");
     return;
   }
 
-  // Redirect to OTP page
-  window.location.href = "otp.html";
-});
-document.querySelector(".continue-btn").addEventListener("click", function () {
-  window.location.href = "otp.html";
+  if (selected === "Email Verification") {
+    alert("A verification link has been sent to your email. Please check your inbox and click the link to verify your account.");
+    window.location.href = "login.html";
+  } else {
+    window.location.href = "otp.html";
+  }
 });

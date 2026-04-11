@@ -12,11 +12,11 @@ document.addEventListener('DOMContentLoaded', function () {
   if (submitBtn) {
     submitBtn.addEventListener('click', function () {
 
-      const fullName     = document.getElementById('fullName').value.trim();
+      const fullName = document.getElementById('fullName').value.trim();
       const emailAddress = document.getElementById('emailAddress').value.trim();
-      const phoneNumber  = document.getElementById('phoneNumber').value.trim();
-      const investment   = document.getElementById('investmentRange').value;
-      const message      = document.getElementById('message').value.trim();
+      const phoneNumber = document.getElementById('phoneNumber').value.trim();
+      const investment = document.getElementById('investmentRange').value;
+      const message = document.getElementById('message').value.trim();
 
       if (!fullName) {
         alert('Please enter your Full Name.');
@@ -36,11 +36,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
       alert('Thank you, ' + fullName + '! Your consultation has been booked. We will contact you shortly.');
 
-      document.getElementById('fullName').value        = '';
-      document.getElementById('emailAddress').value    = '';
-      document.getElementById('phoneNumber').value     = '';
+      document.getElementById('fullName').value = '';
+      document.getElementById('emailAddress').value = '';
+      document.getElementById('phoneNumber').value = '';
       document.getElementById('investmentRange').value = '';
-      document.getElementById('message').value         = '';
+      document.getElementById('message').value = '';
     });
   }
 
@@ -63,7 +63,7 @@ let months = 6;
 
 function calculateProfit() {
 
-  let total = investment * Math.pow((1 + monthlyReturn/100), months);
+  let total = investment * Math.pow((1 + monthlyReturn / 100), months);
   let profit = total - investment;
 
   let yourShare = profit * 0.65;
@@ -85,11 +85,11 @@ document.addEventListener('DOMContentLoaded', function () {
   if (submitBtn) {
     submitBtn.addEventListener('click', function () {
 
-      const fullName     = document.getElementById('fullName').value.trim();
+      const fullName = document.getElementById('fullName').value.trim();
       const emailAddress = document.getElementById('emailAddress').value.trim();
-      const phoneNumber  = document.getElementById('phoneNumber').value.trim();
-      const investment   = document.getElementById('investmentRange').value;
-      const message      = document.getElementById('message').value.trim();
+      const phoneNumber = document.getElementById('phoneNumber').value.trim();
+      const investment = document.getElementById('investmentRange').value;
+      const message = document.getElementById('message').value.trim();
 
       if (!fullName) {
         alert('Please enter your Full Name.');
@@ -109,11 +109,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
       alert('Thank you, ' + fullName + '! Your consultation has been booked. We will contact you shortly.');
 
-      document.getElementById('fullName').value        = '';
-      document.getElementById('emailAddress').value    = '';
-      document.getElementById('phoneNumber').value     = '';
+      document.getElementById('fullName').value = '';
+      document.getElementById('emailAddress').value = '';
+      document.getElementById('phoneNumber').value = '';
       document.getElementById('investmentRange').value = '';
-      document.getElementById('message').value         = '';
+      document.getElementById('message').value = '';
     });
   }
 
@@ -128,35 +128,28 @@ form.addEventListener("submit", function (e) {
   const email = document.getElementById("emailAddress").value;
   const phone = document.getElementById("phoneNumber").value;
   const message = document.getElementById("message").value;
-  const password = document.getElementById("password").value; // 👈 add this
 
   fetch("http://127.0.0.1:8000/consultation/", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-        full_name: fullName,
-        email: email,
-        phone: phone,
-        message: message,
-        password: password   // 👈 add this
+      full_name: fullName,
+      email: email,
+      phone: phone,
+      message: message
     })
   })
-  .then((res) => res.json())
-  .then((data) => {
-    alert("Form Submitted Successfully ✅");
+    .then((res) => res.json())
+    .then((data) => {
+      alert("Form Submitted Successfully ✅");
 
-    // localStorage yahan rakho
-    localStorage.setItem("email", email);
-    localStorage.setItem("password", password);
+      // localStorage yahan rakho
+      localStorage.setItem("email", email);
 
-    form.reset();
-  })
-  .catch((err) => {
-    console.log(err);
-    alert("Error submitting form ❌");
-  });
-});
-document.getElementById("consultForm").addEventListener("submit", function (e) {
-  e.preventDefault(); // form submit rokta hai
-  window.location.href = "verify.html";
+      form.reset();
+    })
+    .catch((err) => {
+      console.log(err);
+      alert("Error submitting form ❌");
+    });
 });

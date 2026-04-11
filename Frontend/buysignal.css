@@ -213,9 +213,10 @@ border-bottom: 1px solid rgba(37, 39, 56, 1)
 
 /* LEFT */
 .left {
-  width: 65%;
+  flex: 1; /* Take available space */
   display: flex;
   flex-direction: column;
+  min-width: 0; /* Important for flex items */
 }
 .top-action {
   margin-bottom: 0; 
@@ -278,7 +279,7 @@ border-bottom: 1px solid rgba(37, 39, 56, 1)
   align-items: center;
   transition: 0.3s;
  border: 2px solid rgba(37, 39, 56, 1);
-  width: 310px;
+  width: 100%; /* Changed from fixed 310px */
   height: 110px;
 }
 
@@ -321,16 +322,17 @@ border-bottom: 1px solid rgba(37, 39, 56, 1)
   background: rgba(18, 19, 31, 1);
   padding: 20px;
   border-radius: 14px;
-  height: 580px; /* 👈 yahan height barhao */
+  min-height: 580px; /* Changed from fixed height */
   display: flex;
   flex-direction: column;
 }
 
 /* RIGHT PANEL */
 .right {
-  width: 35%;
+  width: 380px; /* Fix the width of summary box */
   display: flex;
   flex-direction: column;
+  flex-shrink: 0; /* Don't let it squish */
 }
 
 /* SUMMARY */
@@ -536,11 +538,11 @@ border: 1px solid rgba(37, 39, 56, 1)
   border: 1px solid #252738;
   border-radius: 12px;
   padding: 16px;
+  width: 100%; /* Changed from fixed 350px */
   height: 100px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  width: 350px;
   position: relative;
   transition: 0.2s ease;
   margin-top: 30px;

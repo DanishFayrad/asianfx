@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign Up</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="login.css">
+</head>
+
+<body>
+
+  <div class="login-container">
+
+    <div class="login-icon">
+      <img src="images/arrow (1).png">
+    </div>
+
+    <h1>Create Account</h1>
+    <p class="subtext">Sign up to get started</p>
+
+    <form>
+
+      <div class="input-group">
+        <label>Full Name</label>
+        <div class="input-wrapper">
+          <input id="signupName" type="text" placeholder="Enter your name" class="input-box">
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label>Email</label>
+        <div class="input-wrapper">
+          <input id="signupEmail" type="email" placeholder="john@example.com" class="input-box">
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label>Password</label>
+        <div class="input-wrapper">
+
+          <img src="images/lock.png" class="input-icon">
+
+          <!-- PASSWORD INPUT -->
+          <input id="signupPassword" type="password" placeholder="Create a strong password"
+            class="input-box icon-padding-right">
+
+
+          <img src="images/eye icon.png" id="toggleSignupPassword" class="input-icon-right" style="cursor:pointer;">
+
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label>Phone Number</label>
+        <div class="input-wrapper">
+          <input type="text" placeholder="+1 (555) 123-4567" class="input-box">
+        </div>
+      </div>
+
+      <button id="signupBtn" class="login-btn">Sign Up</button>
+    </form>
+
+    <div class="footer">
+      Already have an account? <a href="login.html">Sign in</a>
+    </div>
+
+  </div>
+  <script src="signup.js"></script>
+</body>
+
+</html>

@@ -18,5 +18,6 @@ inputs.forEach((input, index) => {
 
 });
 document.querySelector(".verify-btn").addEventListener("click", function () {
-  window.location.href = "dashboard.html";
+  alert("Verification is done via the link sent to your email. Please click the link to verify your account, then log in.");
+  window.location.href = "login.html";
 });

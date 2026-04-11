@@ -1,198 +1,200 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>Wallet Overview</title>
 
-<link rel="stylesheet" href="wallet.css">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<head>
+  <meta charset="UTF-8">
+  <title>Wallet Overview</title>
+
+  <link rel="stylesheet" href="wallet.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
 
 <body>
 
-<div class="layout">
+  <div class="layout">
 
-  <!-- Sidebar -->
-  <div class="sidebar">
-    <div class="logo">
-      <img src="images/div (3).png" class="logo-icon">
-      <span>Wallet</span>
-    </div>
-
-    <div class="menu active" onclick="goTo('wallet.html')">
-      <img src="images/i (5).png">
-      <span>Dashboard</span>
-    </div>
-
-    <div class="menu" onclick="goTo('transaction.html')">
-      <img src="images/svg (15).png">
-      <span>Transactions</span>
-    </div>
-  </div>
-
-  <!-- 🔥 HEADER OUTSIDE MAIN -->
-  <div class="header-box">
-    <div class="header">
-<div class="hamburger" onclick="toggleSidebar()">☰</div>
-      <div class="header-left">
-        <h2>Wallet Overview</h2>
-        <p>Track your financial performance</p>
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="logo">
+        <img src="images/div (3).png" class="logo-icon">
+        <span>Wallet</span>
       </div>
 
-      <div class="header-right">
-        <div class="wallet-badge">
-          <img src="images/i (2).png">
-        </div>
-
-        <button class="balance">$100.00</button>
-
-        <div class="live">
-          <span class="dot"></span> Live
-        </div>
-
-        <img src="images/i (3).png" class="icon">
-        <img src="images/img.png" class="avatar">
+      <div class="menu active" onclick="goTo('wallet.html')">
+        <img src="images/i (5).png">
+        <span>Dashboard</span>
       </div>
 
+      <div class="menu" onclick="goTo('transaction.html')">
+        <img src="images/svg (15).png">
+        <span>Transactions</span>
+      </div>
     </div>
-  </div>
 
-  <!-- Main -->
-  <div class="main">
+    <!-- 🔥 HEADER OUTSIDE MAIN -->
+    <div class="header-box">
+      <div class="header">
+        <div class="hamburger" onclick="toggleSidebar()">☰</div>
+        <div class="header-left">
+          <h2>Wallet Overview</h2>
+          <p>Track your financial performance</p>
+        </div>
 
-    <!-- CARDS -->
-    <div class="cards">
-      <div class="card total">
-        <div class="card-top">
-          <img src="images/div (4).png">
-          <span class="badge">
+        <div class="header-right">
+          <div class="wallet-badge">
+            <img src="images/i (2).png">
+          </div>
+
+          <button class="balance" id="walletBalanceBtn">$0.00</button>
+
+          <div class="live">
             <span class="dot"></span> Live
+          </div>
+
+          <img src="images/i (3).png" class="icon">
+          <img src="images/img.png" class="avatar">
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Main -->
+    <div class="main">
+
+      <!-- CARDS -->
+      <div class="cards">
+        <div class="card total">
+          <div class="card-top">
+            <img src="images/div (4).png">
+            <span class="badge">
+              <span class="dot"></span> Live
+            </span>
+          </div>
+          <p>Total Balance</p>
+          <h3 id="walletTotalBalance">$0.00</h3>
+          <span class="growth">
+            <img src="images/svg (16).png" class="trend-icon">
+            +12.5%
           </span>
         </div>
-        <p>Total Balance</p>
-        <h3>$124,580.50</h3>
-       <span class="growth">
-  <img src="images/svg (16).png" class="trend-icon">
-  +12.5%
-</span>
-      </div>
 
-      <div class="card">
-        <div class="card-top">
-          <img src="images/div (5).png">
+        <div class="card">
+          <div class="card-top">
+            <img src="images/div (5).png">
+          </div>
+          <p>Total Deposit</p>
+          <h3 id="walletTotalDeposit">$0.00</h3>
+          <small>45 transactions</small>
         </div>
-        <p>Total Deposit</p>
-        <h3>$98,420.00</h3>
-        <small>45 transactions</small>
-      </div>
 
-      <div class="card">
-        <div class="card-top">
-          <img src="images/div (6).png">
+        <div class="card">
+          <div class="card-top">
+            <img src="images/div (6).png">
+          </div>
+          <p>Total Withdrawal</p>
+          <h3 id="walletTotalWithdrawal">$0.00</h3>
+          <small>28 transactions</small>
         </div>
-        <p>Total Withdrawal</p>
-        <h3>$52,340.00</h3>
-        <small>28 transactions</small>
-      </div>
 
-      <div class="card profit">
-        <div class="card-top">
-          <img src="images/div (7).png">
+        <div class="card profit">
+          <div class="card-top">
+            <img src="images/div (7).png">
+          </div>
+          <p>Total Profit</p>
+          <h3 id="walletTotalProfit">$0.00</h3>
+          <small>+63.2% ROI</small>
         </div>
-        <p>Total Profit</p>
-        <h3>$78,500.50</h3>
-        <small>+63.2% ROI</small>
       </div>
-    </div>
 
-    <!-- LOSS -->
-    <div class="loss-card">
-      <div class="card-top">
-        <img src="images/div (8).png">
+      <!-- LOSS -->
+      <div class="loss-card">
+        <div class="card-top">
+          <img src="images/div (8).png">
+        </div>
+        <p>Total Loss</p>
+        <h3 id="walletTotalLoss">$0.00</h3>
+        <span class="loss">-17.8% ROI</span>
       </div>
-      <p>Total Loss</p>
-      <h3>$22,160.00</h3>
-      <span class="loss">-17.8% ROI</span>
-    </div>
 
-    <!-- BOTTOM -->
-    <div class="bottom">
+      <!-- BOTTOM -->
+      <div class="bottom">
 
-      <!-- LEFT -->
-      <div class="graph-box">
-   <div class="box-header">
-  <h4>Profit & Loss Overview</h4>
+        <!-- LEFT -->
+        <div class="graph-box">
+          <div class="box-header">
+            <h4>Profit & Loss Overview</h4>
 
-  <img src="images/i (6).png" class="box-icon">
-</div>
+            <img src="images/i (6).png" class="box-icon">
+          </div>
 
-        <div class="graph">Put Here Graph</div>
+          <div class="graph">Put Here Graph</div>
 
-        <div class="mini-cards">
-          <div class="mini green">
+          <div class="mini-cards">
+            <div class="mini green">
               <span>
-    <img src="images/i (7).png" class="mini-icon">
-    Profit Trades
-  </span>
-            <h5>142</h5>
-            <small>71% Win Rate</small>
-          </div>
+                <img src="images/i (7).png" class="mini-icon">
+                Profit Trades
+              </span>
+              <h5>142</h5>
+              <small>71% Win Rate</small>
+            </div>
 
-          <div class="mini red">
-            <span>
-    <img src="images/i (8).png" class="mini-icon">
-    Loss Trades
-  </span>
-            <h5>58</h5>
-            <small>29% Loss Rate</small>
-          </div>
-        </div>
-      </div>
-
-      <!-- RIGHT -->
-      <div class="graph-box big">
-        <div class="box-header">
-          <h4>Trade Performance</h4>
-
-          <div class="tabs">
-            <span class="active">7D</span>
-            <span>30D</span>
-            <span>90D</span>
+            <div class="mini red">
+              <span>
+                <img src="images/i (8).png" class="mini-icon">
+                Loss Trades
+              </span>
+              <h5>58</h5>
+              <small>29% Loss Rate</small>
+            </div>
           </div>
         </div>
 
-        <div class="stats">
-          <div class="stat dark">
-            <p>Total Trades</p>
-            <h3>200</h3>
-            <small>
-  <img src="images/Frame.png" class="small-icon">
-  +18 this week
-</small>
+        <!-- RIGHT -->
+        <div class="graph-box big">
+          <div class="box-header">
+            <h4>Trade Performance</h4>
+
+            <div class="tabs">
+              <span class="active">7D</span>
+              <span>30D</span>
+              <span>90D</span>
+            </div>
           </div>
 
-          <div class="stat green">
-            <p>Winning Trades</p>
-            <h3>142</h3>
-            <div class="bar green-bar"></div>
+          <div class="stats">
+            <div class="stat dark">
+              <p>Total Trades</p>
+              <h3>200</h3>
+              <small>
+                <img src="images/Frame.png" class="small-icon">
+                +18 this week
+              </small>
+            </div>
+
+            <div class="stat green">
+              <p>Winning Trades</p>
+              <h3>142</h3>
+              <div class="bar green-bar"></div>
+            </div>
+
+            <div class="stat red">
+              <p>Losing Trades</p>
+              <h3>58</h3>
+              <div class="bar red-bar"></div>
+            </div>
           </div>
 
-          <div class="stat red">
-            <p>Losing Trades</p>
-            <h3>58</h3>
-            <div class="bar red-bar"></div>
-          </div>
+          <div class="graph">Put Here Graph</div>
         </div>
 
-        <div class="graph">Put Here Graph</div>
       </div>
 
     </div>
 
   </div>
 
-</div>
-
-<script src="wallet.js"></script>
+  <script src="wallet.js"></script>
 </body>
+
 </html>

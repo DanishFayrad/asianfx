@@ -35,7 +35,7 @@
  <button class="wallet" id="walletBtn">
   <img src="images/i (2).png">
 </button>
-    <button class="wallet">$100.00</button>
+    <button class="wallet" id="walletBalanceBtn">$0.00</button>
     <img src="images/i (3).png">
     <img src="images/img.png">
   </div>
@@ -51,7 +51,7 @@
 
     <div class="right-actions">
         <button class="deposit">Deposit</button>
-        <button class="deposit">+ New Signal</button>
+        <button id="newSignalBtn" class="deposit">+ New Signal</button>
         <span class="live-updates">Live Updates</span>
     </div>
 </div>
@@ -67,28 +67,28 @@
     <div class="card">
         <img src="images/div (9).png" style="margin-bottom:10px;">
         <span class="card-label">Today</span>
-        <h3>24</h3>
+        <h3 id="statTotalTrades">0</h3>
         <p>Active Signals</p>
     </div>
 
     <div class="card">
         <img src="images/div (10).png" style="margin-bottom:10px;">
         <span class="card-label">This Week</span>
-        <h3>87%</h3>
+        <h3 id="statWinRate">0%</h3>
         <p>Success Rate</p>
     </div>
 
     <div class="card">
         <img src="images/div (11).png" style="margin-bottom:10px;">
         <span class="card-label">This Month</span>
-        <h3>156</h3>
+        <h3 id="statHit">0</h3>
         <p>Targets Hit</p>
     </div>
 
     <div class="card">
         <img src="images/div (12).png" style="margin-bottom:10px;">
         <span class="card-label">Total</span>
-        <h3>$24.5K</h3>
+        <h3 id="statProfit">$0.00</h3>
         <p>Total Profit</p>
     </div>
 

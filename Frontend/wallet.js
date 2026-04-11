@@ -1,23 +1,15 @@
-function goTo(page){
+function goTo(page) {
   window.location.href = page;
 }
-const transactions = [
-  { date: "Dec 28, 2024", time: "10:32 AM", type: "Trade", amount: "+$2,450.00", status: "Completed" },
-  { date: "Dec 27, 2024", time: "03:15 PM", type: "Withdrawal", amount: "-$5,000.00", status: "Pending" },
-  { date: "Dec 26, 2024", time: "11:48 AM", type: "Deposit", amount: "+$10,000.00", status: "Completed" },
-  { date: "Dec 25, 2024", time: "09:22 AM", type: "Trade", amount: "-$1,320.00", status: "Completed" },
-  { date: "Dec 24, 2024", time: "01:15 PM", type: "Deposit", amount: "+$7,000.00", status: "Completed" },
-  { date: "Dec 23, 2024", time: "05:00 PM", type: "Trade", amount: "-$900.00", status: "Pending" },
-  { date: "Dec 22, 2024", time: "11:12 AM", type: "Withdrawal", amount: "-$2,200.00", status: "Completed" },
-  { date: "Dec 21, 2024", time: "02:30 PM", type: "Deposit", amount: "+$4,000.00", status: "Completed" },
-  { date: "Dec 20, 2024", time: "10:10 AM", type: "Trade", amount: "-$1,100.00", status: "Completed" },
-  { date: "Dec 19, 2024", time: "03:45 PM", type: "Withdrawal", amount: "-$3,500.00", status: "Pending" },
-];
 
-// Pagination and filtering variables
+function toggleSidebar() {
+  document.querySelector(".sidebar").classList.toggle("active");
+}
+
+let transactions = [];
 let currentPage = 1;
 const rowsPerPage = 5;
-let filteredTransactions = [...transactions];
+let filteredTransactions = [];
 
 // Elements
 const tbody = document.querySelector("tbody");
@@ -27,8 +19,65 @@ const filterType = document.querySelector(".filters select");
 const filterDate = document.querySelector(".filters input");
 const filterBtn = document.querySelector(".filter-btn");
 
-// Render table function
+const API_BASE_URL = "http://127.0.0.1:8000";
+
+document.addEventListener("DOMContentLoaded", async () => {
+  const userId = localStorage.getItem("user_id");
+  if (!userId) {
+    window.location.href = "login.html";
+    return;
+  }
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/dashboard/${userId}`);
+    if (response.ok) {
+      const data = await response.json();
+      const stats = data.stats;
+      const user = data.user;
+
+      // Populate Wallet Stats if elements exist (wallet.html)
+      const walletBalanceBtn = document.getElementById("walletBalanceBtn");
+      if (walletBalanceBtn) walletBalanceBtn.innerText = `$${user.wallet_balance.toFixed(2)}`;
+
+      const totalBalance = document.getElementById("walletTotalBalance");
+      if (totalBalance) totalBalance.innerText = `$${user.wallet_balance.toFixed(2)}`;
+
+      const totalDeposit = document.getElementById("walletTotalDeposit");
+      if (totalDeposit) totalDeposit.innerText = `$${stats.total_deposit.toFixed(2)}`;
+
+      const totalWithdrawal = document.getElementById("walletTotalWithdrawal");
+      if (totalWithdrawal) totalWithdrawal.innerText = `$${stats.total_withdrawal.toFixed(2)}`;
+
+      const totalProfit = document.getElementById("walletTotalProfit");
+      if (totalProfit) totalProfit.innerText = `$${stats.total_profit.toFixed(2)}`;
+
+      const totalLoss = document.getElementById("walletTotalLoss");
+      if (totalLoss) totalLoss.innerText = `$${stats.total_loss.toFixed(2)}`;
+
+      // Setup Transactions Table if it exists (transaction.html)
+      if (tbody) {
+        transactions = data.recent_transactions.map(tx => {
+          const d = new Date(tx.created_at);
+          return {
+            date: d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+            time: d.toLocaleTimeString("en-US", { hour: '2-digit', minute: '2-digit' }),
+            type: tx.type.charAt(0).toUpperCase() + tx.type.slice(1),
+            amount: `${tx.type === 'deposit' || tx.type === 'profit' ? '+' : '-'}$${tx.amount.toFixed(2)}`,
+            status: "Completed" // API only returns completed tx currently
+          };
+        });
+        filteredTransactions = [...transactions];
+        initFilters();
+        renderTable();
+      }
+    }
+  } catch (error) {
+    console.error("Wallet fetch error:", error);
+  }
+});
+
 function renderTable() {
+  if (!tbody) return;
   tbody.innerHTML = "";
   const start = (currentPage - 1) * rowsPerPage;
   const end = start + rowsPerPage;
@@ -40,8 +89,7 @@ function renderTable() {
       <td class="date">${tx.date}<small>${tx.time}</small></td>
       <td>
         <div style="display:flex; align-items:center; gap:10px;">
-          <img src="div (10).png" style="width:29px; height:42px;">
-          <div><div style="font-weight:600;">${tx.type}</div></div>
+          <div style="font-weight:600;">${tx.type}</div>
         </div>
       </td>
       <td class="${tx.amount.startsWith('+') ? 'profit' : 'loss'}">${tx.amount}</td>
@@ -51,12 +99,14 @@ function renderTable() {
     tbody.appendChild(tr);
   });
 
-  footerSpan.textContent = `Showing ${Math.min(start + 1, filteredTransactions.length)}-${Math.min(end, filteredTransactions.length)} of ${filteredTransactions.length} transactions`;
+  if (footerSpan) {
+    footerSpan.textContent = `Showing ${Math.min(start + 1, filteredTransactions.length)}-${Math.min(end, filteredTransactions.length)} of ${filteredTransactions.length} transactions`;
+  }
   renderPagination();
 }
 
-// Render pagination buttons dynamically
 function renderPagination() {
+  if (!paginationDiv) return;
   const totalPages = Math.ceil(filteredTransactions.length / rowsPerPage);
   paginationDiv.innerHTML = `
     <button id="prev">Previous</button>
@@ -74,10 +124,9 @@ function renderPagination() {
   });
 }
 
-// Filter transactions
 function applyFilter() {
   const typeValue = filterType.value;
-  const dateValue = filterDate.value; // format YYYY-MM-DD
+  const dateValue = filterDate.value;
 
   filteredTransactions = transactions.filter(tx => {
     const txDate = new Date(tx.date + " " + tx.time);
@@ -93,25 +142,13 @@ function applyFilter() {
     return typeMatch && dateMatch;
   });
 
-  currentPage = 1; // reset to first page after filtering
+  currentPage = 1;
   renderTable();
 }
 
-// Initialize type filter options dynamically
 function initFilters() {
+  if (!filterType) return;
   const types = ["All Types", ...new Set(transactions.map(tx => tx.type))];
   filterType.innerHTML = types.map(t => `<option>${t}</option>`).join('');
-}
-
-// Event listener for filter button
-filterBtn.addEventListener("click", applyFilter);
-
-// Initial setup
-initFilters();
-renderTable();
-function toggleSidebar(){
-  document.querySelector(".sidebar").classList.toggle("active");
-}
-function toggleSidebar(){
-  document.querySelector(".sidebar").classList.toggle("active");
+  if (filterBtn) filterBtn.addEventListener("click", applyFilter);
 }
