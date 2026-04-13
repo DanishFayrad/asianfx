@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="login.css">
+</head>
+
+<body>
+
+<div class="login-container">
+
+  <div class="login-icon">
+    <img src="images/arrow (1).png">
+  </div>
+
+  <h1>Welcome Back</h1>
+  <p class="subtext">Sign in to your trading account</p>
+
+  <form>
+
+    <div class="input-group">
+      <label>Email</label>
+      <div class="input-wrapper">
+        <img src="images/envelope icon.png" class="input-icon">
+        <input id="loginEmail" type="email" placeholder="Enter your email" class="input-box icon-padding">
+      </div>
+    </div>
+
+    <div class="input-group">
+      <label>Password</label>
+      <div class="input-wrapper">
+        <img src="images/lock.png" class="input-icon">
+        <input id="passwordField" type="password" placeholder="Enter your password" class="input-box icon-padding-right">
+        <img src="images/eye icon.png" id="togglePassword" class="input-icon-right" style="cursor:pointer;">
+      </div>
+    </div>
+
+    <div class="options">
+      <label><input type="checkbox"> Remember me</label>
+     <button id="forgotBtn" class="forgot-btn">Forgot Password?</button>
+    </div>
+
+    <button class="login-btn" id="loginBtn">Sign In</button>
+
+  </form>
+
+  <!-- ❌ Divider & Social removed -->
+
+  <div class="footer">
+    Don't have an account? <a href="signup.html">Sign up</a>
+  </div>
+
+</div>
+
+<script src="login.js"></script>
+</body>
+</html>

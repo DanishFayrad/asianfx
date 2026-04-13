@@ -1,0 +1,303 @@
+/* RESET */
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+}
+
+body{
+  font-family:'Inter',sans-serif;
+  background: radial-gradient(circle at center, #07121f, #000);
+  height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  color:#fff;
+}
+
+/* CONTAINER */
+.login-container{
+  width:430px;
+  text-align:center;
+}
+
+/* ICON */
+.login-icon{
+  width:60px;
+  height:60px;
+  background:#d4af37;
+  border-radius:12px;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  margin:0 auto 20px;
+}
+
+/* HEADING */
+h1{
+  font-size:20px;
+  margin-bottom:5px;
+}
+
+.subtext{
+  color:#aaa;
+  font-size:14px;
+  margin-bottom:25px;
+}
+
+/* INPUTS */
+.input-group{
+  margin-bottom:15px;
+  text-align:left;
+  color: #D1D5DB;
+}
+
+.input-group label{
+  font-size:13px;
+  margin-bottom:6px;
+  display:block;
+}
+
+.input-box{
+  width:100%;
+  padding:12px;
+  border-radius:10px;
+  border:1px solid #2a2a2a;
+  background:#0f172a;
+  color:#fff;
+  outline:none;
+}
+
+/* Input wrapper for icon */
+.input-wrapper {
+  position: relative;
+}
+
+.input-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 14px;
+  opacity: 0.6;
+}
+
+.icon-padding {
+  padding-left: 42px; /* icon ke liye space */
+}
+
+/* RIGHT SIDE ICON */
+.input-icon-right {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  opacity: 0.6;
+}
+
+/* Space for RIGHT icon */
+.icon-padding-right {
+  padding-left: 42px;
+  padding-right: 42px;
+}
+
+/* OPTIONS */
+.options{
+  display:flex;
+  justify-content:space-between;
+  font-size:12px;
+  margin:10px 0 20px;
+  color: #D1D5DB;
+}
+
+.options a{
+  color:#d4af37;
+  text-decoration:none;
+}
+
+/* BUTTON */
+.login-btn{
+  width:100%;
+  padding:12px;
+  border:none;
+  border-radius:10px;
+  background:#d4af37;
+  font-weight:600;
+  cursor:pointer;
+}
+
+/* DIVIDER */
+.divider {
+  display: flex;
+  align-items: center;
+  color: #ffffffaa;
+  font-size: 12px;
+  margin: 20px 0;
+}
+
+.divider .line {
+  flex: 1;
+  height: 1px;
+  background: #2a2a2a;
+}
+
+.divider .text {
+  margin: 0 10px;
+}
+
+/* SOCIAL */
+.social{
+  display:flex;
+  gap:10px;
+}
+
+.social button{
+  flex:1;
+  padding:10px;
+  border-radius:10px;
+  border:1px solid #2a2a2a;
+  background:transparent;
+  color:#fff;
+  cursor:pointer;
+}
+
+/* FOOTER */
+.footer{
+  margin-top:20px;
+  font-size:13px;
+  color: #9CA3AF;
+}
+
+.footer a{
+  color:#d4af37;
+  text-decoration:none;
+}
+/* ================= RESPONSIVE ================= */
+
+/* Tablets (768px se neeche) */
+@media (max-width: 768px) {
+  .login-container {
+    width: 90%;
+  }
+}
+
+/* Mobile (480px se neeche) */
+@media (max-width: 480px) {
+
+  body {
+    padding: 15px;
+    align-items: flex-start;
+  }
+
+  .login-container {
+    width: 100%;
+    margin-top: 40px;
+  }
+
+  h1 {
+    font-size: 18px;
+  }
+
+  .subtext {
+    font-size: 13px;
+  }
+
+  .input-box {
+    padding: 11px;
+    font-size: 14px;
+  }
+
+  .icon-padding {
+    padding-left: 38px;
+  }
+
+  .icon-padding-right {
+    padding-left: 38px;
+    padding-right: 38px;
+  }
+
+  .input-icon {
+    width: 13px;
+  }
+
+  .input-icon-right {
+    width: 16px;
+  }
+
+  .login-btn {
+    padding: 11px;
+    font-size: 14px;
+  }
+
+  .social {
+    flex-direction: column;
+  }
+
+  .social button {
+    width: 100%;
+  }
+
+  .options {
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
+  }
+
+  .footer {
+    font-size: 12px;
+    text-align: center;
+  }
+}
+
+/* Small phones (360px se neeche) */
+@media (max-width: 360px) {
+  h1 {
+    font-size: 16px;
+  }
+
+  .subtext {
+    font-size: 12px;
+  }
+
+  .login-container {
+    margin-top: 20px;
+  }
+}
+.input-wrapper {
+  position: relative;
+}
+
+.input-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 14px;
+  opacity: 0.6;
+}
+
+.input-icon-right {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  opacity: 0.6;
+}
+
+.icon-padding-right {
+  padding-left: 42px;
+  padding-right: 42px;
+}
+.forgot-btn {
+    color: gray;
+    background: transparent;
+    border: none;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.forgot-btn:hover {
+    text-decoration: underline;
+}
