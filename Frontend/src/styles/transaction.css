@@ -1,0 +1,475 @@
+body{
+  margin:0;
+  font-family:'Inter', sans-serif;
+  background:#020617;
+  color:white;
+  overflow-x:hidden;
+}
+
+/* Layout */
+.layout{
+  display:flex;
+}
+
+/* ================= SIDEBAR ================= */
+.sidebar{
+  background: rgba(21, 27, 46, 1);
+  border: 1px solid rgba(31, 41, 55, 1);
+ position:fixed;
+  top:0;
+  left:0;
+  width:240px;
+  height:40vh;      /* 🔥 gap from left */
+  padding:25px 20px;
+  box-sizing:border-box;
+}
+
+/* Logo */
+.logo{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-bottom:35px;
+  font-weight:600;
+}
+
+.logo-box{
+  width:24px;
+  height:24px;
+  background:#facc15;
+  border-radius:6px;
+}
+
+/* Menu */
+.menu{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:12px;
+  color:#94a3b8;
+  border-radius:10px;
+  cursor:pointer;
+  transition:all 0.25s ease; /* 🔥 smoother */
+}
+.menu img{
+  width:18px;
+}
+
+.menu:hover{
+  background: rgba(255, 255, 255, 0.05); /* 🔥 soft transparent box */
+  color:#E5E7EB;
+}
+
+.menu.active{
+  background: rgba(250, 204, 21, 0.15); /* 🔥 yellow transparent */
+  color:#FACC15;
+  border:1px solid rgba(250, 204, 21, 0.3);
+}
+
+/* ================= MAIN ================= */
+.main{
+   margin-left:240px;
+  margin-top:70px; /* 🔥 header ki height */
+  padding:24px 32px;
+
+  box-sizing:border-box;
+  width:calc(100% - 240px);
+  min-height:100vh;
+
+}
+
+/* ================= HEADER ================= */
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:25px;
+}
+
+.topbar h2{
+  font-size:22px;
+  font-weight:600;
+  margin:0;
+}
+
+.topbar p{
+  margin-top:6px;
+  color:#64748b;
+}
+
+/* Right side */
+.top-right{
+  display:flex;
+  align-items:center;
+  gap:14px;
+}
+
+/* Balance */
+.balance{
+  background:#facc15;
+  border:none;
+  padding:6px 14px;
+  border-radius:8px;
+  font-weight:600;
+  font-size:13px;
+}
+
+/* Live badge */
+.live{
+  background:#022c22;
+  color:#22c55e;
+  padding:5px 12px;
+  border-radius:20px;
+  font-size:12px;
+}
+
+/* Icons */
+.icon{
+  width:18px;
+  opacity:0.7;
+  cursor:pointer;
+}
+
+.avatar{
+  width:34px;
+  height:34px;
+  border-radius:50%;
+  object-fit:cover;
+  cursor:pointer;
+}
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:'Inter',sans-serif;
+}
+
+body{
+background:#0a1426;
+color:white;
+}
+
+/* LAYOUT */
+
+.wrapper{
+display:flex;
+height:100vh;
+}
+
+/* SIDEBAR */
+
+.menu{
+list-style:none;
+}
+
+.menu li{
+padding:12px 14px;
+border-radius:8px;
+margin-bottom:10px;
+color:#9aa4b2;
+cursor:pointer;
+}
+
+.menu li.active{
+background:#111c30;
+color:#f4c430;
+}
+
+/* MAIN */
+
+.main{
+flex:1;
+padding:30px;
+}
+
+/* HEADER */
+
+.header{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:25px;
+}
+
+.header-right{
+display:flex;
+align-items:center;
+gap:15px;
+}
+.header-box{
+  position:fixed;
+  top:0;
+  left:240px; /* sidebar width */
+  right:0;
+  height:70px;
+ background: rgba(21, 27, 46, 1);
+  border-bottom:1px solid #1e293b;
+  
+}
+.header-left h2{
+  margin:0;
+  font-size:22px;
+   margin-left: 30px;
+   margin-top: 10px;
+}
+.header-left p{
+  margin-top:5px;
+  color:#64748b;
+  font-size:13px;
+  margin-left: 30px;
+}
+.wallet{
+background:#f4c430;
+color:black;
+padding:8px 10px;
+border-radius:6px;
+font-size:14px;
+}
+.wallet-badge{
+  width:35px;
+  height:35px;
+  background:#facc15;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:8px;
+}
+
+.wallet-badge img{
+  width:18px;
+}
+
+.balance{
+background:#f4c430;
+color:black;
+padding:6px 14px;
+border-radius:6px;
+font-weight:600;
+}
+
+.live{
+background:#0f1b2e;
+padding:6px 10px;
+border-radius:6px;
+font-size:13px;
+}
+
+.avatar{
+width:32px;
+height:32px;
+border-radius:50%;
+background:url("https://i.pravatar.cc/40");
+background-size:cover;
+}
+
+/* CARD */
+
+.card{
+background:#0f1a2f;
+border-radius:12px;
+padding:25px;
+}
+
+/* CARD HEADER */
+
+.card-header{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:20px;
+}
+
+.filters{
+display:flex;
+gap:10px;
+}
+
+.filters select,
+.filters input{
+background:#081327;
+border:1px solid #2b3c5e;
+color:white;
+padding:8px 10px;
+border-radius:6px;
+}
+
+.filter-btn{
+background:#f4c430;
+border:none;
+padding:8px 14px;
+border-radius:6px;
+cursor:pointer;
+font-weight:500;
+}
+
+/* TABLE */
+
+table{
+width:100%;
+border-collapse:collapse;
+}
+
+th{
+text-align:left;
+color:#7c8aa5;
+font-size:14px;
+padding:14px 10px;
+}
+
+td{
+padding:14px 10px;
+border-bottom:1px solid #1d2a45;
+font-size:14px;
+}
+
+.date small{
+display:block;
+color:#6c7893;
+margin-top:3px;
+}
+
+/* TYPE COLORS */
+
+.trade{
+color:#00d084;
+}
+
+.withdraw{
+color:#9b7bff;
+}
+
+.deposit{
+color:#3aa0ff;
+}
+
+/* AMOUNT */
+
+.profit{
+color:#00d084;
+}
+
+.loss{
+color:#ff4d4d;
+}
+
+/* STATUS */
+
+.completed{
+color:#00d084;
+}
+
+.pending{
+color:#f4c430;
+}
+
+/* VIEW */
+
+.view{
+color:#f4c430;
+cursor:pointer;
+}
+
+/* FOOTER */
+
+.footer{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-top:20px;
+color:#6c7893;
+font-size:13px;
+}
+
+.pagination button{
+background:#081327;
+border:none;
+color:white;
+padding:6px 10px;
+margin-left:6px;
+border-radius:6px;
+cursor:pointer;
+}
+
+.pagination .active{
+background:#f4c430;
+color:black;
+}
+/* HAMBURGER */
+.hamburger{
+  display:none;
+  font-size:22px;
+  cursor:pointer;
+}
+
+/* MOBILE SIDEBAR (HIDDEN BY DEFAULT) */
+@media (max-width: 768px){
+
+  .hamburger{
+    display:block;
+    margin-left:15px;
+  }
+
+  .sidebar{
+    position:fixed;
+    top:0;
+    left:-260px; /* hidden */
+    width:220px;
+    height:100%;
+    z-index:1000;
+    transition:0.3s ease;
+  }
+
+  .sidebar.active{
+    left:0; /* show */
+  }
+
+  .main{
+    margin-left:0;
+    width:100%;
+  }
+
+  .header-box{
+    left:0;
+  }
+}
+
+/* 🔥 EXTRA SMALL DEVICES (290px) */
+@media (max-width: 320px){
+
+  body{
+    font-size:12px;
+  }
+
+  .header-left h2{
+    font-size:16px;
+  }
+
+  .balance{
+    padding:4px 8px;
+    font-size:11px;
+  }
+
+  .live{
+    font-size:10px;
+    padding:4px 6px;
+  }
+
+  .filters{
+    flex-direction:column;
+    gap:6px;
+  }
+
+  .card{
+    padding:10px;
+  }
+
+  td, th{
+    font-size:11px;
+    padding:8px 6px;
+  }
+
+  .pagination button{
+    font-size:10px;
+    padding:5px;
+  }
+}
