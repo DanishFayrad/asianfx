@@ -8,9 +8,11 @@ import '../../styles/dashboard.css';
 
 export default function Dashboard() {
 
+
   const router = useRouter();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 6;
 
