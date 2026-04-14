@@ -56,7 +56,7 @@ export default function Transaction() {
               </div>
 
               <img src="/images/i (3).png" className="icon" alt="Notifications" />
-              <img src="/images/img.png" className="avatar" alt="User" />
+              <img src="/images/img.png" className="avatar" alt="User" onClick={() => router.push('/login')} style={{ cursor: 'pointer', title: 'Login' }} />
             </div>
           </header>
         </div>

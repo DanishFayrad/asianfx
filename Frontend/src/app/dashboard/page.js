@@ -54,7 +54,7 @@ export default function Dashboard() {
           </button>
           <button className="wallet" onClick={() => router.push('/wallet')}>$100.00</button>
           <img src="/images/i (3).png" alt="Notifications" />
-          <img src="/images/img.png" alt="User" />
+          <img src="/images/img.png" alt="User" onClick={() => router.push('/login')} style={{ cursor: 'pointer', title: 'Login' }} />
         </div>
       </header>
 

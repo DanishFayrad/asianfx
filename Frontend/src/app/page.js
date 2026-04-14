@@ -1,4 +1,5 @@
 import React from 'react';
+import Link from 'next/link';
 import '../styles/style.css';
 
 
@@ -21,8 +22,8 @@ export default function Home() {
       <a href="#about">About</a>
       <a href="#trade">Trading</a>
       <a href="#why">Why Choose Us</a>
-      <button   className="btn-yellow">Get Started</button>
-      <button   className="btn-yellow">Log in</button>
+      <Link href="/login"><button className="btn-yellow">Get Started</button></Link>
+      <Link href="/login"><button className="btn-yellow">Log in</button></Link>
     </nav>
   </div>
 </header>
