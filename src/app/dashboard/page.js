@@ -45,16 +45,30 @@ export default function Dashboard() {
         </div>
 
         {/*  HAMBURGER  */}
-        <div className="hamburger" id="hamburger" onClick={toggleMenu}>☰</div>
+        <div className="hamburger" id="hamburger" onClick={toggleMenu}>
+          {isMenuOpen ? '✕' : '☰'}
+        </div>
 
-        {/*  RIGHT SIDE MENU  */}
+        {/*  RIGHT SIDE MENU (Mobile + Desktop)  */}
         <div className={`nav-right ${isMenuOpen ? 'show' : ''}`} id="mobileMenu">
-          <button className="wallet" id="walletBtn" onClick={() => router.push('/wallet')}>
-            <img src="/images/i (2).png" alt="Wallet" />
-          </button>
-          <button className="wallet" onClick={() => router.push('/wallet')}>$100.00</button>
-          <img src="/images/i (3).png" alt="Notifications" />
-          <img src="/images/img.png" alt="User" onClick={() => router.push('/login')} style={{ cursor: 'pointer', title: 'Login' }} />
+          <nav className="mobile-only-nav">
+             <Link className="active" href="#" onClick={() => setIsMenuOpen(false)}>Signals</Link>
+          </nav>
+          <div className="nav-actions">
+            <button className="wallet" id="walletBtn" onClick={() => { setIsMenuOpen(false); router.push('/wallet'); }}>
+              <img src="/images/i (2).png" alt="Wallet" />
+              <span>$100.00</span>
+            </button>
+            <div className="nav-icons">
+              <img src="/images/i (3).png" alt="Notifications" />
+              <img 
+                src="/images/img.png" 
+                alt="User" 
+                onClick={() => { setIsMenuOpen(false); router.push('/login'); }} 
+                style={{ cursor: 'pointer', borderRadius: '50%', border: '2px solid var(--primary)' }} 
+              />
+            </div>
+          </div>
         </div>
       </header>
 

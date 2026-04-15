@@ -1,9 +1,12 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import Link from 'next/link';
 import '../styles/style.css';
 
-
 export default function Home() {
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
+
     return (
         <>
 <header className="navbar">
@@ -13,17 +16,19 @@ export default function Home() {
       Asian fx Signal
     </div>
 
-    <div className="hamburger" id="hamburger">
-
+    <div className="hamburger" id="hamburger" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+      {isMenuOpen ? '✕' : '☰'}
     </div>
 
-    <nav id="navLinks">
-      <a href="#home">Home</a>
-      <a href="#about">About</a>
-      <a href="#trade">Trading</a>
-      <a href="#why">Why Choose Us</a>
-      <Link href="/login"><button className="btn-yellow">Get Started</button></Link>
-      <Link href="/login"><button className="btn-yellow">Log in</button></Link>
+    <nav className={isMenuOpen ? 'active' : ''} id="navLinks">
+      <a href="#home" onClick={() => setIsMenuOpen(false)}>Home</a>
+      <a href="#about" onClick={() => setIsMenuOpen(false)}>About</a>
+      <a href="#trade" onClick={() => setIsMenuOpen(false)}>Trading</a>
+      <a href="#why" onClick={() => setIsMenuOpen(false)}>Why Us</a>
+      <div className="nav-btns">
+        <Link href="/login"><button className="btn-yellow">Log in</button></Link>
+        <Link href="/register"><button className="btn-outline-small">Join Now</button></Link>
+      </div>
     </nav>
   </div>
 </header>
@@ -329,7 +334,7 @@ protected.
       <p>
         Join hundreds of satisfied clients who trust us to manage their trading portfolios.<br /> Start your journey to financial growth today.
       </p>
-      <button>Book Free Consultation</button>
+      <Link href="/register"><button>Book Free Consultation</button></Link>
     </div>
 
   </div>
@@ -545,7 +550,7 @@ We provide realistic expectations based on market conditions. Honesty and transp
           <h3>$2,054.06</h3>
         </div>
 
-        <button className="pc-btn">Start Earning Today</button>
+        <Link href="/register"><button className="pc-btn">Start Earning Today</button></Link>
 
       </div>
 

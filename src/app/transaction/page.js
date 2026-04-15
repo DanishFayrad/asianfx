@@ -20,16 +20,19 @@ export default function Transaction() {
           <span>Wallet</span>
         </div>
 
-        <div className="menu" onClick={() => router.push('/wallet')}>
+        <div className="menu" onClick={() => { setIsSidebarOpen(false); router.push('/wallet'); }}>
           <img src="/images/i (5).png" alt="Dashboard" />
           <span>Dashboard</span>
         </div>
 
-        <div className="menu active" onClick={() => router.push('/transaction')}>
+        <div className="menu active" onClick={() => { setIsSidebarOpen(false); router.push('/transaction'); }}>
           <img src="/images/svg (15).png" alt="Transactions" />
           <span>Transactions</span>
         </div>
       </aside>
+
+      {/* BACKDROP FOR MOBILE */}
+      {isSidebarOpen && <div className="backdrop" onClick={() => setIsSidebarOpen(false)}></div>}
 
       {/*  MAIN  */}
       <main className="main">

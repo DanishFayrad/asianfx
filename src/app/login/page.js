@@ -1,12 +1,33 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useDispatch, useSelector } from 'react-redux';
+import { loginUser, reset } from '@/redux/slices/authSlice';
+import Link from 'next/link';
 import '../../styles/login.css';
 
 export default function Login() {
   const router = useRouter();
+  const dispatch = useDispatch();
   const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  const { token, isLoading, isError, isSuccess, message } = useSelector(
+    (state) => state.auth
+  );
+
+  useEffect(() => {
+    if (isError) {
+      // Error is handled via the message variable in the UI
+    }
+
+    if (isSuccess || token) {
+      router.push('/dashboard');
+      dispatch(reset());
+    }
+  }, [token, isError, isSuccess, message, router, dispatch]);
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
@@ -14,8 +35,7 @@ export default function Login() {
 
   const handleLogin = (e) => {
     e.preventDefault();
-    // In a real app, you'd handle authentication here
-    router.push('/dashboard');
+    dispatch(loginUser({ email, password }));
   };
 
   return (
@@ -28,11 +48,20 @@ export default function Login() {
       <p className="subtext">Sign in to your trading account</p>
 
       <form onSubmit={handleLogin}>
+        {isError && <div style={{ color: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', padding: '10px', borderRadius: '8px', marginBottom: '20px', fontSize: '14px', textAlign: 'center' }}>{message}</div>}
+
         <div className="input-group">
           <label>Email</label>
           <div className="input-wrapper">
             <img src="/images/envelope icon.png" className="input-icon" alt="Email Icon" />
-            <input type="email" placeholder="Enter your email" className="input-box icon-padding" required />
+            <input 
+              type="email" 
+              placeholder="Enter your email" 
+              className="input-box icon-padding" 
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required 
+            />
           </div>
         </div>
 
@@ -48,6 +77,8 @@ export default function Login() {
               type={showPassword ? 'text' : 'password'}
               placeholder="Enter your password"
               className="input-box icon-padding-right"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               required
             />
 
@@ -69,8 +100,8 @@ export default function Login() {
           </label>
           <a href="#">Forgot password?</a>
         </div>
-        <button type="submit" className="login-btn" id="loginBtn">
-          Sign In
+        <button type="submit" className="login-btn" id="loginBtn" disabled={isLoading}>
+          {isLoading ? 'Signing In...' : 'Sign In'}
         </button>
       </form>
 
@@ -92,7 +123,7 @@ export default function Login() {
       </div>
 
       <div className="footer">
-        Don't have an account? <a href="/#consultation">Sign up</a>
+        Don't have an account? <Link href="/register">Sign up</Link>
       </div>
     </div>
   );

@@ -19,47 +19,49 @@ export default function Wallet() {
           <span>Wallet</span>
         </div>
 
-        <div className="menu active" onClick={() => router.push('/wallet')}>
+        <div className="menu active" onClick={() => { setIsSidebarOpen(false); router.push('/wallet'); }}>
           <img src="/images/i (5).png" alt="Dashboard" />
           <span>Dashboard</span>
         </div>
 
-        <div className="menu" onClick={() => router.push('/transaction')}>
+        <div className="menu" onClick={() => { setIsSidebarOpen(false); router.push('/transaction'); }}>
           <img src="/images/svg (15).png" alt="Transactions" />
           <span>Transactions</span>
         </div>
       </aside>
 
-      {/*  🔥 HEADER OUTSIDE MAIN  */}
-      <div className="header-box">
-        <header className="header">
-          <div className="hamburger" onClick={toggleSidebar}>
-            ☰
-          </div>
-          <div className="header-left">
-            <h2>Wallet Overview</h2>
-            <p>Track your financial performance</p>
-          </div>
-
-          <div className="header-right">
-            <div className="wallet-badge">
-              <img src="/images/i (2).png" alt="Wallet Icon" />
-            </div>
-
-            <button className="balance" onClick={() => router.push('/wallet')}>$100.00</button>
-
-            <div className="live">
-              <span className="dot"></span> Live
-            </div>
-
-            <img src="/images/i (3).png" className="icon" alt="Notifications" />
-            <img src="/images/img.png" className="avatar" alt="User Profile" onClick={() => router.push('/login')} style={{ cursor: 'pointer', title: 'Login' }} />
-          </div>
-        </header>
-      </div>
+      {/* BACKDROP FOR MOBILE */}
+      {isSidebarOpen && <div className="backdrop" onClick={() => setIsSidebarOpen(false)}></div>}
 
       {/*  Main  */}
       <main className="main">
+        {/*  🔥 HEADER INSIDE MAIN  */}
+        <div className="header-box">
+          <header className="header">
+            <div className="hamburger" onClick={toggleSidebar}>
+              ☰
+            </div>
+            <div className="header-left">
+              <h2>Wallet Overview</h2>
+              <p>Track your financial performance</p>
+            </div>
+
+            <div className="header-right">
+              <div className="wallet-badge">
+                <img src="/images/i (2).png" alt="Wallet Icon" />
+              </div>
+
+              <button className="balance" onClick={() => router.push('/wallet')}>$100.00</button>
+
+              <div className="live">
+                <span className="dot"></span> Live
+              </div>
+
+              <img src="/images/i (3).png" className="icon" alt="Notifications" />
+              <img src="/images/img.png" className="avatar" alt="User Profile" onClick={() => router.push('/login')} style={{ cursor: 'pointer', title: 'Login' }} />
+            </div>
+          </header>
+        </div>
         {/*  CARDS  */}
         <div className="cards">
           <div className="card total">
