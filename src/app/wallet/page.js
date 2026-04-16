@@ -2,10 +2,12 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSelector } from 'react-redux';
 import '../../styles/wallet.css';
 
 export default function Wallet() {
   const router = useRouter();
+  const { user } = useSelector((state) => state.auth);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
@@ -19,15 +21,27 @@ export default function Wallet() {
           <span>Wallet</span>
         </div>
 
-        <div className="menu active" onClick={() => { setIsSidebarOpen(false); router.push('/wallet'); }}>
+        <div className="menu" onClick={() => { setIsSidebarOpen(false); router.push('/dashboard'); }}>
           <img src="/images/i (5).png" alt="Dashboard" />
           <span>Dashboard</span>
+        </div>
+
+        <div className="menu active" onClick={() => { setIsSidebarOpen(false); router.push('/wallet'); }}>
+          <img src="/images/i (2).png" alt="Wallet" style={{ height: '20px', filter: 'brightness(0) invert(1)' }} />
+          <span>Wallet</span>
         </div>
 
         <div className="menu" onClick={() => { setIsSidebarOpen(false); router.push('/transaction'); }}>
           <img src="/images/svg (15).png" alt="Transactions" />
           <span>Transactions</span>
         </div>
+        
+        {user?.is_admin && (
+          <div className="menu" onClick={() => { setIsSidebarOpen(false); router.push('/admin/signals'); }}>
+            <img src="/images/i (11).png" alt="Admin" style={{ height: '20px', filter: 'brightness(0) invert(1)' }} />
+            <span>Admin</span>
+          </div>
+        )}
       </aside>
 
       {/* BACKDROP FOR MOBILE */}

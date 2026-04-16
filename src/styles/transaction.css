@@ -17,16 +17,27 @@
   box-sizing: border-box;
 }
 
+html, body {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  max-width: 100% !important;
+}
+
 body {
   font-family: 'Inter', sans-serif;
   background-color: var(--bg-dark);
   color: var(--text-main);
   overflow-x: hidden;
+  width: 100%;
 }
 
 .layout {
   display: flex;
   min-height: 100vh;
+  width: 100%;
+  margin: 0;
+  padding: 0;
 }
 
 /* SIDEBAR */
@@ -98,7 +109,10 @@ body {
   flex: 1;
   padding: 0;
   background: var(--bg-dark);
-  min-width: 0; /* Prevent flex overflow */
+  min-width: 0; 
+  width: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 /* HEADER */
@@ -211,7 +225,8 @@ body {
 
 /* TRANSACTION CARD */
 .card {
-  margin: 24px;
+  margin: 24px auto;
+  width: 96%;
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 16px;

@@ -69,7 +69,6 @@ export default function Register() {
         <div className="input-group">
           <label>Full Name</label>
           <div className="input-wrapper">
-            <img src="/images/img.png" className="input-icon" alt="User Icon" />
             <input 
               type="text" 
               name="name"
@@ -85,7 +84,6 @@ export default function Register() {
         <div className="input-group">
           <label>Email</label>
           <div className="input-wrapper">
-            <img src="/images/envelope icon.png" className="input-icon" alt="Email Icon" />
             <input 
               type="email" 
               name="email"
@@ -101,7 +99,6 @@ export default function Register() {
         <div className="input-group">
           <label>Phone Number</label>
           <div className="input-wrapper">
-            <img src="/images/img.png" className="input-icon" alt="Phone Icon" style={{ opacity: 0.6 }} />
             <input 
               type="tel" 
               name="phone"
@@ -117,7 +114,6 @@ export default function Register() {
         <div className="input-group">
           <label>Country</label>
           <div className="input-wrapper">
-            <img src="/images/img.png" className="input-icon" alt="Country Icon" style={{ opacity: 0.6 }} />
             <input 
               type="text" 
               name="country"
@@ -133,7 +129,6 @@ export default function Register() {
         <div className="input-group">
           <label>Password</label>
           <div className="input-wrapper">
-            <img src="/images/lock.png" className="input-icon" alt="Lock Icon" />
             <input
               type={showPassword ? 'text' : 'password'}
               name="password"

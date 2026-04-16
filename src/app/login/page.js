@@ -14,20 +14,20 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const { token, isLoading, isError, isSuccess, message } = useSelector(
+  const { user, token, isLoading, isError, isSuccess, message } = useSelector(
     (state) => state.auth
   );
 
   useEffect(() => {
-    if (isError) {
-      // Error is handled via the message variable in the UI
-    }
-
     if (isSuccess || token) {
-      router.push('/dashboard');
+      if (user?.is_admin) {
+        router.push('/admin/signals');
+      } else {
+        router.push('/dashboard');
+      }
       dispatch(reset());
     }
-  }, [token, isError, isSuccess, message, router, dispatch]);
+  }, [token, user, isError, isSuccess, message, router, dispatch]);
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
@@ -105,22 +105,8 @@ export default function Login() {
         </button>
       </form>
 
-      <div className="divider">
-        <span className="line"></span>
-        <span className="text">Or continue with</span>
-        <span className="line"></span>
-      </div>
 
-      <div className="social">
-        <button type="button">
-          <img src="/images/google.png" style={{ height: '18px', paddingRight: '10px', marginBottom: '-5px' }} alt="Google Icon" />
-          Google
-        </button>
-        <button type="button">
-          <img src="/images/apple.png" style={{ height: '18px', paddingRight: '10px', marginBottom: '-4px' }} alt="Apple Icon" />
-          Apple
-        </button>
-      </div>
+      
 
       <div className="footer">
         Don't have an account? <Link href="/register">Sign up</Link>

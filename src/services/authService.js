@@ -37,10 +37,16 @@ const logout = async () => {
     return response.data;
 };
 
+const getProfile = async () => {
+    const response = await api.get('/auth/profile');
+    return response.data;
+};
+
 const authService = {
     login,
     register,
     logout,
+    getProfile
 };
 
 export default authService;

@@ -75,7 +75,7 @@ export const authSlice = createSlice({
                 state.isLoading = false;
                 state.isSuccess = true;
                 state.token = action.payload.access_token;
-                state.user = action.payload.user; // If backend returns user info
+                state.user = action.payload.user || action.payload; // Capture all fields if user is top-level
             })
             .addCase(loginUser.rejected, (state, action) => {
                 state.isLoading = false;
