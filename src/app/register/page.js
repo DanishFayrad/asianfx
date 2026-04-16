@@ -16,9 +16,11 @@ export default function Register() {
     name: '',
     email: '',
     password: '',
+    phone: '',
+    country: '',
   });
 
-  const { name, email, password } = formData;
+  const { name, email, password, phone, country } = formData;
 
   const { isLoading, isError, isSuccess, message } = useSelector(
     (state) => state.auth
@@ -48,7 +50,7 @@ export default function Register() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    dispatch(registerUser({ name, email, password }));
+    dispatch(registerUser(formData));
   };
 
   return (
@@ -90,6 +92,38 @@ export default function Register() {
               placeholder="Enter your email" 
               className="input-box icon-padding" 
               value={email}
+              onChange={onChange}
+              required 
+            />
+          </div>
+        </div>
+
+        <div className="input-group">
+          <label>Phone Number</label>
+          <div className="input-wrapper">
+            <img src="/images/img.png" className="input-icon" alt="Phone Icon" style={{ opacity: 0.6 }} />
+            <input 
+              type="tel" 
+              name="phone"
+              placeholder="Enter your phone number" 
+              className="input-box icon-padding" 
+              value={phone}
+              onChange={onChange}
+              required 
+            />
+          </div>
+        </div>
+
+        <div className="input-group">
+          <label>Country</label>
+          <div className="input-wrapper">
+            <img src="/images/img.png" className="input-icon" alt="Country Icon" style={{ opacity: 0.6 }} />
+            <input 
+              type="text" 
+              name="country"
+              placeholder="Enter your country" 
+              className="input-box icon-padding" 
+              value={country}
               onChange={onChange}
               required 
             />

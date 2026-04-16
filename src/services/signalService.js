@@ -22,25 +22,31 @@ api.interceptors.request.use(
     }
 );
 
-const login = async (userData) => {
-    const response = await api.post(API_ENDPOINTS.LOGIN, userData);
+const getSignalsDashboard = async () => {
+    const response = await api.get(API_ENDPOINTS.SIGNALS.DASHBOARD);
     return response.data;
 };
 
-const register = async (userData) => {
-    const response = await api.post(API_ENDPOINTS.REGISTER, userData);
+const createSignal = async (signalData) => {
+    const response = await api.post(API_ENDPOINTS.SIGNALS.CREATE, signalData);
     return response.data;
 };
 
-const logout = async () => {
-    const response = await api.post(API_ENDPOINTS.LOGOUT);
+const takeSignal = async (payload) => {
+    const response = await api.post(API_ENDPOINTS.SIGNALS.TAKE, payload);
     return response.data;
 };
 
-const authService = {
-    login,
-    register,
-    logout,
+const getUserSignalHistory = async (userId) => {
+    const response = await api.get(API_ENDPOINTS.SIGNALS.HISTORY(userId));
+    return response.data;
 };
 
-export default authService;
+const signalService = {
+    getSignalsDashboard,
+    createSignal,
+    takeSignal,
+    getUserSignalHistory,
+};
+
+export default signalService;
