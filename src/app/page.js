@@ -25,7 +25,7 @@ export default function Home() {
       <a href="#about" onClick={() => setIsMenuOpen(false)}>About</a>
       <a href="#trade" onClick={() => setIsMenuOpen(false)}>Trading</a>
       <a href="#why" onClick={() => setIsMenuOpen(false)}>Why Us</a>
-      <Link href="/dashboard" onClick={() => setIsMenuOpen(false)}>Dashboard</Link>
+      {/* <Link href="/dashboard" onClick={() => setIsMenuOpen(false)}>Dashboard</Link> */}
       <div className="nav-btns">
         <Link href="/login"><button className="btn-yellow">Log in</button></Link>
         <Link href="/register"><button className="btn-outline-small">Join Now</button></Link>
