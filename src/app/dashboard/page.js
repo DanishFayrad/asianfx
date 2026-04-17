@@ -446,7 +446,7 @@ export default function Dashboard() {
                 <div style={{ textAlign: 'center' }}>
                     <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginBottom: '0.75rem' }}>Send USDT to this <strong>Binance</strong> address:</p>
                     <div style={{ background: 'black', padding: '12px', borderRadius: '8px', wordBreak: 'break-all', fontSize: '0.85rem', color: 'var(--primary)', border: '1px dashed var(--primary)', marginBottom: '0.75rem' }}>
-                        TXbinanceAddressSAMPLE123456789
+                        TA199GDmT2ybpMKdHwZkjMgo2awuk1N1fV
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', fontSize: '0.7rem', color: 'var(--text-muted)' }}>
                         <span>Network: <strong>TRC20</strong></span>
