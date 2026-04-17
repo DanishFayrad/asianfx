@@ -129,7 +129,7 @@ export default function AdminSignals() {
           <div className="logo-box">
              <img src="/images/i (9).png" alt="Logo" style={{ height: '24px' }} />
           </div>
-          <span>TradePro Admin</span>
+          <span>AsianFX Admin</span>
         </div>
 
         <nav className="admin-nav">

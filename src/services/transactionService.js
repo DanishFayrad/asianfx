@@ -33,9 +33,9 @@ const getUserTransactions = async () => {
     return response.data;
 };
 
-const approveTransaction = async (id) => {
+const approveTransaction = async (id, amount) => {
     const token = localStorage.getItem('token');
-    const response = await axios.post(`${API_URL}/${id}/approve`, {}, {
+    const response = await axios.post(`${API_URL}/${id}/approve`, { amount }, {
         headers: {
             'Authorization': `Bearer ${token}`
         }
@@ -53,12 +53,45 @@ const rejectTransaction = async (id) => {
     return response.data;
 };
 
+const getAllTransactions = async () => {
+    const token = localStorage.getItem('token');
+    const response = await axios.get(`${API_URL}/all`, {
+        headers: {
+            'Authorization': `Bearer ${token}`
+        }
+    });
+    return response.data;
+};
+
+const getAdminStats = async () => {
+    const token = localStorage.getItem('token');
+    const response = await axios.get(`${API_URL}/admin-stats`, {
+        headers: {
+            'Authorization': `Bearer ${token}`
+        }
+    });
+    return response.data;
+};
+
+const getWalletStats = async () => {
+    const token = localStorage.getItem('token');
+    const response = await axios.get(`${API_URL}/wallet-stats`, {
+        headers: {
+            'Authorization': `Bearer ${token}`
+        }
+    });
+    return response.data;
+};
+
 const transactionService = {
     requestDeposit,
     getPendingTransactions,
     getUserTransactions,
     approveTransaction,
-    rejectTransaction
+    rejectTransaction,
+    getAllTransactions,
+    getAdminStats,
+    getWalletStats
 };
 
 export default transactionService;

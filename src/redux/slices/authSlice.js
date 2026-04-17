@@ -9,6 +9,14 @@ const getInitialToken = () => {
     return null;
 };
 
+const getInitialUser = () => {
+    if (typeof window !== 'undefined') {
+        const user = localStorage.getItem('user');
+        return user ? JSON.parse(user) : null;
+    }
+    return null;
+};
+
 export const loginUser = createAsyncThunk(
     'auth/login',
     async (userData, thunkAPI) => {
@@ -16,6 +24,12 @@ export const loginUser = createAsyncThunk(
             const data = await authService.login(userData);
             if (data.access_token) {
                 localStorage.setItem('token', data.access_token);
+                // Also store user data
+                if (data.user) {
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                } else {
+                    localStorage.setItem('user', JSON.stringify(data));
+                }
             }
             return data;
         } catch (error) {
@@ -38,7 +52,7 @@ export const registerUser = createAsyncThunk(
 );
 
 const initialState = {
-    user: null,
+    user: getInitialUser(),
     token: getInitialToken(),
     isError: false,
     isSuccess: false,
@@ -58,11 +72,18 @@ export const authSlice = createSlice({
         },
         logout: (state) => {
             localStorage.removeItem('token');
+            localStorage.removeItem('user');
             state.user = null;
             state.token = null;
             state.isSuccess = false;
             state.isError = false;
             state.message = '';
+        },
+        setUser: (state, action) => {
+            state.user = action.payload;
+            if (typeof window !== 'undefined') {
+                localStorage.setItem('user', JSON.stringify(action.payload));
+            }
         },
     },
     extraReducers: (builder) => {
@@ -99,5 +120,5 @@ export const authSlice = createSlice({
     },
 });
 
-export const { reset, logout } = authSlice.actions;
+export const { reset, logout, setUser } = authSlice.actions;
 export default authSlice.reducer;
