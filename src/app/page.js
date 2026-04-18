@@ -47,13 +47,13 @@ export default function Home() {
     <p className="hero-text">
      Trade with confidence using our professional stock market trading signals. For just $5 per signal, you will receive carefully<br />analyzed signals designed to help you make smarter <br />trading decisions. If a signal results in a loss, you don’t need to worry — we will provide you with a replacement signal completely free.This process continues until your trade reaches profit. Once your trade becomes profitable, you can simply purchase a new signal to continue trading with our guidance. Our goal is to provide a fair, reliable, and stress-free trading experience for every trader.
     </p>
-
+ 
     <div className="hero-buttons">
-      <button className="btn-yellow">Deposit</button>
+      <Link href="/login"><button className="btn-yellow curser-pointer">Deposit</button></Link>
       <button className="btn-outline">See How It Works</button>
     </div>
         <div className="stats">
-   <div className="stat-card">
+    <div className="stat-card">
   <img src="/images/SVG (2).png" className="stat-icon" />
   <h3>60-70%</h3>
   <p>Your Profit Share</p>
