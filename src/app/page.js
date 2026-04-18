@@ -49,7 +49,7 @@ export default function Home() {
     </p>
  
     <div className="hero-buttons">
-      <Link href="/login"><button className="btn-yellow curser-pointer">Deposit</button></Link>
+      <Link className='' style={{width:"200px"}} href="/login"><button className="btn-yellow curser-pointer">Deposit</button></Link>
       <button className="btn-outline">See How It Works</button>
     </div>
         <div className="stats">
