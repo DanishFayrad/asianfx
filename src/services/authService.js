@@ -22,6 +22,21 @@ api.interceptors.request.use(
     }
 );
 
+// Add a response interceptor to handle 401 errors globally
+api.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        if (error.response?.status === 401) {
+            console.warn("Token expired or unauthorized. Logging out...");
+            localStorage.removeItem('token');
+            if (typeof window !== 'undefined') {
+                window.location.href = '/login';
+            }
+        }
+        return Promise.reject(error);
+    }
+);
+
 const login = async (userData) => {
     const response = await api.post(API_ENDPOINTS.LOGIN, userData);
     return response.data;

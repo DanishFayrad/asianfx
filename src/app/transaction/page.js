@@ -176,6 +176,18 @@ export default function Transaction() {
     }
   };
 
+  const handleDelete = async (id) => {
+    if (window.confirm("Are you sure you want to delete this transaction record? This action cannot be undone.")) {
+      try {
+        await transactionService.deleteTransaction(id);
+        toast.success("Transaction deleted successfully.");
+        fetchData();
+      } catch (e) {
+        toast.error("Failed to delete transaction.");
+      }
+    }
+  };
+
   const openSignalModal = (userObj) => {
     setTargetUser(userObj);
     setIsSignalModalOpen(true);
@@ -399,7 +411,73 @@ export default function Transaction() {
                                         <button onClick={() => handleApprove(tx.id)} style={{ background: '#22c55e', color: 'black', border: 'none', padding: '6px 14px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>Approve</button>
                                         <button onClick={() => handleReject(tx.id)} style={{ background: '#ef4444', color: 'white', border: 'none', padding: '6px 14px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>Reject</button>
                                         <button onClick={() => openSignalModal(tx.User || {id: tx.user_id, name: 'User ' + tx.user_id})} style={{ background: 'var(--primary)', color: 'black', border: 'none', padding: '6px 14px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>Send Signal</button>
+                                        <button onClick={() => handleDelete(tx.id)} style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid #ef4444', padding: '6px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>Delete</button>
                                     </div>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+              )}
+          </div>
+        </div>
+
+        {/* ALL TRANSACTIONS HISTORY (ADMIN ONLY) */}
+        <div className="card" style={{ border: '1px solid rgba(255,255,255,0.05)' }}>
+          <div className="card-header">
+              <h3>📜 All Transactions History</h3>
+          </div>
+          <div className="table-box" style={{ padding: '1rem', overflowX: 'auto' }}>
+              {userTransactions.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
+                      <p>No transaction history found.</p>
+                  </div>
+              ) : (
+                <table style={{ width: '100%', minWidth: '800px', borderCollapse: 'collapse' }}>
+                    <thead>
+                        <tr style={{ background: 'rgba(255,255,255,0.05)', textAlign: 'left' }}>
+                            <th style={{ padding: '12px' }}>Date</th>
+                            <th style={{ padding: '12px' }}>User</th>
+                            <th style={{ padding: '12px' }}>Type</th>
+                            <th style={{ padding: '12px' }}>Amount</th>
+                            <th style={{ padding: '12px' }}>Status</th>
+                            <th style={{ padding: '12px' }}>Method</th>
+                            <th style={{ padding: '12px' }}>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {userTransactions.map(tx => (
+                            <tr key={tx.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                                <td style={{ padding: '12px', fontSize: '13px' }}>
+                                    {new Date(tx.created_at || Date.now()).toLocaleString()}
+                                </td>
+                                <td style={{ padding: '12px', fontSize: '13px' }}>
+                                    <div>{tx.User?.name || 'User #' + tx.user_id}</div>
+                                    <small style={{ opacity: 0.5 }}>{tx.User?.email}</small>
+                                </td>
+                                <td style={{ padding: '12px', textTransform: 'capitalize', fontSize: '13px' }}>{tx.type}</td>
+                                <td style={{ padding: '12px', fontWeight: 700, color: tx.type === 'deposit' ? '#22c55e' : '#ef4444', fontSize: '13px' }}>
+                                    {tx.type === 'deposit' ? '+' : '-'}${tx.amount}
+                                </td>
+                                <td style={{ padding: '12px', fontSize: '13px' }}>
+                                    <span style={{ 
+                                        padding: '4px 8px', 
+                                        borderRadius: '4px', 
+                                        fontSize: '11px', 
+                                        fontWeight: 700,
+                                        background: tx.status === 'approved' ? 'rgba(34, 197, 94, 0.1)' : tx.status === 'pending' ? 'rgba(234, 179, 8, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                                        color: tx.status === 'approved' ? '#22c55e' : tx.status === 'pending' ? '#eab308' : '#ef4444',
+                                        border: `1px solid ${tx.status === 'approved' ? '#22c55e' : tx.status === 'pending' ? '#eab308' : '#ef4444'}`
+                                    }}>
+                                        {tx.status?.toUpperCase()}
+                                    </span>
+                                </td>
+                                <td style={{ padding: '12px', fontSize: '13px' }}>{tx.payment_method || 'N/A'}</td>
+                                <td style={{ padding: '12px' }}>
+                                    <button 
+                                        onClick={() => handleDelete(tx.id)}
+                                        style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid #ef4444', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '11px', fontWeight: 700 }}
+                                    >Delete</button>
                                 </td>
                             </tr>
                         ))}

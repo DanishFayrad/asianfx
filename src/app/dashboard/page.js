@@ -72,7 +72,7 @@ export default function Dashboard() {
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 10000); // Tick every 10s
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000); // Tick every 1s for real-time countdown
     return () => clearInterval(timer);
   }, []);
   
@@ -125,11 +125,17 @@ export default function Dashboard() {
             toast.success(notif.message, { duration: 6000 });
         }
 
-        // If it's a new signal, refresh signals list
         if (notif.type === 'signal') {
             fetchSignals();
             setSignalBanner(notif);
-            toast('📈 ' + (notif.title || 'New Signal Available!'), {
+            
+            let toastMsg = '📈 ' + (notif.title || 'New Signal Available!');
+            if (notif.signal?.release_at && new Date(notif.signal.release_at).getTime() > new Date().getTime()) {
+                const mins = Math.max(1, Math.ceil((new Date(notif.signal.release_at).getTime() - new Date().getTime()) / 60000));
+                toastMsg += ` (Unlocks in ${mins}m)`;
+            }
+
+            toast(toastMsg, {
                 style: {
                     background: 'var(--primary)',
                     color: 'black',
@@ -139,14 +145,14 @@ export default function Dashboard() {
             });
         }
 
-        socket.on('signal_timer_updated', (data) => {
-            console.log("Timer updated for signal:", data.signal_id);
-            fetchAllData(); // Refresh to get new timestamps
-        });
-
         // Show a temporary alert or badge
         setUserNotification(notif);
         setTimeout(() => setUserNotification(null), 10000); // Hide after 10s
+    });
+
+    socket.on('signal_timer_updated', (data) => {
+        console.log("Timer updated for signal:", data.signal_id);
+        fetchAllData(); // Refresh to get new timestamps
     });
 
     socket.on('admin_notification', (notif) => {
@@ -246,6 +252,13 @@ export default function Dashboard() {
 
   const [signalToTake, setSignalToTake] = useState(null);
   const [isTakeSignalModalOpen, setIsTakeSignalModalOpen] = useState(false);
+
+  const formatCountdown = (releaseAt) => {
+    const totalSeconds = Math.max(0, Math.floor((new Date(releaseAt).getTime() - currentTime.getTime()) / 1000));
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  };
 
   const handleTakeSignal = async (signal) => {
     if (!user?.is_active && !user?.is_admin) {
@@ -447,11 +460,18 @@ export default function Dashboard() {
             <span style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span style={{ fontSize: '1.2rem' }}>📈</span> 
                 {signalBanner.title}: {signalBanner.message}
+                {signalBanner.signal?.release_at && new Date(signalBanner.signal.release_at).getTime() > currentTime.getTime() && (
+                  <span style={{ background: 'rgba(0,0,0,0.5)', padding: '4px 12px', borderRadius: '6px', marginLeft: '10px', border: '1px solid #d4af37', display: 'inline-flex', alignItems: 'center', gap: '5px', animation: 'pulse 2s infinite' }}>
+                    <span style={{ fontSize: '1.1rem' }}>⌛</span>
+                    <span style={{ fontWeight: 800, fontFamily: 'monospace', letterSpacing: '1px' }}>{formatCountdown(signalBanner.signal.release_at)}</span>
+                  </span>
+                )}
             </span>
             <button 
                 onClick={() => {
                     setSignalBanner(null);
-                    window.scrollTo({ top: 500, behavior: 'smooth' }); // Scroll to signals table
+                    const tableElement = document.querySelector('.table-box');
+                    if (tableElement) tableElement.scrollIntoView({ behavior: 'smooth' });
                 }} 
                 style={{ 
                     background: '#d4af37', 
@@ -486,6 +506,58 @@ export default function Dashboard() {
             )}
           </div>
         </div>
+
+        {/* UPCOMING SIGNAL PERSISTENT BANNER */}
+        {mounted && !user?.is_admin && signals.filter(s => s.release_at && new Date(s.release_at).getTime() > currentTime.getTime()).length > 0 && (
+          <div style={{ 
+            background: 'linear-gradient(135.4deg, rgba(212, 175, 55, 0.1) 10%, rgba(212, 175, 55, 0.05) 90%)', 
+            border: '1px solid rgba(212, 175, 55, 0.3)', 
+            borderRadius: '16px', 
+            padding: '1.5rem', 
+            marginBottom: '2rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '20px',
+            boxShadow: '0 10px 30px -10px rgba(0,0,0,0.3)',
+            position: 'relative',
+            overflow: 'hidden'
+          }}>
+            <div style={{ position: 'absolute', top: '-20px', right: '-20px', fontSize: '100px', opacity: 0.05, transform: 'rotate(-15deg)', pointerEvents: 'none' }}>⌛</div>
+            
+            <div style={{ background: 'rgba(212, 175, 55, 0.2)', width: '60px', height: '60px', borderRadius: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem' }}>
+              ⌛
+            </div>
+            
+            <div style={{ flex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
+                <span style={{ color: '#d4af37', fontWeight: 800, textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '1px' }}>Upcoming Alert</span>
+                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#d4af37', boxShadow: '0 0 10px #d4af37' }}></span>
+              </div>
+              <h3 style={{ color: 'white', fontSize: '1.2rem', fontWeight: 700, marginBottom: '4px' }}>
+                Next Signal Release: <span style={{ color: '#d4af37' }}>{signals.filter(s => s.release_at && new Date(s.release_at).getTime() > currentTime.getTime()).sort((a,b) => new Date(a.release_at) - new Date(b.release_at))[0]?.symbol}</span>
+              </h3>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                A professional entry signal is being analyzed. Stay tuned to take your trade at the release time.
+              </p>
+            </div>
+
+            <div style={{ textAlign: 'right', padding: '0 1rem' }}>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '5px', fontWeight: 600 }}>COUNTDOWN</div>
+              <div style={{ fontSize: '2.5rem', fontWeight: 900, color: '#d4af37', fontFamily: 'monospace', letterSpacing: '2px', textShadow: '0 0 20px rgba(212, 175, 55, 0.3)' }}>
+                {formatCountdown(signals.filter(s => s.release_at && new Date(s.release_at).getTime() > currentTime.getTime()).sort((a,b) => new Date(a.release_at) - new Date(b.release_at))[0]?.release_at)}
+              </div>
+              <button 
+                onClick={() => {
+                  const tableElement = document.querySelector('.table-box');
+                  if (tableElement) tableElement.scrollIntoView({ behavior: 'smooth' });
+                }}
+                style={{ background: '#d4af37', color: 'black', border: 'none', padding: '8px 20px', borderRadius: '8px', fontWeight: 700, cursor: 'pointer', marginTop: '10px', fontSize: '0.8rem', width: '100%' }}
+              >
+                JOIN TRADE
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* INACTIVE NOTICE */}
         {mounted && !user?.is_admin && !user?.is_active && (
@@ -681,27 +753,59 @@ export default function Dashboard() {
                     </td>
                      <td className="time">
                        {signal.release_at && new Date(signal.release_at).getTime() > currentTime.getTime() 
-                        ? <span style={{ color: '#f59e0b', fontWeight: 600 }}>Scheduled</span>
+                        ? (
+                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                <span style={{ color: '#f59e0b', fontWeight: 700, fontSize: '0.8rem' }}>Release In</span>
+                                <span style={{ color: '#f59e0b', fontSize: '0.75rem' }}>{formatCountdown(signal.release_at)}</span>
+                            </div>
+                        )
                         : new Date(signal.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                        }
                      </td>
-                     <td className="Action">
-                       {signal.release_at && new Date(signal.release_at).getTime() > currentTime.getTime() ? (
-                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                            <div style={{ fontSize: '11px', color: '#f59e0b', fontWeight: 800, whiteSpace: 'nowrap' }}>
-                               ⌛ {Math.max(1, Math.ceil((new Date(signal.release_at).getTime() - currentTime.getTime()) / 60000))}m left
-                            </div>
-                            <div style={{ fontSize: '8px', color: '#9ca3af', textTransform: 'uppercase' }}>Locked</div>
-                         </div>
-                       ) : (
+                      <td className="Action">
+                       <div style={{ position: 'relative', width: '42px', height: '42px', margin: '0 auto' }}>
+                         {/* ALWAYS SHOW IMAGE BUTTON */}
                          <img 
                           src="/images/i (10).png" 
                           alt="Take Signal" 
-                          title="Take Signal" 
-                          style={{ cursor: 'pointer' }} 
-                          onClick={() => handleTakeSignal(signal)}
+                          title={signal.release_at && new Date(signal.release_at).getTime() > currentTime.getTime() ? `Unlocks in ${formatCountdown(signal.release_at)}` : "Take Signal"} 
+                          style={{ 
+                            cursor: signal.release_at && new Date(signal.release_at).getTime() > currentTime.getTime() ? 'not-allowed' : 'pointer',
+                            opacity: signal.release_at && new Date(signal.release_at).getTime() > currentTime.getTime() ? 0.4 : 1,
+                            filter: signal.release_at && new Date(signal.release_at).getTime() > currentTime.getTime() ? 'grayscale(1)' : 'none',
+                            width: '100%',
+                            height: '100%'
+                          }} 
+                          onClick={() => {
+                            if (signal.release_at && new Date(signal.release_at).getTime() > currentTime.getTime()) {
+                                toast.error(`This signal is locked. Please wait ${formatCountdown(signal.release_at)} more.`);
+                                return;
+                            }
+                            handleTakeSignal(signal);
+                          }}
                          />
-                       )}
+                         
+                         {/* OVERLAY TIMER IF SCHEDULED */}
+                         {signal.release_at && new Date(signal.release_at).getTime() > currentTime.getTime() && (
+                            <div style={{ 
+                                position: 'absolute', 
+                                top: '50%', 
+                                left: '50%', 
+                                transform: 'translate(-50%, -50%)',
+                                background: 'rgba(0,0,0,0.8)',
+                                border: '1px solid #d4af37',
+                                borderRadius: '4px',
+                                padding: '2px 4px',
+                                pointerEvents: 'none',
+                                whiteSpace: 'nowrap',
+                                zIndex: 10
+                            }}>
+                                <div style={{ fontSize: '10px', color: '#d4af37', fontWeight: 900, fontFamily: 'monospace' }}>
+                                    {formatCountdown(signal.release_at)}
+                                </div>
+                            </div>
+                         )}
+                       </div>
                     </td>
                   </tr>
                 ))

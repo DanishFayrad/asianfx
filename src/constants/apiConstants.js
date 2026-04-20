@@ -17,6 +17,7 @@ export const API_ENDPOINTS = {
         MY: '/api/transactions/my',
         APPROVE: (id) => `/api/transactions/${id}/approve`,
         REJECT: (id) => `/api/transactions/${id}/reject`,
+        DELETE: (id) => `/api/transactions/${id}`,
         ALL: '/api/transactions/all',
         ADMIN_STATS: '/api/transactions/admin-stats',
         WALLET_STATS: '/api/transactions/wallet-stats',

@@ -63,6 +63,11 @@ const getWalletStats = async () => {
     return response.data;
 };
 
+const deleteTransaction = async (id) => {
+    const response = await api.delete(API_ENDPOINTS.TRANSACTIONS.DELETE(id));
+    return response.data;
+};
+
 const transactionService = {
     requestDeposit,
     getPendingTransactions,
@@ -71,7 +76,8 @@ const transactionService = {
     rejectTransaction,
     getAllTransactions,
     getAdminStats,
-    getWalletStats
+    getWalletStats,
+    deleteTransaction
 };
 
 export default transactionService;
