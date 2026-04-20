@@ -6,7 +6,12 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useSelector, useDispatch } from 'react-redux';
 import signalService from '../../../services/signalService';
 import authService from '../../../services/authService';
+import transactionService from '../../../services/transactionService';
 import { logout } from '../../../redux/slices/authSlice';
+import { io } from 'socket.io-client';
+import { API_BASE_URL } from '../../../constants/apiConstants';
+import axios from 'axios';
+import toast from 'react-hot-toast';
 import '../../../styles/adminSignals.css';
 
 export default function AdminSignals() {
@@ -14,6 +19,10 @@ export default function AdminSignals() {
   const pathname = usePathname();
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [type, setType] = useState('Buy');
@@ -23,11 +32,14 @@ export default function AdminSignals() {
     target_price: '',
     stop_loss: '',
     signal_type: 'free',
+    timer_minutes: '', // New field
   });
   
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [recentSignals, setRecentSignals] = useState([]);
+  const [adminStats, setAdminStats] = useState(null);
+  const [liveClientsCount, setLiveClientsCount] = useState(0);
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
@@ -37,6 +49,20 @@ export default function AdminSignals() {
     { id: 2, name: 'Gold', symbol: 'XAUUSD', displaySymbol: 'XAU/USD', iconColor: '#FFD700', icon: '/images/div (15).png' },
     { id: 3, name: 'Silver', symbol: 'XAGUSD', displaySymbol: 'XAG/USD', iconColor: '#C0C0C0', icon: '/images/div (16).png' },
   ];
+
+  const fetchAllAdminData = async () => {
+    try {
+        const data = await signalService.getSignalsDashboard();
+        setRecentSignals(data.active_signals || []);
+        
+        if (user?.is_admin) {
+            const stats = await transactionService.getAdminStats();
+            setAdminStats(stats);
+        }
+    } catch (e) {
+        console.error("Failed to fetch admin data", e);
+    }
+  };
 
   useEffect(() => {
     // 🔒 Security Check: Only Super Admin can access this page
@@ -48,17 +74,25 @@ export default function AdminSignals() {
     // Select default asset
     if (assets.length > 0) setSelectedAsset(assets[1]); // Gold default
     
-    // Fetch recent broadcasts if we want to show history, using dashboard endpoint
-    const fetchRecent = async () => {
-        try {
-            const data = await signalService.getSignalsDashboard();
-            setRecentSignals(data.active_signals || []);
-        } catch (e) {
-            console.error("Failed to fetch recent", e);
-        }
-    };
-    fetchRecent();
-  }, []);
+    fetchAllAdminData();
+
+    // Set up Real-time listener for badges
+    if (user?.is_admin) {
+        const socket = io(API_BASE_URL);
+        socket.emit('join_admin');
+
+        socket.on('admin_notification', (notif) => {
+            console.log("Admin page real-time update:", notif);
+            fetchAllAdminData();
+        });
+
+        socket.on('active_clients_count', (count) => {
+            setLiveClientsCount(count);
+        });
+
+        return () => socket.disconnect();
+    }
+  }, [user]);
 
   const handleChange = (e) => {
     setFormData({
@@ -95,11 +129,12 @@ export default function AdminSignals() {
         target_price: parseFloat(formData.target_price),
         stop_loss: parseFloat(formData.stop_loss),
         signal_type: formData.signal_type,
+        timer_minutes: formData.timer_minutes,
         description: `Signal for ${selectedAsset.name}`,
       };
 
       await signalService.createSignal(payload);
-      setMessage('Signal broadcasted successfully!');
+      setMessage(formData.timer_minutes ? `Signal scheduled for release in ${formData.timer_minutes}m` : 'Signal broadcasted successfully!');
       
       // Reset form
       setFormData({
@@ -107,6 +142,7 @@ export default function AdminSignals() {
         target_price: '',
         stop_loss: '',
         signal_type: 'free',
+        timer_minutes: '',
       });
       
       // Refresh recent list
@@ -142,15 +178,31 @@ export default function AdminSignals() {
           <Link href="/wallet" className="admin-item" onClick={() => setIsSidebarOpen(false)}>
              <img src="/images/i (2).png" alt="Wallet" style={{ filter: 'brightness(0) invert(1)', width: '20px' }} /> Wallet
           </Link>
-          <Link href="/transaction" className="admin-item" onClick={() => setIsSidebarOpen(false)}>
-             <img src="/images/svg (15).png" alt="Transactions" style={{ filter: 'brightness(0) invert(1)', width: '20px' }} /> Transactions
+          <Link href="/transaction" className="admin-item" onClick={() => setIsSidebarOpen(false)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <img src="/images/svg (15).png" alt="Transactions" style={{ filter: 'brightness(0) invert(1)', width: '20px' }} /> 
+                Transactions
+              </div>
+              {adminStats?.pending_deposits > 0 && (
+                <span style={{ 
+                  background: '#ef4444', 
+                  color: 'white', 
+                  borderRadius: '50%', 
+                  width: '18px', 
+                  height: '18px', 
+                  fontSize: '10px', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center' 
+                }}>{adminStats.pending_deposits}</span>
+              )}
           </Link>
         </nav>
 
         <div className="admin-footer">
           <img src="/images/img.png" alt="Profile" className="admin-avatar" />
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>{user?.name || 'Administrator'}</span>
+            <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>{mounted ? (user?.name || 'Administrator') : 'Administrator'}</span>
             <span style={{ fontSize: '0.75rem', color: 'var(--admin-text-muted)' }}>Admin Account</span>
           </div>
         </div>
@@ -171,9 +223,10 @@ export default function AdminSignals() {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-            <div className="admin-balance-card">
-               <span style={{ fontSize: '0.8rem', color: 'var(--admin-text-muted)' }}>Status</span>
-               <strong style={{ fontSize: '1rem', color: 'var(--admin-success)' }}>System Online</strong>
+             
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(34, 197, 94, 0.1)', padding: '6px 12px', borderRadius: '20px', border: '1px solid var(--admin-success)' }}>
+               <div style={{ width: '8px', height: '8px', background: 'var(--admin-success)', borderRadius: '50%', boxShadow: '0 0 8px var(--admin-success)' }}></div>
+               <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--admin-success)' }}>{liveClientsCount} active on web</span>
             </div>
             
             <button 
@@ -302,6 +355,19 @@ export default function AdminSignals() {
                     </select>
                 </div>
 
+                <div className="admin-form-group">
+                    <label>Release Countdown (Minutes)</label>
+                    <input 
+                        type="number" 
+                        name="timer_minutes"
+                        className="admin-form-input" 
+                        value={formData.timer_minutes}
+                        onChange={handleChange}
+                        placeholder="e.g. 5 or 8 minutes" 
+                    />
+                    <small style={{ color: 'var(--admin-text-muted)', fontSize: '0.7rem' }}>Leave blank for instant broadcast</small>
+                </div>
+
                 {message && (
                     <div style={{ textAlign: 'center', marginTop: '1rem', fontSize: '0.85rem', color: message.includes('success') ? 'var(--admin-success)' : 'var(--admin-danger)' }}>
                         {message}
@@ -347,6 +413,32 @@ export default function AdminSignals() {
                          Entry: ${sig.entry_price}
                       </div>
                    </div>
+                   <div style={{ textAlign: 'center', borderLeft: '1px solid var(--admin-border-color)', paddingLeft: '10px' }}>
+                        <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--primary)' }}>{sig.total_taken || 0}</div>
+                        <div style={{ fontSize: '0.65rem', color: 'var(--admin-text-muted)', textTransform: 'uppercase' }}>Purchased</div>
+                   </div>
+                   
+                   {sig.release_at && new Date(sig.release_at) > new Date() && (
+                       <div style={{ width: '100%', marginTop: '10px', paddingTop: '10px', borderTop: '1px dashed var(--admin-border-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+                           <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#f59e0b' }}>
+                               ⏳ {Math.ceil((new Date(sig.release_at) - new Date()) / 60000)}m left
+                           </span>
+                           <button 
+                               onClick={async () => {
+                                   try {
+                                       await axios.post(`${API_BASE_URL}/api/signals/${sig.id}/extend-timer`, { additional_minutes: 2 }, {
+                                           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+                                       });
+                                       fetchAllAdminData();
+                                       toast.success("Timer extended by 2 minutes");
+                                   } catch (e) { toast.error("Failed to extend timer"); }
+                               }}
+                               style={{ background: 'rgba(212, 175, 55, 0.1)', border: '1px solid #d4af37', color: '#d4af37', fontSize: '10px', padding: '2px 8px', borderRadius: '4px', cursor: 'pointer' }}
+                           >
+                               + 2 Min
+                           </button>
+                       </div>
+                   )}
                 </div>
               ))}
               {recentSignals.length === 0 && (

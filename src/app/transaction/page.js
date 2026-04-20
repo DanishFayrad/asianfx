@@ -11,6 +11,7 @@ import { setUser, logout } from '../../redux/slices/authSlice';
 import { io } from 'socket.io-client';
 import { useDispatch } from 'react-redux';
 import toast from 'react-hot-toast';
+import { API_BASE_URL } from '../../constants/apiConstants';
 import '../../styles/transaction.css';
 
 export default function Transaction() {
@@ -18,6 +19,12 @@ export default function Transaction() {
   const dispatch = useDispatch();
   const { user, token } = useSelector((state) => state.auth);
   const [isAuthorizing, setIsAuthorizing] = useState(true);
+  const [mounted, setMounted] = useState(false);
+  const [isActionLoading, setIsActionLoading] = useState(false);
+  
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   
   useEffect(() => {
      const checkAuth = async () => {
@@ -102,13 +109,15 @@ export default function Transaction() {
     fetchData();
 
     if (user?.is_admin) {
-        const socket = io('http://localhost:5000');
+        const socket = io(API_BASE_URL);
         socket.emit('join_admin');
 
         socket.on('admin_notification', (notif) => {
             console.log("Real-time admin update:", notif);
             if (notif.type === 'NEW_DEPOSIT') {
                 setPendingDeposits(prev => [notif.transaction, ...prev]);
+                // Refresh all stats (including badges) immediately
+                fetchData();
             }
         });
 
@@ -140,33 +149,30 @@ export default function Transaction() {
 
   const executeConfirmAction = async () => {
     const { type, data, inputValue } = confirmModal;
-    if (type === 'approve') {
-        const parsedAmount = parseFloat(inputValue);
-        if (isNaN(parsedAmount) || parsedAmount <= 0) {
-            toast.error("Invalid amount.");
-            return;
-        }
-        try {
+    setIsActionLoading(true);
+    try {
+        if (type === 'approve') {
+            const parsedAmount = parseFloat(inputValue);
+            if (isNaN(parsedAmount) || parsedAmount <= 0) {
+                toast.error("Please enter a valid amount.");
+                return;
+            }
             await transactionService.approveTransaction(data, parsedAmount);
-            toast.success('Deposit approved!');
-            closeConfirmModal();
-            fetchData();
+            toast.success("Deposit approved and wallet credited.");
             
             const tx = pendingDeposits.find(t => t.id === data);
             const userObj = tx?.User || {id: tx?.user_id, name: 'User #' + tx?.user_id};
             openSignalModal(userObj);
-        } catch (e) {
-            toast.error('Failed to approve');
-        }
-    } else if (type === 'reject') {
-        try {
+        } else if (type === 'reject') {
             await transactionService.rejectTransaction(data);
-            toast.success('Deposit rejected.');
-            closeConfirmModal();
-            fetchData();
-        } catch (e) {
-            toast.error('Failed to reject');
+            toast.success("Deposit request rejected.");
         }
+        closeConfirmModal();
+        fetchData();
+    } catch (e) {
+        toast.error("Failed to process transaction.");
+    } finally {
+        setIsActionLoading(false);
     }
   };
 
@@ -201,9 +207,7 @@ export default function Transaction() {
     }
   };
 
-  const BACKEND_URL = 'http://localhost:5000';
-
-  if (isAuthorizing && !user) {
+  if (!mounted || (isAuthorizing && !user)) {
       return (
           <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0a0d14', color: 'white' }}>
               <div className="loader">Loading Admin Panel...</div>
@@ -320,8 +324,8 @@ export default function Transaction() {
                         zIndex: 3000
                     }}>
                         <div style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '12px', marginBottom: '12px' }}>
-                            <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>{user?.name}</div>
-                            <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{user?.email}</div>
+                            <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>{mounted ? user?.name : ''}</div>
+                            <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{mounted ? user?.email : ''}</div>
                         </div>
                         <button 
                             onClick={handleLogout} 

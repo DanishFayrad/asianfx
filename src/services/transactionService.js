@@ -1,12 +1,27 @@
 import axios from 'axios';
+import { API_BASE_URL, API_ENDPOINTS } from '../constants/apiConstants';
 
-const API_URL = 'http://localhost:5000/api/transactions'; // Adjust base URL as needed
+const api = axios.create({
+    baseURL: API_BASE_URL,
+});
+
+// Add a request interceptor to include the token in every request
+api.interceptors.request.use(
+    (config) => {
+        const token = localStorage.getItem('token');
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+    },
+    (error) => {
+        return Promise.reject(error);
+    }
+);
 
 const requestDeposit = async (formData) => {
-    const token = localStorage.getItem('token');
-    const response = await axios.post(`${API_URL}/deposit`, formData, {
+    const response = await api.post(API_ENDPOINTS.TRANSACTIONS.DEPOSIT, formData, {
         headers: {
-            'Authorization': `Bearer ${token}`,
             'Content-Type': 'multipart/form-data'
         }
     });
@@ -14,72 +29,37 @@ const requestDeposit = async (formData) => {
 };
 
 const getPendingTransactions = async () => {
-    const token = localStorage.getItem('token');
-    const response = await axios.get(`${API_URL}/pending`, {
-        headers: {
-            'Authorization': `Bearer ${token}`
-        }
-    });
+    const response = await api.get(API_ENDPOINTS.TRANSACTIONS.PENDING);
     return response.data;
 };
 
 const getUserTransactions = async () => {
-    const token = localStorage.getItem('token');
-    const response = await axios.get(`${API_URL}/my`, {
-        headers: {
-            'Authorization': `Bearer ${token}`
-        }
-    });
+    const response = await api.get(API_ENDPOINTS.TRANSACTIONS.MY);
     return response.data;
 };
 
 const approveTransaction = async (id, amount) => {
-    const token = localStorage.getItem('token');
-    const response = await axios.post(`${API_URL}/${id}/approve`, { amount }, {
-        headers: {
-            'Authorization': `Bearer ${token}`
-        }
-    });
+    const response = await api.post(API_ENDPOINTS.TRANSACTIONS.APPROVE(id), { amount });
     return response.data;
 };
 
 const rejectTransaction = async (id) => {
-    const token = localStorage.getItem('token');
-    const response = await axios.post(`${API_URL}/${id}/reject`, {}, {
-        headers: {
-            'Authorization': `Bearer ${token}`
-        }
-    });
+    const response = await api.post(API_ENDPOINTS.TRANSACTIONS.REJECT(id), {});
     return response.data;
 };
 
 const getAllTransactions = async () => {
-    const token = localStorage.getItem('token');
-    const response = await axios.get(`${API_URL}/all`, {
-        headers: {
-            'Authorization': `Bearer ${token}`
-        }
-    });
+    const response = await api.get(API_ENDPOINTS.TRANSACTIONS.ALL);
     return response.data;
 };
 
 const getAdminStats = async () => {
-    const token = localStorage.getItem('token');
-    const response = await axios.get(`${API_URL}/admin-stats`, {
-        headers: {
-            'Authorization': `Bearer ${token}`
-        }
-    });
+    const response = await api.get(API_ENDPOINTS.TRANSACTIONS.ADMIN_STATS);
     return response.data;
 };
 
 const getWalletStats = async () => {
-    const token = localStorage.getItem('token');
-    const response = await axios.get(`${API_URL}/wallet-stats`, {
-        headers: {
-            'Authorization': `Bearer ${token}`
-        }
-    });
+    const response = await api.get(API_ENDPOINTS.TRANSACTIONS.WALLET_STATS);
     return response.data;
 };
 

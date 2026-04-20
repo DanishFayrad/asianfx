@@ -38,7 +38,7 @@ const logout = async () => {
 };
 
 const getProfile = async () => {
-    const response = await api.get('/auth/profile');
+    const response = await api.get(API_ENDPOINTS.PROFILE);
     return response.data;
 };
 

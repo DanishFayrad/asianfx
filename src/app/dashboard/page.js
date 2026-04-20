@@ -8,15 +8,22 @@ import signalService from '../../services/signalService';
 import authService from '../../services/authService';
 import { logout } from '../../redux/slices/authSlice';
 import transactionService from '../../services/transactionService';
+import notificationService from '../../services/notificationService';
 import { setUser } from '../../redux/slices/authSlice';
 import { io } from 'socket.io-client';
 import toast from 'react-hot-toast';
+import { API_BASE_URL } from '../../constants/apiConstants';
 import '../../styles/dashboard.css';
 
 export default function Dashboard() {
   const router = useRouter();
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
+  const [mounted, setMounted] = useState(false);
+  
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   
   const handleDeposit = async () => {
     if (!screenshot) {
@@ -60,7 +67,14 @@ export default function Dashboard() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [adminNotification, setAdminNotification] = useState(null);
   const [userNotification, setUserNotification] = useState(null);
+  const [signalBanner, setSignalBanner] = useState(null);
   const [activePendingDeposit, setActivePendingDeposit] = useState(null);
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 10000); // Tick every 10s
+    return () => clearInterval(timer);
+  }, []);
   
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -93,7 +107,7 @@ export default function Dashboard() {
     if (!user) return;
 
     // Connect to socket
-    const socket = io('http://localhost:5000');
+    const socket = io(API_BASE_URL);
     
     socket.emit('join', user.id);
     if (user.is_admin) {
@@ -108,7 +122,27 @@ export default function Dashboard() {
         // If it's payment approval, refresh profile
         if (notif.type === 'payment_approval') {
             refreshUserProfile();
+            toast.success(notif.message, { duration: 6000 });
         }
+
+        // If it's a new signal, refresh signals list
+        if (notif.type === 'signal') {
+            fetchSignals();
+            setSignalBanner(notif);
+            toast('📈 ' + (notif.title || 'New Signal Available!'), {
+                style: {
+                    background: 'var(--primary)',
+                    color: 'black',
+                    fontWeight: 700
+                },
+                duration: 6000
+            });
+        }
+
+        socket.on('signal_timer_updated', (data) => {
+            console.log("Timer updated for signal:", data.signal_id);
+            fetchAllData(); // Refresh to get new timestamps
+        });
 
         // Show a temporary alert or badge
         setUserNotification(notif);
@@ -119,6 +153,15 @@ export default function Dashboard() {
         if (user.is_admin) {
             console.log("New admin notification:", notif);
             setAdminNotification(`🔔 New Deposit Request! User #${notif.transaction.user_id} uploaded proof for $${notif.transaction.amount}`);
+            
+            // Instantly update the stats for the banner
+            setAdminStats(prev => ({
+                ...prev,
+                pending_deposits: (prev?.pending_deposits || 0) + 1
+            }));
+            
+            // Also trigger a full refresh to be sure
+            fetchAllData();
         }
     });
 
@@ -205,7 +248,7 @@ export default function Dashboard() {
   const [isTakeSignalModalOpen, setIsTakeSignalModalOpen] = useState(false);
 
   const handleTakeSignal = async (signal) => {
-    if (!user?.is_active) {
+    if (!user?.is_active && !user?.is_admin) {
         toast.error('Your account is not active for signals. Please complete a deposit and wait for admin approval.');
         setIsDepositModalOpen(true);
         return;
@@ -216,6 +259,7 @@ export default function Dashboard() {
 
   const confirmTakeSignal = async () => {
     if (!signalToTake) return;
+    setIsSubmitting(true);
     try {
       const payload = {
         user_id: user.id || user.user_id,
@@ -229,6 +273,8 @@ export default function Dashboard() {
       fetchSignals();
     } catch (error) {
       toast.error(error.response?.data?.message || "Error taking signal");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -291,8 +337,15 @@ export default function Dashboard() {
           <nav>
             <Link className="active" href="/dashboard">Signals</Link>
             <Link href="/wallet">Wallet</Link>
-            {user?.is_admin && <Link href="/transaction">Transactions</Link>}
-            {user?.is_admin && <Link href="/admin/signals">Admin</Link>}
+            {mounted && user?.is_admin && (
+              <Link href="/transaction" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                Transactions
+                {adminStats?.pending_deposits > 0 && (
+                  <span className="nav-badge">{adminStats.pending_deposits}</span>
+                )}
+              </Link>
+            )}
+            {mounted && user?.is_admin && <Link href="/admin/signals">Admin</Link>}
           </nav>
         </div>
 
@@ -306,8 +359,15 @@ export default function Dashboard() {
           <nav className="mobile-only-nav">
              <Link className="active" href="/dashboard" onClick={() => setIsMenuOpen(false)}>Signals</Link>
              <Link href="/wallet" onClick={() => setIsMenuOpen(false)}>Wallet</Link>
-             {user?.is_admin && <Link href="/transaction" onClick={() => setIsMenuOpen(false)}>Transactions</Link>}
-             {user?.is_admin && <Link href="/admin/signals" onClick={() => setIsMenuOpen(false)}>Admin</Link>}
+             {mounted && user?.is_admin && (
+               <Link href="/transaction" onClick={() => setIsMenuOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                 Transactions
+                 {adminStats?.pending_deposits > 0 && (
+                   <span className="nav-badge">{adminStats.pending_deposits}</span>
+                 )}
+               </Link>
+             )}
+             {mounted && user?.is_admin && <Link href="/admin/signals" onClick={() => setIsMenuOpen(false)}>Admin</Link>}
           </nav>
           <div className="db-nav-actions">
             {/* Wallet Balance Removed as requested */}
@@ -346,14 +406,14 @@ export default function Dashboard() {
               {/* Profile Dropdown */}
               <div className={`profile-dropdown ${isProfileOpen ? 'show' : ''}`}>
                 <div className="dropdown-user-info">
-                  <span className="user-name">{user?.name || 'Trader'}</span>
-                  <span className="user-email">{user?.email}</span>
-                  <span className="user-id">ID: #{user?.user_id || user?.id || '---'}</span>
+                  <span className="user-name">{mounted ? (user?.name || 'Trader') : 'Trader'}</span>
+                  <span className="user-email">{mounted ? user?.email : ''}</span>
+                  <span className="user-id">ID: #{mounted ? (user?.user_id || user?.id || '---') : '---'}</span>
                 </div>
                 
                 <div className="dropdown-balance">
                   <span>Wallet Balance</span>
-                  <strong>${user?.wallet_balance || '0.00'}</strong>
+                  <strong>${mounted ? (user?.wallet_balance || '0.00') : '0.00'}</strong>
                 </div>
                 
                 <button className="logout-btn" onClick={handleLogout}>
@@ -367,7 +427,7 @@ export default function Dashboard() {
       </header>
 
       {/* NOTIFICATION BARS */}
-      {user?.is_admin && adminNotification && (
+      {mounted && user?.is_admin && adminNotification && (
         <div style={{ background: 'rgba(239, 68, 68, 0.1)', borderBottom: '1px solid #ef4444', padding: '10px 1rem', color: '#ef4444', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '15px', zIndex: 1000, position: 'relative' }}>
             <span style={{ fontWeight: 600 }}>{adminNotification}</span>
             <button onClick={() => router.push('/transaction')} style={{ background: '#ef4444', color: 'white', border: 'none', padding: '4px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}>Review Now</button>
@@ -375,19 +435,42 @@ export default function Dashboard() {
         </div>
       )}
 
-      {!user?.is_admin && userNotification && (
+      {mounted && !user?.is_admin && userNotification && (
         <div style={{ background: 'rgba(34, 197, 94, 0.1)', borderBottom: '1px solid #22c55e', padding: '10px 1rem', color: '#22c55e', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', zIndex: 1000, position: 'relative' }}>
-            <span style={{ fontWeight: 600 }}>{userNotification}</span>
+            <span style={{ fontWeight: 600 }}>{userNotification.message || (typeof userNotification === 'string' ? userNotification : 'New Update Available!')}</span>
             <button onClick={() => setUserNotification(null)} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#22c55e', cursor: 'pointer', fontSize: '1rem' }}>✕</button>
         </div>
       )}
 
-      {!user?.is_admin && activePendingDeposit && (
-        <div style={{ background: 'rgba(212, 175, 55, 0.1)', borderBottom: '1px solid #d4af37', padding: '10px 1rem', color: '#d4af37', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', zIndex: 1000, position: 'relative' }}>
-            <span style={{ fontWeight: 600 }}>🗓️ Status: Your deposit of ${activePendingDeposit.amount} is currently Pending Review.</span>
-            <span style={{ marginLeft: 'auto', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 800 }}>Admin Reviewing...</span>
+      {mounted && !user?.is_admin && signalBanner && (
+        <div style={{ background: 'rgba(212, 175, 55, 0.15)', borderBottom: '2px solid #d4af37', padding: '12px 1rem', color: '#d4af37', fontSize: '0.9rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '15px', zIndex: 1100, position: 'relative' }}>
+            <span style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '1.2rem' }}>📈</span> 
+                {signalBanner.title}: {signalBanner.message}
+            </span>
+            <button 
+                onClick={() => {
+                    setSignalBanner(null);
+                    window.scrollTo({ top: 500, behavior: 'smooth' }); // Scroll to signals table
+                }} 
+                style={{ 
+                    background: '#d4af37', 
+                    color: 'black', 
+                    border: 'none', 
+                    padding: '5px 15px', 
+                    borderRadius: '4px', 
+                    cursor: 'pointer', 
+                    fontSize: '0.8rem', 
+                    fontWeight: 700 
+                }}
+            >
+                View Details
+            </button>
+            <button onClick={() => setSignalBanner(null)} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#d4af37', cursor: 'pointer', fontSize: '1.2rem' }}>✕</button>
         </div>
       )}
+
+     
 
       {/*  MAIN  */}
       <div className="db-container">
@@ -395,16 +478,17 @@ export default function Dashboard() {
           <h1 className="db-page-title">Trading Signals</h1>
 
           <div className="right-actions">
-            <button className="deposit" onClick={() => setIsDepositModalOpen(true)}>Deposit</button>
-            {user?.is_admin && (
+            {mounted && !user?.is_admin && (
+                <button className="deposit" onClick={() => setIsDepositModalOpen(true)}>Deposit</button>
+            )}
+            {mounted && user?.is_admin && (
               <button className="deposit" onClick={() => router.push('/admin/signals')}>+ New Signal</button>
             )}
-            <span className="live-updates">Live Updates</span>
           </div>
         </div>
 
         {/* INACTIVE NOTICE */}
-        {!user?.is_admin && !user?.is_active && (
+        {mounted && !user?.is_admin && !user?.is_active && (
             <div style={{ 
                 background: 'rgba(234, 179, 8, 0.1)', 
                 border: '1px solid #eab308', 
@@ -500,37 +584,50 @@ export default function Dashboard() {
           </div>
         )}
 
-        <p className="db-subtitle">Real-time signals for Gold, Silver, and Forex markets</p>
-
-        {/*  STATS  */}
-        <div className="db-stats">
+        <p className="db-subtitle">Real-time signals for Gold, Silver, and Forex markets</p>         <div className="db-stats">
           <div className="db-card">
             <img src="/images/div (9).png" style={{ marginBottom: "10px" }} alt="Stat Icon" />
-            <span className="db-card-label">{user?.is_admin ? 'Users' : 'Overall'}</span>
-            <h3>{user?.is_admin ? adminStats?.total_users || 0 : stats.total_signals}</h3>
-            <p>{user?.is_admin ? 'Total Registered' : 'Total Signals'}</p>
+            <span className="db-card-label">{mounted && user?.is_admin ? 'Users' : 'Overall'}</span>
+            <h3>{mounted && user?.is_admin ? adminStats?.total_users || 0 : stats.total_signals}</h3>
+            <p>{mounted && user?.is_admin ? `Total (${adminStats?.today_registrations || 0} today)` : 'Total Signals'}</p>
           </div>
 
           <div className="db-card">
             <img src="/images/div (10).png" style={{ marginBottom: "10px" }} alt="Stat Icon" />
-            <span className="db-card-label">{user?.is_admin ? 'Balance' : 'Success'}</span>
-            <h3>{user?.is_admin ? `$${adminStats?.platform_balance || 0}` : `${stats.success_rate}%`}</h3>
-            <p>{user?.is_admin ? 'Platform Total' : 'Success Rate'}</p>
+            <span className="db-card-label">{mounted && user?.is_admin ? 'Balance' : 'Success'}</span>
+            <h3>{mounted && user?.is_admin ? `$${adminStats?.platform_balance || 0}` : `${stats.success_rate}%`}</h3>
+            <p>{mounted && user?.is_admin ? 'Platform Total' : 'Success Rate'}</p>
           </div>
 
           <div className="db-card">
             <img src="/images/div (11).png" style={{ marginBottom: "10px" }} alt="Stat Icon" />
-            <span className="db-card-label">{user?.is_admin ? 'Pending' : 'Now'}</span>
-            <h3>{user?.is_admin ? adminStats?.pending_deposits || 0 : stats.active_signals}</h3>
-            <p>{user?.is_admin ? 'Deposit Requests' : 'Active Signals'}</p>
+            <span className="db-card-label">{mounted && user?.is_admin ? 'Pending' : 'Now'}</span>
+            <h3>{mounted && user?.is_admin ? adminStats?.pending_deposits || 0 : stats.active_signals}</h3>
+            <p>{mounted && user?.is_admin ? 'Deposit Requests' : 'Active Signals'}</p>
           </div>
 
           <div className="db-card">
             <img src="/images/div (12).png" style={{ marginBottom: "10px" }} alt="Stat Icon" />
-            <span className="db-card-label">{user?.is_admin ? 'Approved' : 'Total'}</span>
-            <h3>{user?.is_admin ? adminStats?.approved_deposits || 0 : '$24.5K'}</h3>
-            <p>{user?.is_admin ? 'Completed Deposits' : 'Total Profit'}</p>
+            <span className="db-card-label">{mounted && user?.is_admin ? 'Today' : 'Total'}</span>
+            <h3>{mounted && user?.is_admin ? `$${adminStats?.today_deposit || 0}` : stats.total_signals}</h3>
+            <p>{mounted && user?.is_admin ? 'Today Deposits' : 'Total Signals'}</p>
           </div>
+
+          {mounted && user?.is_admin && (
+            <div className="db-card">
+                <img src="/images/div (11).png" style={{ marginBottom: "10px" }} alt="Stat Icon" />
+                <span className="db-card-label">Monthly</span>
+                <h3>${adminStats?.monthly_deposit || 0}</h3>
+                <p>Monthly Deposits</p>
+            </div>
+          )}
+
+          {/* <div className="db-card">
+            <img src="/images/div (12).png" style={{ marginBottom: "10px" }} alt="Stat Icon" />
+            <span className="db-card-label">{mounted && user?.is_admin ? 'Approved' : 'Total'}</span>
+            {/* <h3>{mounted && user?.is_admin ? adminStats?.approved_deposits || 0 : '$24.5K'}</h3> */}
+            {/* <p>{mounted && user?.is_admin ? 'Completed Deposits' : 'Total Profit'}</p> */}
+          {/* </div> */} 
         </div>
 
         {/*  TABLE - only for normal users */}
@@ -582,15 +679,29 @@ export default function Dashboard() {
                         {signal.status}
                       </span>
                     </td>
-                    <td className="time">{new Date(signal.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
-                    <td className="Action">
-                       <img 
-                        src="/images/i (10).png" 
-                        alt="Take Signal" 
-                        title="Take Signal" 
-                        style={{ cursor: 'pointer' }} 
-                        onClick={() => handleTakeSignal(signal)}
-                       />
+                     <td className="time">
+                       {signal.release_at && new Date(signal.release_at).getTime() > currentTime.getTime() 
+                        ? <span style={{ color: '#f59e0b', fontWeight: 600 }}>Scheduled</span>
+                        : new Date(signal.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                       }
+                     </td>
+                     <td className="Action">
+                       {signal.release_at && new Date(signal.release_at).getTime() > currentTime.getTime() ? (
+                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                            <div style={{ fontSize: '11px', color: '#f59e0b', fontWeight: 800, whiteSpace: 'nowrap' }}>
+                               ⌛ {Math.max(1, Math.ceil((new Date(signal.release_at).getTime() - currentTime.getTime()) / 60000))}m left
+                            </div>
+                            <div style={{ fontSize: '8px', color: '#9ca3af', textTransform: 'uppercase' }}>Locked</div>
+                         </div>
+                       ) : (
+                         <img 
+                          src="/images/i (10).png" 
+                          alt="Take Signal" 
+                          title="Take Signal" 
+                          style={{ cursor: 'pointer' }} 
+                          onClick={() => handleTakeSignal(signal)}
+                         />
+                       )}
                     </td>
                   </tr>
                 ))
@@ -649,9 +760,10 @@ export default function Dashboard() {
                     <div style={{ display: 'flex', gap: '12px' }}>
                         <button 
                             onClick={confirmTakeSignal} 
-                            style={{ flex: 2, background: 'var(--primary)', border: 'none', padding: '14px', borderRadius: '12px', cursor: 'pointer', fontWeight: 700, color: 'black', fontSize: '1rem' }}
+                            disabled={isSubmitting}
+                            style={{ flex: 2, background: 'var(--primary)', border: 'none', padding: '14px', borderRadius: '12px', cursor: isSubmitting ? 'not-allowed' : 'pointer', opacity: isSubmitting ? 0.7 : 1, fontWeight: 700, color: 'black', fontSize: '1rem' }}
                         >
-                            Take Signal
+                            {isSubmitting ? 'Processing...' : 'Take Signal'}
                         </button>
                         <button 
                             onClick={() => setIsTakeSignalModalOpen(false)} 

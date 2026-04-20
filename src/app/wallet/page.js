@@ -11,6 +11,10 @@ import '../../styles/wallet.css';
 export default function Wallet() {
   const router = useRouter();
   const { user } = useSelector((state) => state.auth);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   const dispatch = useDispatch();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -83,14 +87,28 @@ export default function Wallet() {
           <span>Wallet</span>
         </div>
 
-        {user?.is_admin && (
+        {mounted && user?.is_admin && (
           <div className="menu" onClick={() => { setIsSidebarOpen(false); router.push('/transaction'); }}>
             <img src="/images/svg (15).png" alt="Transactions" />
             <span>Transactions</span>
+            {stats?.pending_deposits > 0 && (
+                <span style={{ 
+                    background: '#ef4444', 
+                    color: 'white', 
+                    borderRadius: '50%', 
+                    width: '18px', 
+                    height: '18px', 
+                    fontSize: '10px', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    marginLeft: 'auto' 
+                }}>{stats.pending_deposits}</span>
+            )}
           </div>
         )}
         
-        {user?.is_admin && (
+        {mounted && user?.is_admin && (
           <div className="menu" onClick={() => { setIsSidebarOpen(false); router.push('/admin/signals'); }}>
             <img src="/images/i (11).png" alt="Admin" style={{ height: '20px', filter: 'brightness(0) invert(1)' }} />
             <span>Admin</span>
@@ -174,8 +192,8 @@ export default function Wallet() {
                         zIndex: 3000
                     }}>
                         <div style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '12px', marginBottom: '12px' }}>
-                            <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>{user?.name || 'Trader'}</div>
-                            <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{user?.email}</div>
+                            <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>{mounted ? (user?.name || 'Trader') : 'Trader'}</div>
+                            <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{mounted ? user?.email : ''}</div>
                         </div>
                         <button 
                             onClick={handleLogout} 
@@ -202,43 +220,61 @@ export default function Wallet() {
           <div className="card total">
             <div className="card-top">
               <img src="/images/div (4).png" alt="Balance Icon" />
-              <span className="badge">
-                <span className="dot"></span> Live
-              </span>
+              <div className="badge">
+                <span className="dot"></span> {mounted && user?.is_admin ? 'ADMIN' : 'PERSONAL'}
+              </div>
             </div>
-            <p>{user?.is_admin ? 'Total Platform Balance' : 'My Total Balance'}</p>
-            <h3>${user?.is_admin ? stats?.platform_balance || '0' : stats?.balance?.toLocaleString() || '0'}</h3>
-            <span className="growth">
-              <img src="/images/svg (16).png" className="trend-icon" alt="Trend" />
-              Live
-            </span>
+            <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)', marginBottom: '8px' }}>
+                {mounted && user?.is_admin ? 'Total Platform Balance' : 'Current Wallet Balance'}
+            </p>
+            <h3 style={{ fontSize: '2.5rem', fontWeight: 800, margin: '5px 0' }}>
+                ${mounted && user?.is_admin ? stats?.platform_balance || '0' : stats?.balance?.toLocaleString() || '0'}
+            </h3>
+            <div className="growth" style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.5)', display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <img src="/images/svg (16).png" className="trend-icon" alt="Trend" style={{ height: '14px', width: 'auto' }} />
+              Live Profile Updates
+            </div>
           </div>
 
           <div className="card">
             <div className="card-top">
               <img src="/images/div (5).png" alt="Deposit Icon" />
             </div>
-            <p>Total Deposit</p>
-            <h3>${stats?.total_deposit?.toLocaleString() || '0'}</h3>
-            <small>{stats?.deposit_count || 0} transactions</small>
+            <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)' }}>
+                {mounted && user?.is_admin ? 'Platform Deposits' : 'Total I Deposited'}
+            </p>
+            <h3 style={{ fontSize: '1.75rem', fontWeight: 700 }}>${stats?.total_deposit?.toLocaleString() || '0'}</h3>
+            <small style={{ color: 'var(--primary)', fontWeight: 600 }}>{stats?.deposit_count || 0} Successful</small>
           </div>
 
           <div className="card">
             <div className="card-top">
               <img src="/images/div (6).png" alt="Withdrawal Icon" />
             </div>
-            <p>Total Withdrawal</p>
-            <h3>${stats?.total_withdrawal?.toLocaleString() || '0'}</h3>
-            <small>{stats?.withdrawal_count || 0} transactions</small>
+            <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)' }}>
+                {mounted && user?.is_admin ? 'Platform Withdrawals' : 'Total I Withdrew'}
+            </p>
+            <h3 style={{ fontSize: '1.75rem', fontWeight: 700 }}>${stats?.total_withdrawal?.toLocaleString() || '0'}</h3>
+            <small style={{ color: '#94a3b8' }}>{stats?.withdrawal_count || 0} Processed</small>
           </div>
+        </div>
 
+        <div className="cards secondary">
           <div className="card profit">
             <div className="card-top">
               <img src="/images/div (7).png" alt="Profit Icon" />
             </div>
-            <p>{user?.is_admin ? 'Platform ROI' : 'Total Profit'}</p>
-            <h3>${stats?.total_profit?.toLocaleString() || '0'}</h3>
-            <small>Live Metrics</small>
+            <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)' }}>
+                {mounted && user?.is_admin ? 'Platform Estimated ROI' : 'My Total Signal Profit'}
+            </p>
+            <h3 style={{ 
+                fontSize: '1.75rem', 
+                fontWeight: 700,
+                color: (stats?.total_profit >= 0) ? 'var(--success)' : '#ef4444' 
+            }}>
+                {stats?.total_profit < 0 ? `-$${Math.abs(stats?.total_profit).toLocaleString()}` : `$${stats?.total_profit?.toLocaleString() || '0'}`}
+            </h3>
+            <small>Updated Live</small>
           </div>
         </div>
 
