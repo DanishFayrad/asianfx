@@ -28,7 +28,7 @@ export default function Register() {
 
   useEffect(() => {
     if (isSuccess) {
-      router.push('/login');
+      router.push(`/verify-email?email=${encodeURIComponent(email)}`);
       dispatch(reset());
     }
 

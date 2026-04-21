@@ -109,10 +109,13 @@ export default function Dashboard() {
     // Connect to socket
     const socket = io(API_BASE_URL);
     
-    socket.emit('join', user.id);
-    if (user.is_admin) {
-        socket.emit('join_admin');
-    }
+    socket.on('connect', () => {
+        console.log("Socket connected:", socket.id);
+        socket.emit('join', user.id);
+        if (user.is_admin) {
+            socket.emit('join_admin');
+        }
+    });
 
     socket.on('notification', (notif) => {
         console.log("New real-time notification:", notif);
@@ -178,6 +181,9 @@ export default function Dashboard() {
     };
   }, [user]);
 
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [signalIdToDelete, setSignalIdToDelete] = useState(null);
+
   const fetchSignals = async () => {
     try {
       setLoading(true);
@@ -194,6 +200,24 @@ export default function Dashboard() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const confirmDelete = async () => {
+    if (!signalIdToDelete) return;
+    try {
+        await signalService.deleteSignal(signalIdToDelete);
+        toast.success("Signal removed");
+        setIsDeleteModalOpen(false);
+        setSignalIdToDelete(null);
+        fetchSignals();
+    } catch (error) {
+        toast.error("Failed to remove signal");
+    }
+  };
+
+  const handleDeleteSignal = (id) => {
+    setSignalIdToDelete(id);
+    setIsDeleteModalOpen(true);
   };
 
   const fetchAllData = async () => {
@@ -490,8 +514,6 @@ export default function Dashboard() {
         </div>
       )}
 
-     
-
       {/*  MAIN  */}
       <div className="db-container">
         <div className="db-top-bar">
@@ -656,51 +678,115 @@ export default function Dashboard() {
           </div>
         )}
 
-        <p className="db-subtitle">Real-time signals for Gold, Silver, and Forex markets</p>         <div className="db-stats">
-          <div className="db-card">
-            <img src="/images/div (9).png" style={{ marginBottom: "10px" }} alt="Stat Icon" />
-            <span className="db-card-label">{mounted && user?.is_admin ? 'Users' : 'Overall'}</span>
-            <h3>{mounted && user?.is_admin ? adminStats?.total_users || 0 : stats.total_signals}</h3>
-            <p>{mounted && user?.is_admin ? `Total (${adminStats?.today_registrations || 0} today)` : 'Total Signals'}</p>
-          </div>
+        {mounted && user?.is_admin ? (
+            <p className="db-subtitle">Global Platform Overview & Business Analytics</p>
+        ) : (
+            <p className="db-subtitle">Real-time signals for Gold, Silver, and Forex markets</p>
+        )}
 
-          <div className="db-card">
-            <img src="/images/div (10).png" style={{ marginBottom: "10px" }} alt="Stat Icon" />
-            <span className="db-card-label">{mounted && user?.is_admin ? 'Balance' : 'Success'}</span>
-            <h3>{mounted && user?.is_admin ? `$${adminStats?.platform_balance || 0}` : `${stats.success_rate}%`}</h3>
-            <p>{mounted && user?.is_admin ? 'Platform Total' : 'Success Rate'}</p>
-          </div>
+        {mounted && user?.is_admin ? (
+            /* PREMIUM ADMIN BUSINESS DASHBOARD */
+            <div className="admin-business-suite" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                <div className="db-stats" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))' }}>
+                    <div className="db-card admin-kpi" style={{ borderLeft: '4px solid #a78bfa' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
+                            <span className="db-card-label" style={{ color: '#a78bfa' }}>GLOBAL BALANCE</span>
+                            <div style={{ background: 'rgba(167, 139, 250, 0.1)', padding: '4px', borderRadius: '6px' }}>💰</div>
+                        </div>
+                        <h3>${adminStats?.platform_balance || '0.00'}</h3>
+                        <p style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                            <span>Users Wallet Total</span>
+                            <span style={{ color: '#22c55e' }}>ONLINE</span>
+                        </p>
+                    </div>
 
-          <div className="db-card">
-            <img src="/images/div (11).png" style={{ marginBottom: "10px" }} alt="Stat Icon" />
-            <span className="db-card-label">{mounted && user?.is_admin ? 'Pending' : 'Now'}</span>
-            <h3>{mounted && user?.is_admin ? adminStats?.pending_deposits || 0 : stats.active_signals}</h3>
-            <p>{mounted && user?.is_admin ? 'Deposit Requests' : 'Active Signals'}</p>
-          </div>
+                    <div className="db-card admin-kpi" style={{ borderLeft: '4px solid #22c55e' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
+                            <span className="db-card-label" style={{ color: '#22c55e' }}>TOTAL REVENUE</span>
+                            <div style={{ background: 'rgba(34, 197, 94, 0.1)', padding: '4px', borderRadius: '6px' }}>📈</div>
+                        </div>
+                        <h3>${adminStats?.total_deposit || '0.00'}</h3>
+                        <p>Accumulated Deposits</p>
+                    </div>
 
-          <div className="db-card">
-            <img src="/images/div (12).png" style={{ marginBottom: "10px" }} alt="Stat Icon" />
-            <span className="db-card-label">{mounted && user?.is_admin ? 'Today' : 'Total'}</span>
-            <h3>{mounted && user?.is_admin ? `$${adminStats?.today_deposit || 0}` : stats.total_signals}</h3>
-            <p>{mounted && user?.is_admin ? 'Today Deposits' : 'Total Signals'}</p>
-          </div>
+                    <div className="db-card admin-kpi" style={{ borderLeft: '4px solid #f59e0b' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
+                            <span className="db-card-label" style={{ color: '#f59e0b' }}>PENDING ACTION</span>
+                            <div style={{ background: 'rgba(245, 158, 11, 0.1)', padding: '4px', borderRadius: '6px' }}>⏳</div>
+                        </div>
+                        <h3>{adminStats?.pending_deposits || 0}</h3>
+                        <p>Awaiting Verification</p>
+                    </div>
 
-          {mounted && user?.is_admin && (
-            <div className="db-card">
-                <img src="/images/div (11).png" style={{ marginBottom: "10px" }} alt="Stat Icon" />
-                <span className="db-card-label">Monthly</span>
-                <h3>${adminStats?.monthly_deposit || 0}</h3>
-                <p>Monthly Deposits</p>
+                    <div className="db-card admin-kpi" style={{ borderLeft: '4px solid #60a5fa' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
+                            <span className="db-card-label" style={{ color: '#60a5fa' }}>PLATFORM PROFIT</span>
+                            <div style={{ background: 'rgba(96, 165, 250, 0.1)', padding: '4px', borderRadius: '6px' }}>💎</div>
+                        </div>
+                        <h3>${adminStats?.total_profit || '0.00'}</h3>
+                        <p>Net Earnings</p>
+                    </div>
+                </div>
+
+                {/* QUICK NAV GRID FOR ADMIN */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
+                    <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '20px', padding: '1.5rem', display: 'flex', gap: '20px', alignItems: 'center', cursor: 'pointer', transition: '0.3s' }} onClick={() => router.push('/transaction')}>
+                         <div style={{ background: '#ef4444', color: 'white', width: '50px', height: '50px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem' }}>💵</div>
+                         <div>
+                            <h4 style={{ margin: 0, fontSize: '1.1rem' }}>Transaction Desk</h4>
+                            <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-dim)' }}>Approve deposits & send signals</p>
+                         </div>
+                         <div style={{ marginLeft: 'auto', background: 'rgba(255,255,255,0.1)', padding: '4px 10px', borderRadius: '20px', fontSize: '0.75rem' }}>{adminStats?.pending_deposits || 0} Alert</div>
+                    </div>
+
+                    <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '20px', padding: '1.5rem', display: 'flex', gap: '20px', alignItems: 'center', cursor: 'pointer', transition: '0.3s' }} onClick={() => router.push('/admin/signals')}>
+                         <div style={{ background: '#d4af37', color: 'black', width: '50px', height: '50px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem' }}>📢</div>
+                         <div>
+                            <h4 style={{ margin: 0, fontSize: '1.1rem' }}>Global Center</h4>
+                            <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-dim)' }}>Manage signals & market trends</p>
+                         </div>
+                    </div>
+
+                    <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '20px', padding: '1.5rem', display: 'flex', gap: '20px', alignItems: 'center', cursor: 'pointer', transition: '0.3s' }}>
+                         <div style={{ background: '#3b82f6', color: 'white', width: '50px', height: '50px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem' }}>👥</div>
+                         <div>
+                            <h4 style={{ margin: 0, fontSize: '1.1rem' }}>Users Matrix</h4>
+                            <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-dim)' }}>{adminStats?.total_users || 0} Registered Members</p>
+                         </div>
+                    </div>
+                </div>
             </div>
-          )}
+        ) : (
+            <div className="db-stats">
+              <div className="db-card">
+                <img src="/images/div (9).png" style={{ marginBottom: "10px" }} alt="Stat Icon" />
+                <span className="db-card-label">Overall</span>
+                <h3>{stats.total_signals}</h3>
+                <p>Total Signals</p>
+              </div>
 
-          {/* <div className="db-card">
-            <img src="/images/div (12).png" style={{ marginBottom: "10px" }} alt="Stat Icon" />
-            <span className="db-card-label">{mounted && user?.is_admin ? 'Approved' : 'Total'}</span>
-            {/* <h3>{mounted && user?.is_admin ? adminStats?.approved_deposits || 0 : '$24.5K'}</h3> */}
-            {/* <p>{mounted && user?.is_admin ? 'Completed Deposits' : 'Total Profit'}</p> */}
-          {/* </div> */} 
-        </div>
+              <div className="db-card">
+                <img src="/images/div (10).png" style={{ marginBottom: "10px" }} alt="Stat Icon" />
+                <span className="db-card-label">Success</span>
+                <h3>{stats.success_rate}%</h3>
+                <p>Success Rate</p>
+              </div>
+
+              <div className="db-card">
+                <img src="/images/div (11).png" style={{ marginBottom: "10px" }} alt="Stat Icon" />
+                <span className="db-card-label">Now</span>
+                <h3>{stats.active_signals}</h3>
+                <p>Active Signals</p>
+              </div>
+
+              <div className="db-card">
+                <img src="/images/div (12).png" style={{ marginBottom: "10px" }} alt="Stat Icon" />
+                <span className="db-card-label">Total</span>
+                <h3>{stats.total_signals}</h3>
+                <p>Total Signals</p>
+              </div>
+            </div>
+        )}
 
         {/*  TABLE - only for normal users */}
         {!user?.is_admin && (
@@ -762,48 +848,103 @@ export default function Dashboard() {
                         : new Date(signal.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                        }
                      </td>
-                      <td className="Action">
-                       <div style={{ position: 'relative', width: '42px', height: '42px', margin: '0 auto' }}>
-                         {/* ALWAYS SHOW IMAGE BUTTON */}
-                         <img 
-                          src="/images/i (10).png" 
-                          alt="Take Signal" 
-                          title={signal.release_at && new Date(signal.release_at).getTime() > currentTime.getTime() ? `Unlocks in ${formatCountdown(signal.release_at)}` : "Take Signal"} 
-                          style={{ 
-                            cursor: signal.release_at && new Date(signal.release_at).getTime() > currentTime.getTime() ? 'not-allowed' : 'pointer',
-                            opacity: signal.release_at && new Date(signal.release_at).getTime() > currentTime.getTime() ? 0.4 : 1,
-                            filter: signal.release_at && new Date(signal.release_at).getTime() > currentTime.getTime() ? 'grayscale(1)' : 'none',
-                            width: '100%',
-                            height: '100%'
-                          }} 
-                          onClick={() => {
-                            if (signal.release_at && new Date(signal.release_at).getTime() > currentTime.getTime()) {
-                                toast.error(`This signal is locked. Please wait ${formatCountdown(signal.release_at)} more.`);
-                                return;
-                            }
-                            handleTakeSignal(signal);
-                          }}
-                         />
-                         
-                         {/* OVERLAY TIMER IF SCHEDULED */}
-                         {signal.release_at && new Date(signal.release_at).getTime() > currentTime.getTime() && (
-                            <div style={{ 
-                                position: 'absolute', 
-                                top: '50%', 
-                                left: '50%', 
-                                transform: 'translate(-50%, -50%)',
-                                background: 'rgba(0,0,0,0.8)',
-                                border: '1px solid #d4af37',
-                                borderRadius: '4px',
-                                padding: '2px 4px',
-                                pointerEvents: 'none',
-                                whiteSpace: 'nowrap',
-                                zIndex: 10
-                            }}>
-                                <div style={{ fontSize: '10px', color: '#d4af37', fontWeight: 900, fontFamily: 'monospace' }}>
-                                    {formatCountdown(signal.release_at)}
-                                </div>
-                            </div>
+                      <td className="Action" style={{ verticalAlign: 'middle', padding: '12px 0' }}>
+                       <div style={{ display: 'flex', alignItems: 'center', gap: '18px', justifyContent: 'center', minHeight: '42px' }}>
+                         <div style={{ position: 'relative', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                           {/* ALWAYS SHOW IMAGE BUTTON */}
+                           <img 
+                            src="/images/i (10).png" 
+                            alt="Take Signal" 
+                            title={signal.release_at && new Date(signal.release_at).getTime() > currentTime.getTime() ? `Unlocks in ${formatCountdown(signal.release_at)}` : "Take Signal"} 
+                            style={{ 
+                              cursor: signal.release_at && new Date(signal.release_at).getTime() > currentTime.getTime() ? 'not-allowed' : 'pointer',
+                              opacity: signal.release_at && new Date(signal.release_at).getTime() > currentTime.getTime() ? 0.25 : 1,
+                              filter: signal.release_at && new Date(signal.release_at).getTime() > currentTime.getTime() ? 'grayscale(1) brightness(0.5)' : 'none',
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'contain',
+                              transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                              transform: 'scale(1)'
+                            }} 
+                            onMouseOver={(e) => { 
+                                if (!(signal.release_at && new Date(signal.release_at).getTime() > currentTime.getTime())) {
+                                    e.currentTarget.style.transform = 'scale(1.15)';
+                                    e.currentTarget.style.filter = 'drop-shadow(0 0 12px rgba(212, 175, 55, 0.6))';
+                                }
+                            }}
+                            onMouseOut={(e) => { 
+                                e.currentTarget.style.transform = 'scale(1)';
+                                e.currentTarget.style.filter = 'none';
+                            }}
+                            onClick={() => {
+                              if (signal.release_at && new Date(signal.release_at).getTime() > currentTime.getTime()) {
+                                  toast.error(`This signal is locked. Please wait ${formatCountdown(signal.release_at)} more.`);
+                                  return;
+                              }
+                              handleTakeSignal(signal);
+                            }}
+                           />
+                           
+                           {/* OVERLAY TIMER IF SCHEDULED */}
+                           {signal.release_at && new Date(signal.release_at).getTime() > currentTime.getTime() && (
+                              <div style={{ 
+                                  position: 'absolute', 
+                                  top: '50%', 
+                                  left: '50%', 
+                                  transform: 'translate(-50%, -50%)',
+                                  background: 'rgba(15, 23, 42, 0.95)',
+                                  border: '1px solid #d4af37',
+                                  borderRadius: '6px',
+                                  padding: '2px 6px',
+                                  pointerEvents: 'none',
+                                  whiteSpace: 'nowrap',
+                                  zIndex: 10,
+                                  boxShadow: '0 4px 12px rgba(0,0,0,0.5)'
+                              }}>
+                                  <div style={{ fontSize: '10px', color: '#d4af37', fontWeight: 900, fontFamily: 'monospace', letterSpacing: '0.5px' }}>
+                                      {formatCountdown(signal.release_at)}
+                                  </div>
+                              </div>
+                           )}
+                         </div>
+
+                         {/* DELETE BUTTON - Only show for Admin OR if it's a Private Signal (targeted) */}
+                         {(user?.is_admin || (signal.target_user_id !== null && signal.target_user_id !== undefined)) && (
+                            <button 
+                                onClick={() => handleDeleteSignal(signal.id)}
+                                style={{ 
+                                    background: 'rgba(239, 68, 68, 0.05)', 
+                                    border: '1px solid rgba(239, 68, 68, 0.15)', 
+                                    color: '#f87171', 
+                                    width: '32px', 
+                                    height: '32px', 
+                                    borderRadius: '10px', 
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    fontSize: '1.1rem',
+                                    padding: 0,
+                                    transition: 'all 0.25s ease',
+                                    position: 'relative',
+                                    overflow: 'hidden'
+                                }}
+                                onMouseOver={(e) => { 
+                                    e.currentTarget.style.background = 'rgba(239, 68, 68, 0.15)';
+                                    e.currentTarget.style.borderColor = '#ef4444';
+                                    e.currentTarget.style.color = 'white';
+                                    e.currentTarget.style.transform = 'translateY(-1px)';
+                                }}
+                                onMouseOut={(e) => { 
+                                    e.currentTarget.style.background = 'rgba(239, 68, 68, 0.05)';
+                                    e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.15)';
+                                    e.currentTarget.style.color = '#f87171';
+                                    e.currentTarget.style.transform = 'translateY(0)';
+                                }}
+                                title="Remove Signal"
+                            >
+                                <span style={{ position: 'relative', top: '-1px', fontWeight: 'bold' }}>×</span>
+                            </button>
                          )}
                        </div>
                     </td>
@@ -836,6 +977,7 @@ export default function Dashboard() {
           </div>
         </div>
         )}
+
         {/* TAKE SIGNAL CONFIRMATION MODAL */}
         {isTakeSignalModalOpen && signalToTake && (
             <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(10px)' }}>
@@ -875,6 +1017,32 @@ export default function Dashboard() {
                         >
                             Cancel
                         </button>
+                    </div>
+                </div>
+            </div>
+        )}
+
+        {/* DELETE CONFIRMATION MODAL */}
+        {isDeleteModalOpen && (
+            <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', zIndex: 5000, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(10px)' }}>
+                <div className="modal-content" style={{ background: '#0f172a', padding: '2.5rem', borderRadius: '24px', color: 'white', width: '400px', border: '1px solid rgba(239, 68, 68, 0.3)', boxShadow: '0 25px 50px -12px rgba(239, 68, 68, 0.1)' }}>
+                    <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+                        <div style={{ background: 'rgba(239, 68, 68, 0.1)', width: '70px', height: '70px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}>
+                            <span style={{ fontSize: '2.5rem', color: '#ef4444' }}>⚠️</span>
+                        </div>
+                        <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '0.75rem' }}>Delete Signal?</h2>
+                        <p style={{ color: '#94a3b8', fontSize: '1rem', lineHeight: '1.6' }}>Are you sure you want to remove this signal? This action cannot be undone.</p>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '15px' }}>
+                        <button 
+                            onClick={() => { setIsDeleteModalOpen(false); setSignalIdToDelete(null); }}
+                            style={{ flex: 1, background: 'rgba(255,255,255,0.05)', color: 'white', border: '1px solid rgba(255,255,255,0.1)', padding: '14px', borderRadius: '14px', cursor: 'pointer', fontWeight: 600, fontSize: '1rem' }}
+                        >Cancel</button>
+                        <button 
+                            onClick={confirmDelete}
+                            style={{ flex: 1, background: '#ef4444', color: 'white', border: 'none', padding: '14px', borderRadius: '14px', cursor: 'pointer', fontWeight: 700, fontSize: '1rem', boxShadow: '0 10px 20px -5px rgba(239, 68, 68, 0.4)' }}
+                        >Yes, Delete</button>
                     </div>
                 </div>
             </div>

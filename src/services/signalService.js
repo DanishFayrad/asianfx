@@ -42,11 +42,17 @@ const getUserSignalHistory = async (userId) => {
     return response.data;
 };
 
+const deleteSignal = async (id) => {
+    const response = await api.delete(API_ENDPOINTS.SIGNALS.DELETE(id));
+    return response.data;
+};
+
 const signalService = {
     getSignalsDashboard,
     createSignal,
     takeSignal,
     getUserSignalHistory,
+    deleteSignal,
 };
 
 export default signalService;

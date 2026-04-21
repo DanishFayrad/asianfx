@@ -79,7 +79,11 @@ export default function AdminSignals() {
     // Set up Real-time listener for badges
     if (user?.is_admin) {
         const socket = io(API_BASE_URL);
-        socket.emit('join_admin');
+        
+        socket.on('connect', () => {
+            console.log("Admin Socket connected:", socket.id);
+            socket.emit('join_admin');
+        });
 
         socket.on('admin_notification', (notif) => {
             console.log("Admin page real-time update:", notif);

@@ -3,13 +3,17 @@ export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost
 export const API_ENDPOINTS = {
     LOGIN: '/api/auth/login',
     REGISTER: '/api/auth/register',
+    VERIFY_OTP: '/api/auth/verify-otp',
     LOGOUT: '/api/auth/logout',
     PROFILE: '/api/auth/profile',
+    FORGOT_PASSWORD: '/api/auth/forgot-password',
+    RESET_PASSWORD: '/api/auth/reset-password',
     SIGNALS: {
         DASHBOARD: '/api/signals/dashboard',
         CREATE: '/api/signals/create',
         TAKE: '/api/signals/take',
         HISTORY: (userId) => `/api/signals/user/${userId}/history`,
+        DELETE: (id) => `/api/signals/${id}`,
     },
     TRANSACTIONS: {
         DEPOSIT: '/api/transactions/deposit',

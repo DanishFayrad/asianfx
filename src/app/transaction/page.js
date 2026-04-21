@@ -67,7 +67,8 @@ export default function Transaction() {
     target_price: '',
     stop_loss: '',
     signal_type: 'premium',
-    description: ''
+    description: '',
+    releaseMinutes: ''
   });
 
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -197,8 +198,10 @@ export default function Transaction() {
     try {
         const payload = {
             ...signalData,
-            target_user_id: targetUser.id
+            target_user_id: targetUser.id,
+            timer_minutes: signalData.releaseMinutes || null
         };
+
         await signalService.createSignal(payload);
         toast.success(`Signal sent successfully to ${targetUser.name}`);
         setIsSignalModalOpen(false);
@@ -360,16 +363,19 @@ export default function Transaction() {
           </header>
         </div>
 
-        {/* ADMIN PENDING DEPOSITS CARD */}
+        {/* ADMIN DEPOSIT MANAGEMENT CARD */}
         <div className="card" style={{ marginBottom: '2rem', border: '1px solid rgba(212,175,55,0.3)' }}>
-          <div className="card-header">
-              <h3 style={{ color: '#d4af37' }}>🔔 Pending Deposit Approvals</h3>
+          <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ color: '#d4af37' }}>💰 Deposit Management</h3>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>
+                Showing all recent requests (Manual Delete)
+              </div>
           </div>
           <div className="table-box" style={{ padding: '1rem', overflowX: 'auto' }}>
-              {pendingDeposits.length === 0 ? (
+              {userTransactions.filter(t => t.type === 'deposit').length === 0 ? (
                   <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
                       <img src="/images/svg (15).png" style={{ width: '40px', opacity: 0.2, marginBottom: '1rem' }} alt="Empty" />
-                      <p>Currently, there are no pending deposit requests to approve.</p>
+                      <p>No deposit requests found.</p>
                   </div>
               ) : (
                 <table style={{ width: '100%', minWidth: '800px', borderCollapse: 'collapse' }}>
@@ -378,40 +384,61 @@ export default function Transaction() {
                             <th style={{ padding: '15px' }}>Date</th>
                             <th style={{ padding: '15px' }}>User</th>
                             <th style={{ padding: '15px' }}>Amount</th>
-                            <th style={{ padding: '15px' }}>Proof</th>
+                            <th style={{ padding: '15px' }}>Status</th>
                             <th style={{ padding: '15px' }}>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {pendingDeposits.map(tx => (
-                            <tr key={tx.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                        {userTransactions.filter(t => t.type === 'deposit').slice(0, 20).map(tx => (
+                            <tr key={tx.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', background: (tx.status === 'completed' || tx.status === 'approved') ? 'rgba(34, 197, 94, 0.02)' : 'transparent' }}>
                                 <td style={{ padding: '15px' }}>
-                                    {new Date(tx.created_at || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                    {new Date(tx.created_at).toLocaleDateString()}
                                 </td>
                                 <td style={{ padding: '15px' }}>
                                     <div style={{ color: 'white', fontWeight: 'bold' }}>{tx.User?.name || 'User #' + tx.user_id}</div>
-                                    <small style={{ color: 'var(--text-muted)' }}>{tx.User?.email || 'N/A'}</small>
+                                    <small style={{ color: 'var(--text-dim)' }}>{tx.User?.email}</small>
                                 </td>
                                 <td style={{ padding: '15px', color: '#22c55e', fontWeight: 'bold' }}>${tx.amount}</td>
                                 <td style={{ padding: '15px' }}>
-                                    <button 
-                                        onClick={() => {
-                                            const url = tx.proof_image;
-                                            if (url?.startsWith('data:') || url?.startsWith('http')) {
-                                                window.open(url, '_blank');
-                                            } else {
-                                                window.open(`${BACKEND_URL}${url}`, '_blank');
-                                            }
-                                        }} 
-                                        style={{ background: 'rgba(255,255,255,0.1)', color: 'white', border: '1px solid rgba(255,255,255,0.2)', padding: '6px 12px', borderRadius: '5px', cursor: 'pointer', fontSize: '13px' }}
-                                    >View Image</button>
+                                    <span style={{ 
+                                        padding: '4px 8px', 
+                                        borderRadius: '4px', 
+                                        fontSize: '0.65rem', 
+                                        fontWeight: 900, 
+                                        background: (tx.status === 'completed' || tx.status === 'approved') ? 'rgba(34, 197, 94, 0.15)' : tx.status === 'pending' ? 'rgba(234, 179, 8, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                                        color: (tx.status === 'completed' || tx.status === 'approved') ? '#22c55e' : tx.status === 'pending' ? '#eab308' : '#ef4444',
+                                        textTransform: 'uppercase'
+                                    }}>
+                                        {tx.status}
+                                    </span>
                                 </td>
                                 <td style={{ padding: '15px' }}>
-                                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                                        <button onClick={() => handleApprove(tx.id)} style={{ background: '#22c55e', color: 'black', border: 'none', padding: '6px 14px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>Approve</button>
-                                        <button onClick={() => handleReject(tx.id)} style={{ background: '#ef4444', color: 'white', border: 'none', padding: '6px 14px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>Reject</button>
-                                        <button onClick={() => openSignalModal(tx.User || {id: tx.user_id, name: 'User ' + tx.user_id})} style={{ background: 'var(--primary)', color: 'black', border: 'none', padding: '6px 14px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>Send Signal</button>
-                                        <button onClick={() => handleDelete(tx.id)} style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid #ef4444', padding: '6px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>Delete</button>
+                                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+                                        {tx.status === 'pending' && (
+                                            <>
+                                                <button onClick={() => handleApprove(tx.id)} style={{ background: '#22c55e', color: 'black', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold' }}>Approve</button>
+                                                <button onClick={() => handleReject(tx.id)} style={{ background: '#ef4444', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold' }}>Reject</button>
+                                            </>
+                                        )}
+                                        
+                                        {(tx.status === 'completed' || tx.status === 'approved' || tx.status === 'pending') && (
+                                             <button onClick={() => openSignalModal(tx.User || {id: tx.user_id, name: 'User ' + tx.user_id})} style={{ background: 'var(--primary)', color: 'black', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold' }}>Send Signal</button>
+                                        )}
+
+                                        <button 
+                                            onClick={() => {
+                                                const url = tx.proof_image;
+                                                if (url?.startsWith('data:') || url?.startsWith('http')) {
+                                                    window.open(url, '_blank');
+                                                } else {
+                                                    window.open(`${BACKEND_URL}${url}`, '_blank');
+                                                }
+                                            }} 
+                                            style={{ background: 'rgba(255,255,255,0.1)', color: 'white', border: 'none', width: '28px', height: '28px', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                            title="View Proof"
+                                        >🖼️</button>
+
+                                        <button onClick={() => handleDelete(tx.id)} style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid #ef4444', padding: '6px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold' }}>Delete</button>
                                     </div>
                                 </td>
                             </tr>
@@ -422,70 +449,7 @@ export default function Transaction() {
           </div>
         </div>
 
-        {/* ALL TRANSACTIONS HISTORY (ADMIN ONLY) */}
-        <div className="card" style={{ border: '1px solid rgba(255,255,255,0.05)' }}>
-          <div className="card-header">
-              <h3>📜 All Transactions History</h3>
-          </div>
-          <div className="table-box" style={{ padding: '1rem', overflowX: 'auto' }}>
-              {userTransactions.length === 0 ? (
-                  <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
-                      <p>No transaction history found.</p>
-                  </div>
-              ) : (
-                <table style={{ width: '100%', minWidth: '800px', borderCollapse: 'collapse' }}>
-                    <thead>
-                        <tr style={{ background: 'rgba(255,255,255,0.05)', textAlign: 'left' }}>
-                            <th style={{ padding: '12px' }}>Date</th>
-                            <th style={{ padding: '12px' }}>User</th>
-                            <th style={{ padding: '12px' }}>Type</th>
-                            <th style={{ padding: '12px' }}>Amount</th>
-                            <th style={{ padding: '12px' }}>Status</th>
-                            <th style={{ padding: '12px' }}>Method</th>
-                            <th style={{ padding: '12px' }}>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {userTransactions.map(tx => (
-                            <tr key={tx.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                                <td style={{ padding: '12px', fontSize: '13px' }}>
-                                    {new Date(tx.created_at || Date.now()).toLocaleString()}
-                                </td>
-                                <td style={{ padding: '12px', fontSize: '13px' }}>
-                                    <div>{tx.User?.name || 'User #' + tx.user_id}</div>
-                                    <small style={{ opacity: 0.5 }}>{tx.User?.email}</small>
-                                </td>
-                                <td style={{ padding: '12px', textTransform: 'capitalize', fontSize: '13px' }}>{tx.type}</td>
-                                <td style={{ padding: '12px', fontWeight: 700, color: tx.type === 'deposit' ? '#22c55e' : '#ef4444', fontSize: '13px' }}>
-                                    {tx.type === 'deposit' ? '+' : '-'}${tx.amount}
-                                </td>
-                                <td style={{ padding: '12px', fontSize: '13px' }}>
-                                    <span style={{ 
-                                        padding: '4px 8px', 
-                                        borderRadius: '4px', 
-                                        fontSize: '11px', 
-                                        fontWeight: 700,
-                                        background: tx.status === 'approved' ? 'rgba(34, 197, 94, 0.1)' : tx.status === 'pending' ? 'rgba(234, 179, 8, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-                                        color: tx.status === 'approved' ? '#22c55e' : tx.status === 'pending' ? '#eab308' : '#ef4444',
-                                        border: `1px solid ${tx.status === 'approved' ? '#22c55e' : tx.status === 'pending' ? '#eab308' : '#ef4444'}`
-                                    }}>
-                                        {tx.status?.toUpperCase()}
-                                    </span>
-                                </td>
-                                <td style={{ padding: '12px', fontSize: '13px' }}>{tx.payment_method || 'N/A'}</td>
-                                <td style={{ padding: '12px' }}>
-                                    <button 
-                                        onClick={() => handleDelete(tx.id)}
-                                        style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid #ef4444', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '11px', fontWeight: 700 }}
-                                    >Delete</button>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-              )}
-          </div>
-        </div>
+
 
         {/* SIGNAL MODAL */}
         {isSignalModalOpen && (
@@ -537,7 +501,22 @@ export default function Transaction() {
                             </div>
                         </div>
 
-                        <div style={{ display: 'flex', gap: '15px', marginTop: '1rem' }}>
+                        <div>
+                            <label style={{ fontSize: '0.75rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 700, display: 'block', marginBottom: '6px' }}>Release Timer (Optional)</label>
+                            <div style={{ position: 'relative' }}>
+                                <input 
+                                    type="number" 
+                                    placeholder="Minutes (e.g. 5, 10, 30)" 
+                                    style={{ width: '100%', background: '#1e293b', border: '1px solid #334155', color: 'white', padding: '12px 12px 12px 40px', borderRadius: '10px', outline: 'none', fontWeight: 600, color: '#d4af37' }} 
+                                    value={signalData.releaseMinutes} 
+                                    onChange={(e) => setSignalData({...signalData, releaseMinutes: e.target.value})} 
+                                />
+                                <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', fontSize: '1.2rem', opacity: 0.6 }}>⌛</span>
+                            </div>
+                            <p style={{ fontSize: '0.65rem', color: '#64748b', marginTop: '6px' }}>Leave empty for instant release. Enter minutes to show a countdown timer to the user.</p>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '15px', marginTop: '0.5rem' }}>
                             <button onClick={handleSendSignal} style={{ flex: 2, background: '#d4af37', border: 'none', padding: '14px', borderRadius: '10px', cursor: 'pointer', fontWeight: 700, color: 'black', fontSize: '1rem', transition: '0.3s' }}>Broadcast Signal</button>
                             <button onClick={() => setIsSignalModalOpen(false)} style={{ flex: 1, background: 'transparent', border: '1px solid #334155', color: 'white', padding: '14px', borderRadius: '10px', cursor: 'pointer' }}>Cancel</button>
                         </div>
@@ -587,6 +566,8 @@ export default function Transaction() {
                 </div>
             </div>
         )}
+
+        {/* Recent Transactions History removed per request */}
 
         {/* System Log explicitly removed per request */}
       </main>

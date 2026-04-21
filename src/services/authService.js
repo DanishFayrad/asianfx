@@ -57,11 +57,29 @@ const getProfile = async () => {
     return response.data;
 };
 
+const verifyOTP = async (data) => {
+    const response = await api.post(API_ENDPOINTS.VERIFY_OTP, data);
+    return response.data;
+};
+
+const forgotPassword = async (data) => {
+    const response = await api.post(API_ENDPOINTS.FORGOT_PASSWORD, data);
+    return response.data;
+};
+
+const resetPassword = async (data) => {
+    const response = await api.post(API_ENDPOINTS.RESET_PASSWORD, data);
+    return response.data;
+};
+
 const authService = {
     login,
     register,
     logout,
-    getProfile
+    getProfile,
+    verifyOTP,
+    forgotPassword,
+    resetPassword
 };
 
 export default authService;
