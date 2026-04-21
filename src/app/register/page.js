@@ -18,7 +18,15 @@ export default function Register() {
     password: '',
     phone: '',
     country: '',
+    referral_code: '',
   });
+
+  useEffect(() => {
+    const storedRef = localStorage.getItem('referral_code');
+    if (storedRef) {
+      setFormData(prev => ({ ...prev, referral_code: storedRef }));
+    }
+  }, []);
 
   const { name, email, password, phone, country } = formData;
 
@@ -144,6 +152,20 @@ export default function Register() {
               style={{ cursor: 'pointer' }}
               onClick={togglePasswordVisibility}
               alt="Toggle Password"
+            />
+          </div>
+        </div>
+
+        <div className="input-group">
+          <label>Referral Code (Optional)</label>
+          <div className="input-wrapper">
+            <input 
+              type="text" 
+              name="referral_code"
+              placeholder="Enter referral code" 
+              className="input-box icon-padding" 
+              value={formData.referral_code}
+              onChange={onChange}
             />
           </div>
         </div>

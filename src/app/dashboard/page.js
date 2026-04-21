@@ -302,7 +302,7 @@ export default function Dashboard() {
         user_id: user.id || user.user_id,
         signal_id: signalToTake.id,
         taken_price: signalToTake.entry_price,
-        invested_amount: 5.0,
+        invested_amount: 1.0,
       };
       const response = await signalService.takeSignal(payload);
       toast.success(response.message || "Signal taken successfully!");
@@ -757,6 +757,7 @@ export default function Dashboard() {
                 </div>
             </div>
         ) : (
+            <>
             <div className="db-stats">
               <div className="db-card">
                 <img src="/images/div (9).png" style={{ marginBottom: "10px" }} alt="Stat Icon" />
@@ -786,6 +787,62 @@ export default function Dashboard() {
                 <p>Total Signals</p>
               </div>
             </div>
+
+            {/* REFERRAL / AFFILIATE SECTION */}
+            <div className="affiliate-center" style={{ 
+                background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.05) 0%, rgba(0, 0, 0, 0.3) 100%)', 
+                border: '1px solid rgba(212, 175, 55, 0.2)', 
+                borderRadius: '24px', 
+                padding: '2rem', 
+                marginBottom: '2.5rem',
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+                gap: '2rem',
+                position: 'relative',
+                overflow: 'hidden'
+            }}>
+                <div style={{ position: 'absolute', top: '-10px', right: '-10px', fontSize: '120px', opacity: 0.03, pointerEvents: 'none' }}>🤝</div>
+                
+                <div className="affiliate-info">
+                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '1rem' }}>
+                      <div style={{ background: '#d4af37', color: 'black', width: '40px', height: '40px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>💰</div>
+                      <h3 style={{ color: 'white', margin: 0, fontSize: '1.4rem' }}>Refer & Earn</h3>
+                   </div>
+                   <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: '1.6', marginBottom: '1.5rem' }}>
+                      Invite your community to AsianFX and earn <strong>$0.30</strong> for every signal they take. Build your passive income stream today!
+                   </p>
+                   
+                   <div style={{ background: 'rgba(0,0,0,0.5)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '15px' }}>
+                      <label style={{ display: 'block', fontSize: '0.75rem', color: '#d4af37', fontWeight: 700, textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '1px' }}>Your Referral Link</label>
+                      <div style={{ display: 'flex', gap: '10px' }}>
+                         <input 
+                            readOnly 
+                            value={mounted ? `${window.location.origin}?ref=${user?.referral_code || ''}` : ''} 
+                            style={{ flex: 1, background: 'transparent', border: 'none', color: 'white', fontSize: '0.85rem', outline: 'none' }}
+                         />
+                         <button 
+                            onClick={() => {
+                                const link = `${window.location.origin}?ref=${user?.referral_code}`;
+                                navigator.clipboard.writeText(link);
+                                toast.success('Link copied!');
+                            }}
+                            style={{ background: '#d4af37', color: 'black', border: 'none', borderRadius: '6px', padding: '4px 12px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
+                         >COPY</button>
+                      </div>
+                   </div>
+                </div>
+
+                <div className="affiliate-stats-card" style={{ background: 'rgba(212, 175, 55, 0.1)', border: '1px solid rgba(212, 175, 55, 0.2)', borderRadius: '20px', padding: '1.5rem', textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                   <span style={{ fontSize: '0.8rem', color: '#d4af37', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' }}>Affiliate Balance</span>
+                   <h2 style={{ fontSize: '2.5rem', margin: '10px 0', color: 'white' }}>${mounted ? (user?.affiliate_balance || '0.00') : '0.00'}</h2>
+                   <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>Earnings from your referred community</p>
+                   <button 
+                      style={{ marginTop: '1.5rem', background: 'transparent', border: '1px solid #d4af37', color: '#d4af37', padding: '8px 20px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer' }}
+                      onClick={() => toast.error('Minimum withdrawal for affiliate balance is $10')}
+                   >Withdraw Profits</button>
+                </div>
+            </div>
+            </>
         )}
 
         {/*  TABLE - only for normal users */}

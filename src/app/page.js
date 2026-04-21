@@ -7,6 +7,15 @@ import '../styles/style.css';
 export default function Home() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
+    React.useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const ref = urlParams.get('ref');
+        if (ref) {
+            localStorage.setItem('referral_code', ref);
+            console.log('Referral code saved:', ref);
+        }
+    }, []);
+
     return (
         <>
 <header className="navbar">

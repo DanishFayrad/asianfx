@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import authService from '../../services/authService';
 import toast from 'react-hot-toast';
 import '../../styles/forgotPassword.css';
 
-export default function VerifyEmail() {
+function VerifyEmailContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const emailFromQuery = searchParams.get('email');
@@ -20,7 +21,7 @@ export default function VerifyEmail() {
             toast.error('Email is missing. Please register again.');
             router.push('/register');
         }
-    }, [emailFromQuery]);
+    }, [emailFromQuery, email, router]);
 
     const handleVerify = async (e) => {
         e.preventDefault();
@@ -90,5 +91,20 @@ export default function VerifyEmail() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function VerifyEmail() {
+    return (
+        <Suspense fallback={
+            <div className="forgot-password-container">
+                <div className="forgot-password-card" style={{ textAlign: 'center', padding: '50px' }}>
+                    <div className="loading-spinner"></div>
+                    <p style={{ color: 'white', marginTop: '20px' }}>Loading verification page...</p>
+                </div>
+            </div>
+        }>
+            <VerifyEmailContent />
+        </Suspense>
     );
 }
