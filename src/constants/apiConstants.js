@@ -1,9 +1,10 @@
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL_LIVE || 'http://localhost:5000';
 
 export const API_ENDPOINTS = {
     LOGIN: '/api/auth/login',
     REGISTER: '/api/auth/register',
     VERIFY_OTP: '/api/auth/verify-otp',
+    RESEND_OTP: '/api/auth/resend-otp',
     LOGOUT: '/api/auth/logout',
     PROFILE: '/api/auth/profile',
     FORGOT_PASSWORD: '/api/auth/forgot-password',

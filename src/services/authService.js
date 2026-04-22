@@ -62,6 +62,11 @@ const verifyOTP = async (data) => {
     return response.data;
 };
 
+const resendOTP = async (data) => {
+    const response = await api.post(API_ENDPOINTS.RESEND_OTP, data);
+    return response.data;
+};
+
 const forgotPassword = async (data) => {
     const response = await api.post(API_ENDPOINTS.FORGOT_PASSWORD, data);
     return response.data;
@@ -78,6 +83,7 @@ const authService = {
     logout,
     getProfile,
     verifyOTP,
+    resendOTP,
     forgotPassword,
     resetPassword
 };

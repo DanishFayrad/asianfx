@@ -39,10 +39,10 @@ export default function VerifyEmailClient() {
 
     const handleResend = async () => {
         try {
-            await authService.forgotPassword({ email });
-            toast.success('New code sent to your email!');
+            await authService.resendOTP({ email });
+            toast.success('New verification code sent to your email!');
         } catch (error) {
-            toast.error('Failed to resend code');
+            toast.error(error.response?.data?.message || 'Failed to resend code');
         }
     };
 
