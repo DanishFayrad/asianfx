@@ -501,20 +501,6 @@ export default function Transaction() {
                             </div>
                         </div>
 
-                        <div>
-                            <label style={{ fontSize: '0.75rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 700, display: 'block', marginBottom: '6px' }}>Release Timer (Optional)</label>
-                            <div style={{ position: 'relative' }}>
-                                <input 
-                                    type="number" 
-                                    placeholder="Minutes (e.g. 5, 10, 30)" 
-                                    style={{ width: '100%', background: '#1e293b', border: '1px solid #334155', color: 'white', padding: '12px 12px 12px 40px', borderRadius: '10px', outline: 'none', fontWeight: 600, color: '#d4af37' }} 
-                                    value={signalData.releaseMinutes} 
-                                    onChange={(e) => setSignalData({...signalData, releaseMinutes: e.target.value})} 
-                                />
-                                <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', fontSize: '1.2rem', opacity: 0.6 }}>⌛</span>
-                            </div>
-                            <p style={{ fontSize: '0.65rem', color: '#64748b', marginTop: '6px' }}>Leave empty for instant release. Enter minutes to show a countdown timer to the user.</p>
-                        </div>
 
                         <div style={{ display: 'flex', gap: '15px', marginTop: '0.5rem' }}>
                             <button onClick={handleSendSignal} style={{ flex: 2, background: '#d4af37', border: 'none', padding: '14px', borderRadius: '10px', cursor: 'pointer', fontWeight: 700, color: 'black', fontSize: '1rem', transition: '0.3s' }}>Broadcast Signal</button>

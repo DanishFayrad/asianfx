@@ -15,6 +15,10 @@ export const API_ENDPOINTS = {
         TAKE: '/api/signals/take',
         HISTORY: (userId) => `/api/signals/user/${userId}/history`,
         DELETE: (id) => `/api/signals/${id}`,
+        GLOBAL_TIMER: '/api/signals/global-timer',
+        REQUEST_ACCESS: '/api/signals/request-access',
+        REQUESTS: '/api/signals/requests',
+        APPROVE_REQUEST: (id) => `/api/signals/requests/${id}/approve`,
     },
     TRANSACTIONS: {
         DEPOSIT: '/api/transactions/deposit',

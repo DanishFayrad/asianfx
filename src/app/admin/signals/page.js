@@ -40,6 +40,9 @@ export default function AdminSignals() {
   const [recentSignals, setRecentSignals] = useState([]);
   const [adminStats, setAdminStats] = useState(null);
   const [liveClientsCount, setLiveClientsCount] = useState(0);
+  const [globalTimerMinutes, setGlobalTimerMinutes] = useState('');
+  const [signalRequests, setSignalRequests] = useState([]);
+  const [activeGlobalTimer, setActiveGlobalTimer] = useState(null);
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
@@ -58,6 +61,12 @@ export default function AdminSignals() {
         if (user?.is_admin) {
             const stats = await transactionService.getAdminStats();
             setAdminStats(stats);
+            
+            const timerData = await signalService.getGlobalTimer();
+            setActiveGlobalTimer(timerData.expires_at);
+
+            const requests = await signalService.getSignalRequests();
+            setSignalRequests(requests);
         }
     } catch (e) {
         console.error("Failed to fetch admin data", e);
@@ -92,6 +101,10 @@ export default function AdminSignals() {
 
         socket.on('active_clients_count', (count) => {
             setLiveClientsCount(count);
+        });
+
+        socket.on('global_timer_update', (data) => {
+            setActiveGlobalTimer(data.expires_at);
         });
 
         return () => socket.disconnect();
@@ -159,6 +172,41 @@ export default function AdminSignals() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSetGlobalTimer = async () => {
+      if (!globalTimerMinutes) return;
+      try {
+          setLoading(true);
+          await signalService.setGlobalTimer(globalTimerMinutes);
+          toast.success(`Global timer set for ${globalTimerMinutes} minutes`);
+          setGlobalTimerMinutes('');
+          fetchAllAdminData();
+      } catch (e) {
+          toast.error("Failed to set global timer");
+      } finally {
+          setLoading(false);
+      }
+  };
+
+  const handleClearGlobalTimer = async () => {
+      try {
+          await signalService.clearGlobalTimer();
+          toast.success("Global timer cleared");
+          fetchAllAdminData();
+      } catch (e) {
+          toast.error("Failed to clear timer");
+      }
+  };
+
+  const handleApproveRequest = async (id) => {
+      try {
+          await signalService.approveSignalRequest(id);
+          toast.success("Request approved");
+          fetchAllAdminData();
+      } catch (e) {
+          toast.error("Failed to approve request");
+      }
   };
 
   return (
@@ -390,9 +438,84 @@ export default function AdminSignals() {
                 <p style={{ fontSize: '0.7rem', color: 'var(--admin-text-muted)', textAlign: 'center', marginTop: '1rem' }}>
                    ⓘ Signals are instantly broadcasted to all active clients.
                 </p>
-             </div>
+              </div>
           </aside>
         </form>
+
+        {/* NEW GLOBAL TIMER & REQUESTS SECTION */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '2rem', marginBottom: '3rem' }}>
+            {/* GLOBAL TIMER CARD */}
+            <section className="admin-summary-card" style={{ margin: 0 }}>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span style={{ fontSize: '1.5rem' }}>⌛</span> Next Signal Countdown
+                </h3>
+                <p className="admin-subtitle">Set a breaking news style timer for all users</p>
+                
+                {activeGlobalTimer ? (
+                    <div style={{ background: 'rgba(212, 175, 55, 0.1)', border: '1px solid #d4af37', borderRadius: '12px', padding: '1.5rem', textAlign: 'center', marginBottom: '1.5rem' }}>
+                        <div style={{ fontSize: '0.75rem', color: '#d4af37', fontWeight: 800, textTransform: 'uppercase', marginBottom: '5px' }}>Active Timer</div>
+                        <div style={{ fontSize: '2.5rem', fontWeight: 900, color: '#d4af37', fontFamily: 'monospace' }}>
+                            {Math.max(0, Math.ceil((new Date(activeGlobalTimer) - new Date()) / 60000))}m left
+                        </div>
+                        <button 
+                            onClick={handleClearGlobalTimer}
+                            style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid #ef4444', color: '#ef4444', padding: '6px 15px', borderRadius: '6px', cursor: 'pointer', marginTop: '10px', fontSize: '0.8rem' }}
+                        >Stop Timer</button>
+                    </div>
+                ) : (
+                    <div className="admin-form-group">
+                        <label>Timer Duration (Minutes)</label>
+                        <div style={{ display: 'flex', gap: '10px' }}>
+                            <input 
+                                type="number" 
+                                className="admin-form-input" 
+                                value={globalTimerMinutes}
+                                onChange={(e) => setGlobalTimerMinutes(e.target.value)}
+                                placeholder="e.g. 10" 
+                            />
+                            <button 
+                                onClick={handleSetGlobalTimer}
+                                className="admin-btn-broadcast" 
+                                style={{ margin: 0, whiteSpace: 'nowrap', width: 'auto', padding: '0 20px' }}
+                                disabled={loading || !globalTimerMinutes}
+                            >Start Countdown</button>
+                        </div>
+                    </div>
+                )}
+                <small style={{ color: 'var(--admin-text-muted)' }}>ⓘ Setting this timer will clear all previous signal requests.</small>
+            </section>
+
+            {/* SIGNAL REQUESTS CARD */}
+            <section className="admin-summary-card" style={{ margin: 0, maxHeight: '400px', overflowY: 'auto' }}>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span style={{ fontSize: '1.5rem' }}>📥</span> Signal Access Requests
+                </h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    {signalRequests.length === 0 ? (
+                        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: '2rem 0' }}>No pending requests</p>
+                    ) : (
+                        signalRequests.map(req => (
+                            <div key={req.id} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--admin-border-color)', borderRadius: '12px', padding: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <div>
+                                    <div style={{ fontWeight: 600 }}>{req.User?.name}</div>
+                                    <div style={{ fontSize: '0.7rem', color: 'var(--admin-text-muted)' }}>Wallet: ${req.User?.wallet_balance}</div>
+                                </div>
+                                <div>
+                                    {req.status === 'pending' ? (
+                                        <button 
+                                            onClick={() => handleApproveRequest(req.id)}
+                                            style={{ background: 'var(--admin-success)', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '6px', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 600 }}
+                                        >Approve</button>
+                                    ) : (
+                                        <span style={{ color: 'var(--admin-success)', fontSize: '0.75rem', fontWeight: 600 }}>Approved ✅</span>
+                                    )}
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
+            </section>
+        </div>
 
         {/* RECENT BROADCASTS SECTION */}
         <section className="admin-recent-section">

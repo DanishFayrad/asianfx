@@ -70,6 +70,8 @@ export default function Dashboard() {
   const [signalBanner, setSignalBanner] = useState(null);
   const [activePendingDeposit, setActivePendingDeposit] = useState(null);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [globalTimer, setGlobalTimer] = useState(null);
+  const [requestStatus, setRequestStatus] = useState(null);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000); // Tick every 1s for real-time countdown
@@ -158,6 +160,12 @@ export default function Dashboard() {
         fetchAllData(); // Refresh to get new timestamps
     });
 
+    socket.on('global_timer_update', (data) => {
+        console.log("Global timer update:", data);
+        setGlobalTimer(data.expires_at);
+        if (!data.expires_at) setRequestStatus(null);
+    });
+
     socket.on('admin_notification', (notif) => {
         if (user.is_admin) {
             console.log("New admin notification:", notif);
@@ -226,6 +234,14 @@ export default function Dashboard() {
     await fetchSignals();
     await fetchNotifications();
     await checkPendingDeposit();
+    
+    // Fetch Global Timer
+    try {
+        const timerData = await signalService.getGlobalTimer();
+        setGlobalTimer(timerData.expires_at);
+        setRequestStatus(timerData.requestStatus);
+    } catch (e) { console.error(e); }
+
     setLoading(false);
   };
 
@@ -313,6 +329,19 @@ export default function Dashboard() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleRequestAccess = async () => {
+      try {
+          setIsSubmitting(true);
+          const response = await signalService.requestSignalAccess();
+          toast.success(response.message);
+          setRequestStatus('pending');
+      } catch (e) {
+          toast.error(e.response?.data?.message || "Failed to send request");
+      } finally {
+          setIsSubmitting(false);
+      }
   };
 
   const getSymbolIcon = (symbol) => {
@@ -529,54 +558,52 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* UPCOMING SIGNAL PERSISTENT BANNER */}
-        {mounted && !user?.is_admin && signals.filter(s => s.release_at && new Date(s.release_at).getTime() > currentTime.getTime()).length > 0 && (
+        {/* GLOBAL BREAKING NEWS TIMER */}
+        {mounted && !user?.is_admin && globalTimer && (
           <div style={{ 
-            background: 'linear-gradient(135.4deg, rgba(212, 175, 55, 0.1) 10%, rgba(212, 175, 55, 0.05) 90%)', 
-            border: '1px solid rgba(212, 175, 55, 0.3)', 
-            borderRadius: '16px', 
-            padding: '1.5rem', 
-            marginBottom: '2rem',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '20px',
-            boxShadow: '0 10px 30px -10px rgba(0,0,0,0.3)',
+            background: 'linear-gradient(90deg, #1a1a1a 0%, #2c240a 50%, #1a1a1a 100%)', 
+            border: '2px solid #d4af37', 
+            borderRadius: '20px', 
+            padding: '2rem', 
+            marginBottom: '2.5rem',
+            textAlign: 'center',
             position: 'relative',
-            overflow: 'hidden'
+            overflow: 'hidden',
+            boxShadow: '0 0 30px rgba(212, 175, 55, 0.2)'
           }}>
-            <div style={{ position: 'absolute', top: '-20px', right: '-20px', fontSize: '100px', opacity: 0.05, transform: 'rotate(-15deg)', pointerEvents: 'none' }}>⌛</div>
             
-            <div style={{ background: 'rgba(212, 175, 55, 0.2)', width: '60px', height: '60px', borderRadius: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem' }}>
-              ⌛
-            </div>
+            <h2 style={{ color: 'white', fontSize: '1.8rem', fontWeight: 800, marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '2px' }}>
+                Upcoming <span style={{ color: '#d4af37' }}>Gold</span> Signal
+            </h2>
+            <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>A high-probability trading opportunity is approaching. Prepare your entry.</p>
             
-            <div style={{ flex: 1 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
-                <span style={{ color: '#d4af37', fontWeight: 800, textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '1px' }}>Upcoming Alert</span>
-                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#d4af37', boxShadow: '0 0 10px #d4af37' }}></span>
-              </div>
-              <h3 style={{ color: 'white', fontSize: '1.2rem', fontWeight: 700, marginBottom: '4px' }}>
-                Next Signal Release: <span style={{ color: '#d4af37' }}>{signals.filter(s => s.release_at && new Date(s.release_at).getTime() > currentTime.getTime()).sort((a,b) => new Date(a.release_at) - new Date(b.release_at))[0]?.symbol}</span>
-              </h3>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-                A professional entry signal is being analyzed. Stay tuned to take your trade at the release time.
-              </p>
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '30px', marginBottom: '2rem' }}>
+                <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: '3.5rem', fontWeight: 900, color: '#d4af37', fontFamily: 'monospace', textShadow: '0 0 15px rgba(212, 175, 55, 0.4)' }}>
+                        {formatCountdown(globalTimer)}
+                    </div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '3px' }}>COUNTDOWN</div>
+                </div>
             </div>
 
-            <div style={{ textAlign: 'right', padding: '0 1rem' }}>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '5px', fontWeight: 600 }}>COUNTDOWN</div>
-              <div style={{ fontSize: '2.5rem', fontWeight: 900, color: '#d4af37', fontFamily: 'monospace', letterSpacing: '2px', textShadow: '0 0 20px rgba(212, 175, 55, 0.3)' }}>
-                {formatCountdown(signals.filter(s => s.release_at && new Date(s.release_at).getTime() > currentTime.getTime()).sort((a,b) => new Date(a.release_at) - new Date(b.release_at))[0]?.release_at)}
-              </div>
-              <button 
-                onClick={() => {
-                  const tableElement = document.querySelector('.table-box');
-                  if (tableElement) tableElement.scrollIntoView({ behavior: 'smooth' });
-                }}
-                style={{ background: '#d4af37', color: 'black', border: 'none', padding: '8px 20px', borderRadius: '8px', fontWeight: 700, cursor: 'pointer', marginTop: '10px', fontSize: '0.8rem', width: '100%' }}
-              >
-                JOIN TRADE
-              </button>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '15px' }}>
+                {!requestStatus ? (
+                    <button 
+                        onClick={handleRequestAccess}
+                        disabled={isSubmitting}
+                        style={{ background: '#d4af37', color: 'black', border: 'none', padding: '12px 35px', borderRadius: '12px', fontWeight: 800, fontSize: '1rem', cursor: 'pointer', transition: '0.3s', boxShadow: '0 5px 15px rgba(212, 175, 55, 0.3)' }}
+                    >
+                        {isSubmitting ? 'Sending Request...' : 'REQUEST SIGNAL ACCESS'}
+                    </button>
+                ) : requestStatus === 'pending' ? (
+                    <div style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', padding: '12px 30px', borderRadius: '12px', color: '#d4af37', fontWeight: 700 }}>
+                        ⏳ REQUEST PENDING APPROVAL
+                    </div>
+                ) : (
+                    <div style={{ background: 'rgba(34, 197, 94, 0.1)', border: '1px solid #22c55e', padding: '12px 30px', borderRadius: '12px', color: '#22c55e', fontWeight: 700 }}>
+                        ✅ ACCESS GRANTED
+                    </div>
+                )}
             </div>
           </div>
         )}
