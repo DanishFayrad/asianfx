@@ -72,6 +72,22 @@ export default function Dashboard() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [globalTimer, setGlobalTimer] = useState(null);
   const [requestStatus, setRequestStatus] = useState(null);
+  const [isSignalAlertOpen, setIsSignalAlertOpen] = useState(false);
+  const [incomingSignal, setIncomingSignal] = useState(null);
+  const [isGlobalTimerHidden, setIsGlobalTimerHidden] = useState(false);
+  const [rejectedSignalIds, setRejectedSignalIds] = useState([]);
+  
+  // Persist rejected signals
+  useEffect(() => {
+    const saved = localStorage.getItem('rejectedSignalIds');
+    if (saved) {
+      try { setRejectedSignalIds(JSON.parse(saved)); } catch (e) { console.error(e); }
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('rejectedSignalIds', JSON.stringify(rejectedSignalIds));
+  }, [rejectedSignalIds]);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000); // Tick every 1s for real-time countdown
@@ -134,6 +150,12 @@ export default function Dashboard() {
             fetchSignals();
             setSignalBanner(notif);
             
+            // Trigger the new Premium Alert Popup
+            if (notif.signal) {
+                setIncomingSignal(notif.signal);
+                setIsSignalAlertOpen(true);
+            }
+
             let toastMsg = '📈 ' + (notif.title || 'New Signal Available!');
             if (notif.signal?.release_at && new Date(notif.signal.release_at).getTime() > new Date().getTime()) {
                 const mins = Math.max(1, Math.ceil((new Date(notif.signal.release_at).getTime() - new Date().getTime()) / 60000));
@@ -306,6 +328,7 @@ export default function Dashboard() {
         setIsDepositModalOpen(true);
         return;
     }
+    setIsGlobalTimerHidden(true); // Hide global timer as the user is now interacting with a live signal
     setSignalToTake(signal);
     setIsTakeSignalModalOpen(true);
   };
@@ -361,7 +384,8 @@ export default function Dashboard() {
   };
 
   const filteredSignals = signals.filter(s => 
-    s.symbol.toLowerCase().includes(searchTerm.toLowerCase())
+    s.symbol.toLowerCase().includes(searchTerm.toLowerCase()) &&
+    !rejectedSignalIds.includes(s.id)
   );
 
   const totalPages = Math.ceil(filteredSignals.length / rowsPerPage);
@@ -559,7 +583,7 @@ export default function Dashboard() {
         </div>
 
         {/* GLOBAL BREAKING NEWS TIMER */}
-        {mounted && !user?.is_admin && globalTimer && (
+        {mounted && !user?.is_admin && globalTimer && !isGlobalTimerHidden && (
           <div style={{ 
             background: 'linear-gradient(90deg, #1a1a1a 0%, #2c240a 50%, #1a1a1a 100%)', 
             border: '2px solid #d4af37', 
@@ -836,7 +860,7 @@ export default function Dashboard() {
                       <h3 style={{ color: 'white', margin: 0, fontSize: '1.4rem' }}>Refer & Earn</h3>
                    </div>
                    <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: '1.6', marginBottom: '1.5rem' }}>
-                      Invite your community to AsianFX and earn <strong>$0.30</strong> for every signal they take. Build your passive income stream today!
+                       Invite your community to AsianFX and earn <strong>$0.30</strong> for every <strong>$1</strong> they deposit. Build your passive income stream today!
                    </p>
                    
                    <div style={{ background: 'rgba(0,0,0,0.5)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '15px' }}>
@@ -844,12 +868,13 @@ export default function Dashboard() {
                       <div style={{ display: 'flex', gap: '10px' }}>
                          <input 
                             readOnly 
-                            value={mounted ? `${window.location.origin}?ref=${user?.referral_code || ''}` : ''} 
+                            value={mounted ? `${window.location.origin.includes('localhost') ? 'https://www.asianfxsignals.com' : window.location.origin}/register?ref=${user?.referral_code || ''}` : ''} 
                             style={{ flex: 1, background: 'transparent', border: 'none', color: 'white', fontSize: '0.85rem', outline: 'none' }}
                          />
                          <button 
                             onClick={() => {
-                                const link = `${window.location.origin}?ref=${user?.referral_code}`;
+                                 const baseUrl = window.location.origin.includes('localhost') ? 'https://www.asianfxsignals.com' : window.location.origin;
+                                 const link = `${baseUrl}/register?ref=${user?.referral_code}`;
                                 navigator.clipboard.writeText(link);
                                 toast.success('Link copied!');
                             }}
@@ -859,14 +884,23 @@ export default function Dashboard() {
                    </div>
                 </div>
 
-                <div className="affiliate-stats-card" style={{ background: 'rgba(212, 175, 55, 0.1)', border: '1px solid rgba(212, 175, 55, 0.2)', borderRadius: '20px', padding: '1.5rem', textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                   <span style={{ fontSize: '0.8rem', color: '#d4af37', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' }}>Affiliate Balance</span>
-                   <h2 style={{ fontSize: '2.5rem', margin: '10px 0', color: 'white' }}>${mounted ? (user?.affiliate_balance || '0.00') : '0.00'}</h2>
-                   <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>Earnings from your referred community</p>
-                   <button 
-                      style={{ marginTop: '1.5rem', background: 'transparent', border: '1px solid #d4af37', color: '#d4af37', padding: '8px 20px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer' }}
-                      onClick={() => toast.error('Minimum withdrawal for affiliate balance is $10')}
-                   >Withdraw Profits</button>
+                <div className="affiliate-stats-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                    <div style={{ background: 'rgba(212, 175, 55, 0.1)', border: '1px solid rgba(212, 175, 55, 0.2)', borderRadius: '16px', padding: '1.25rem', textAlign: 'center' }}>
+                       <span style={{ fontSize: '0.65rem', color: '#d4af37', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' }}>Total Referrals</span>
+                       <h3 style={{ fontSize: '1.5rem', margin: '5px 0', color: 'white' }}>{mounted ? (user?.referral_count || '0') : '0'}</h3>
+                    </div>
+                    <div style={{ background: 'rgba(212, 175, 55, 0.1)', border: '1px solid rgba(212, 175, 55, 0.2)', borderRadius: '16px', padding: '1.25rem', textAlign: 'center' }}>
+                       <span style={{ fontSize: '0.65rem', color: '#d4af37', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' }}>Referral Deposits</span>
+                       <h3 style={{ fontSize: '1.5rem', margin: '5px 0', color: 'white' }}>${mounted ? (user?.total_referral_deposits?.toFixed(2) || '0.00') : '0.00'}</h3>
+                    </div>
+                    <div style={{ background: 'rgba(212, 175, 55, 0.2)', border: '1px solid rgba(212, 175, 55, 0.4)', borderRadius: '16px', padding: '1.25rem', textAlign: 'center', gridColumn: 'span 2' }}>
+                       <span style={{ fontSize: '0.75rem', color: '#d4af37', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px' }}>Your Commission</span>
+                       <h2 style={{ fontSize: '2.2rem', margin: '5px 0', color: 'white' }}>${mounted ? (user?.affiliate_balance?.toFixed(2) || '0.00') : '0.00'}</h2>
+                       <button 
+                          style={{ marginTop: '0.75rem', background: '#d4af37', border: 'none', color: 'black', padding: '8px 20px', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer', width: '100%' }}
+                          onClick={() => toast.error('Minimum withdrawal for affiliate balance is $10')}
+                       >Withdraw Profits</button>
+                    </div>
                 </div>
             </div>
             </>
@@ -1128,6 +1162,120 @@ export default function Dashboard() {
                             style={{ flex: 1, background: '#ef4444', color: 'white', border: 'none', padding: '14px', borderRadius: '14px', cursor: 'pointer', fontWeight: 700, fontSize: '1rem', boxShadow: '0 10px 20px -5px rgba(239, 68, 68, 0.4)' }}
                         >Yes, Delete</button>
                     </div>
+                </div>
+            </div>
+        )}
+
+        {/* PREMIUM SIGNAL ALERT POPUP */}
+        {isSignalAlertOpen && incomingSignal && (
+            <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.9)', zIndex: 4000, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(12px)' }}>
+                <div className="signal-alert-card" style={{ 
+                    background: 'linear-gradient(180deg, #1e293b 0%, #0f172a 100%)', 
+                    padding: '2.5rem', 
+                    borderRadius: '32px', 
+                    color: 'white', 
+                    width: '450px', 
+                    border: '1px solid rgba(212, 175, 55, 0.3)', 
+                    boxShadow: '0 0 50px rgba(212, 175, 55, 0.15)',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    animation: 'slideUp 0.5s cubic-bezier(0.4, 0, 0.2, 1)'
+                }}>
+                    {/* Decorative element */}
+                    <div style={{ position: 'absolute', top: '-50px', right: '-50px', width: '150px', height: '150px', background: 'rgba(212, 175, 55, 0.05)', borderRadius: '50%', filter: 'blur(40px)' }}></div>
+                    
+                    <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+                        <div style={{ 
+                            background: 'rgba(212, 175, 55, 0.1)', 
+                            width: '80px', 
+                            height: '80px', 
+                            borderRadius: '24px', 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'center', 
+                            margin: '0 auto 1.5rem',
+                            border: '1px solid rgba(212, 175, 55, 0.2)',
+                            boxShadow: '0 10px 20px rgba(0,0,0,0.2)'
+                        }}>
+                            <img src={getSymbolIcon(incomingSignal.symbol)} style={{ width: '40px' }} alt="Symbol" />
+                        </div>
+                        <h2 style={{ fontSize: '1.8rem', fontWeight: 900, marginBottom: '0.5rem', letterSpacing: '-0.5px' }}>New Signal Alert!</h2>
+                        <p style={{ color: '#94a3b8', fontSize: '1rem', lineHeight: '1.5' }}>
+                            An exclusive trading opportunity for <strong>{incomingSignal.symbol}</strong> is now live.
+                        </p>
+                    </div>
+
+                    <div style={{ 
+                        background: 'rgba(0, 0, 0, 0.3)', 
+                        padding: '1.5rem', 
+                        borderRadius: '20px', 
+                        marginBottom: '2rem', 
+                        border: '1px solid rgba(255,255,255,0.05)',
+                        display: 'grid',
+                        gridTemplateColumns: '1fr 1fr',
+                        gap: '15px'
+                    }}>
+                        <div style={{ textAlign: 'center', borderRight: '1px solid rgba(255,255,255,0.1)' }}>
+                            <span style={{ display: 'block', fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700, marginBottom: '5px' }}>Action</span>
+                            <span style={{ fontSize: '1.2rem', fontWeight: 800, color: incomingSignal.type.toLowerCase() === 'buy' ? '#22c55e' : '#ef4444' }}>{incomingSignal.type.toUpperCase()}</span>
+                        </div>
+                        <div style={{ textAlign: 'center' }}>
+                            <span style={{ display: 'block', fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700, marginBottom: '5px' }}>Entry</span>
+                            <span style={{ fontSize: '1.2rem', fontWeight: 800 }}>{incomingSignal.entry_price}</span>
+                        </div>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        <button 
+                            onClick={() => {
+                                setIsSignalAlertOpen(false);
+                                setIsGlobalTimerHidden(true); // Hide the global timer banner for this user
+                                handleTakeSignal(incomingSignal);
+                            }} 
+                            style={{ 
+                                width: '100%', 
+                                background: '#d4af37', 
+                                color: 'black', 
+                                border: 'none', 
+                                padding: '16px', 
+                                borderRadius: '16px', 
+                                cursor: 'pointer', 
+                                fontWeight: 800, 
+                                fontSize: '1.1rem',
+                                transition: '0.3s',
+                                boxShadow: '0 10px 20px rgba(212, 175, 55, 0.2)'
+                            }}
+                            onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+                            onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                        >
+                            YES, I WANT TO TAKE IT
+                        </button>
+                        <button 
+                            onClick={() => {
+                                if (incomingSignal) {
+                                    setRejectedSignalIds(prev => [...prev, incomingSignal.id]);
+                                }
+                                setIsSignalAlertOpen(false);
+                            }} 
+                            style={{ 
+                                width: '100%', 
+                                background: 'transparent', 
+                                border: '1px solid rgba(255,255,255,0.1)', 
+                                color: '#94a3b8', 
+                                padding: '14px', 
+                                borderRadius: '16px', 
+                                cursor: 'pointer', 
+                                fontWeight: 600,
+                                fontSize: '1rem'
+                            }}
+                        >
+                            Reject Signal
+                        </button>
+                    </div>
+
+                    <p style={{ textAlign: 'center', fontSize: '0.75rem', color: 'rgba(255,255,255,0.3)', marginTop: '1.5rem' }}>
+                        You can still access this signal from your dashboard anytime.
+                    </p>
                 </div>
             </div>
         )}

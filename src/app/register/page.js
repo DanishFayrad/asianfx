@@ -22,9 +22,19 @@ export default function Register() {
   });
 
   useEffect(() => {
-    const storedRef = localStorage.getItem('referral_code');
-    if (storedRef) {
-      setFormData(prev => ({ ...prev, referral_code: storedRef }));
+    // Check URL first
+    const urlParams = new URLSearchParams(window.location.search);
+    const refFromUrl = urlParams.get('ref');
+    
+    if (refFromUrl) {
+      setFormData(prev => ({ ...prev, referral_code: refFromUrl }));
+      localStorage.setItem('referral_code', refFromUrl); // Also save for future
+    } else {
+      // Fallback to localStorage
+      const storedRef = localStorage.getItem('referral_code');
+      if (storedRef) {
+        setFormData(prev => ({ ...prev, referral_code: storedRef }));
+      }
     }
   }, []);
 

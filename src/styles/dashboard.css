@@ -203,6 +203,11 @@
     to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
 .dropdown-user-info {
     border-bottom: 1px solid var(--border-color);
     padding-bottom: 1rem;
