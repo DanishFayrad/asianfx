@@ -50,7 +50,9 @@ export default function Home() {
 
     <h1>
       <span>Earn Money Safely</span><br />
+      
       Your Wealth, Our Strategy
+
     </h1>
 
     <p className="hero-text">
