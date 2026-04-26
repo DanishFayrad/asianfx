@@ -9,6 +9,21 @@ const apiClient = axios.create({
     },
 });
 
+export let serverTimeOffset = 0;
+
+export const syncClockWithHeuristic = (serverTimestampString) => {
+    if (!serverTimestampString) return;
+    const actualRemaining = new Date(serverTimestampString).getTime() - Date.now();
+    if (actualRemaining > 0) {
+        const snappedRemaining = Math.round(actualRemaining / 60000) * 60000;
+        const drift = actualRemaining - snappedRemaining;
+        // If drift is less than 15 seconds, assume it's clock skew and update the offset
+        if (Math.abs(drift) < 15000) {
+            serverTimeOffset = drift;
+        }
+    }
+};
+
 // Add a request interceptor to include the token in every request
 apiClient.interceptors.request.use(
     (config) => {
@@ -27,7 +42,14 @@ apiClient.interceptors.request.use(
 
 // Add a response interceptor to handle 401 and 403 errors globally
 apiClient.interceptors.response.use(
-    (response) => response,
+    (response) => {
+        if (response.headers && response.headers.date) {
+            const serverTime = new Date(response.headers.date).getTime();
+            const localTime = Date.now();
+            serverTimeOffset = serverTime - localTime;
+        }
+        return response;
+    },
     (error) => {
         const { response } = error;
 

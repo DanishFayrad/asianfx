@@ -13,6 +13,7 @@ import { setUser } from '../../redux/slices/authSlice';
 import { io } from 'socket.io-client';
 import toast from 'react-hot-toast';
 import { API_BASE_URL } from '../../constants/apiConstants';
+import { serverTimeOffset, syncClockWithHeuristic } from '../../services/apiClient';
 import '../../styles/dashboard.css';
 
 export default function Dashboard() {
@@ -90,7 +91,7 @@ export default function Dashboard() {
   }, [rejectedSignalIds]);
 
   useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000); // Tick every 1s for real-time countdown
+    const timer = setInterval(() => setCurrentTime(new Date(Date.now() + serverTimeOffset)), 1000); // Tick every 1s for real-time countdown
     return () => clearInterval(timer);
   }, []);
   
@@ -186,6 +187,7 @@ export default function Dashboard() {
 
     socket.on('global_timer_update', (data) => {
         console.log("Global timer update:", data);
+        if (data.expires_at) syncClockWithHeuristic(data.expires_at);
         setGlobalTimer(data.expires_at);
         if (!data.expires_at) setRequestStatus(null);
     });
@@ -262,6 +264,7 @@ export default function Dashboard() {
     // Fetch Global Timer
     try {
         const timerData = await signalService.getGlobalTimer();
+        if (timerData.expires_at) syncClockWithHeuristic(timerData.expires_at);
         setGlobalTimer(timerData.expires_at);
         setRequestStatus(timerData.requestStatus);
     } catch (e) { console.error(e); }

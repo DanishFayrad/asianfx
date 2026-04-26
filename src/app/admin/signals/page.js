@@ -7,7 +7,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import signalService from '../../../services/signalService';
 import authService from '../../../services/authService';
 import transactionService from '../../../services/transactionService';
-import apiClient from '../../../services/apiClient';
+import apiClient, { serverTimeOffset, syncClockWithHeuristic } from '../../../services/apiClient';
 import { logout } from '../../../redux/slices/authSlice';
 import { io } from 'socket.io-client';
 import { API_BASE_URL } from '../../../constants/apiConstants';
@@ -47,7 +47,7 @@ export default function AdminSignals() {
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    const timer = setInterval(() => setCurrentTime(new Date(Date.now() + serverTimeOffset)), 1000);
     return () => clearInterval(timer);
   }, []);
 
@@ -70,6 +70,9 @@ export default function AdminSignals() {
             setAdminStats(stats);
             
             const timerData = await signalService.getGlobalTimer();
+            if (timerData.expires_at) {
+                syncClockWithHeuristic(timerData.expires_at);
+            }
             setActiveGlobalTimer(timerData.expires_at);
 
             const requests = await signalService.getSignalRequests();
@@ -111,6 +114,7 @@ export default function AdminSignals() {
         });
 
         socket.on('global_timer_update', (data) => {
+            if (data.expires_at) syncClockWithHeuristic(data.expires_at);
             setActiveGlobalTimer(data.expires_at);
         });
 
