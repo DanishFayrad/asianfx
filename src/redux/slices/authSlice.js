@@ -51,6 +51,17 @@ export const registerUser = createAsyncThunk(
     }
 );
 
+export const checkAuth = createAsyncThunk(
+    'auth/check',
+    async (_, thunkAPI) => {
+        try {
+            return await authService.getProfile();
+        } catch (error) {
+            return thunkAPI.rejectWithValue(error.response?.data?.message || 'Session expired');
+        }
+    }
+);
+
 const initialState = {
     user: getInitialUser(),
     token: getInitialToken(),
@@ -116,6 +127,24 @@ export const authSlice = createSlice({
                 state.isLoading = false;
                 state.isError = true;
                 state.message = action.payload;
+            })
+            // Check Auth
+            .addCase(checkAuth.pending, (state) => {
+                state.isLoading = true;
+            })
+            .addCase(checkAuth.fulfilled, (state, action) => {
+                state.isLoading = false;
+                state.user = action.payload;
+                state.isSuccess = true;
+            })
+            .addCase(checkAuth.rejected, (state) => {
+                state.isLoading = false;
+                state.user = null;
+                state.token = null;
+                if (typeof window !== 'undefined') {
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('user');
+                }
             });
     },
 });
