@@ -73,17 +73,26 @@ export default function VerifyEmailClient() {
                     </div>
 
                     <button type="submit" className="btn-primary" disabled={loading}>
-                        {loading ? 'Verifying...' : 'Verify & Activate'}
+                        {loading ? (
+                            <>
+                                <div className="button-loader"></div>
+                                <span>Verifying...</span>
+                            </>
+                        ) : (
+                            'Verify & Activate'
+                        )}
                     </button>
                     
-                    <button 
-                        type="button" 
-                        className="back-to-login" 
-                        style={{ border: 'none', background: 'transparent', cursor: 'pointer', width: '100%', textAlign: 'center', marginTop: '1.5rem', color: 'var(--text-dim)' }}
-                        onClick={handleResend}
-                    >
-                        Didn't receive a code? <span style={{ color: 'var(--primary-gold)' }}>Resend</span>
-                    </button>
+                    <div className="resend-section">
+                        <p className="resend-text">Didn't receive a code?</p>
+                        <button 
+                            type="button" 
+                            className="resend-link"
+                            onClick={handleResend}
+                        >
+                            Resend Code
+                        </button>
+                    </div>
                 </form>
 
                 <div className="back-to-login">

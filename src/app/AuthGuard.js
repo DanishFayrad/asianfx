@@ -67,10 +67,19 @@ export default function AuthGuard({ children }) {
                 display: 'flex', 
                 justifyContent: 'center', 
                 alignItems: 'center', 
-                background: '#0f172a',
-                color: '#fff'
+                background: 'radial-gradient(circle at center, #1e293b 0%, #0f172a 100%)',
+                color: '#fff',
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                zIndex: 9999
             }}>
-                <div className="loader">Verifying session...</div>
+                <div className="loader-container">
+                    <div className="premium-loader"></div>
+                    <div className="loader-text">Verifying Session</div>
+                </div>
             </div>
         );
     }
