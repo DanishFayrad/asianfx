@@ -133,9 +133,11 @@ export default function Dashboard() {
         if (user.is_admin) {
             socket.emit('join_admin');
         }
+
     });
 
     socket.on('notification', (notif) => {
+        
         console.log("New real-time notification:", notif);
         setNotifications(prev => [notif, ...prev]);
         setUnreadCount(prev => prev + 1);
