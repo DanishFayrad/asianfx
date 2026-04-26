@@ -7,10 +7,10 @@ import { useSelector, useDispatch } from 'react-redux';
 import signalService from '../../../services/signalService';
 import authService from '../../../services/authService';
 import transactionService from '../../../services/transactionService';
+import apiClient from '../../../services/apiClient';
 import { logout } from '../../../redux/slices/authSlice';
 import { io } from 'socket.io-client';
 import { API_BASE_URL } from '../../../constants/apiConstants';
-import axios from 'axios';
 import toast from 'react-hot-toast';
 import '../../../styles/adminSignals.css';
 
@@ -23,6 +23,7 @@ export default function AdminSignals() {
   useEffect(() => {
     setMounted(true);
   }, []);
+
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [type, setType] = useState('Buy');
@@ -553,9 +554,7 @@ export default function AdminSignals() {
                            <button 
                                onClick={async () => {
                                    try {
-                                       await axios.post(`${API_BASE_URL}/api/signals/${sig.id}/extend-timer`, { additional_minutes: 2 }, {
-                                           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-                                       });
+                                       await apiClient.post(`/api/signals/${sig.id}/extend-timer`, { additional_minutes: 2 });
                                        fetchAllAdminData();
                                        toast.success("Timer extended by 2 minutes");
                                    } catch (e) { toast.error("Failed to extend timer"); }

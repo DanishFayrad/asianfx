@@ -582,55 +582,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* GLOBAL BREAKING NEWS TIMER */}
-        {mounted && !user?.is_admin && globalTimer && !isGlobalTimerHidden && (
-          <div style={{ 
-            background: 'linear-gradient(90deg, #1a1a1a 0%, #2c240a 50%, #1a1a1a 100%)', 
-            border: '2px solid #d4af37', 
-            borderRadius: '20px', 
-            padding: '2rem', 
-            marginBottom: '2.5rem',
-            textAlign: 'center',
-            position: 'relative',
-            overflow: 'hidden',
-            boxShadow: '0 0 30px rgba(212, 175, 55, 0.2)'
-          }}>
-            
-            <h2 style={{ color: 'white', fontSize: '1.8rem', fontWeight: 800, marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '2px' }}>
-                Upcoming <span style={{ color: '#d4af37' }}>Gold</span> Signal
-            </h2>
-            <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>A high-probability trading opportunity is approaching. Prepare your entry.</p>
-            
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '30px', marginBottom: '2rem' }}>
-                <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: '3.5rem', fontWeight: 900, color: '#d4af37', fontFamily: 'monospace', textShadow: '0 0 15px rgba(212, 175, 55, 0.4)' }}>
-                        {formatCountdown(globalTimer)}
-                    </div>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '3px' }}>COUNTDOWN</div>
-                </div>
-            </div>
-
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '15px' }}>
-                {!requestStatus ? (
-                    <button 
-                        onClick={handleRequestAccess}
-                        disabled={isSubmitting}
-                        style={{ background: '#d4af37', color: 'black', border: 'none', padding: '12px 35px', borderRadius: '12px', fontWeight: 800, fontSize: '1rem', cursor: 'pointer', transition: '0.3s', boxShadow: '0 5px 15px rgba(212, 175, 55, 0.3)' }}
-                    >
-                        {isSubmitting ? 'Sending Request...' : 'REQUEST SIGNAL ACCESS'}
-                    </button>
-                ) : requestStatus === 'pending' ? (
-                    <div style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', padding: '12px 30px', borderRadius: '12px', color: '#d4af37', fontWeight: 700 }}>
-                        ⏳ REQUEST PENDING APPROVAL
-                    </div>
-                ) : (
-                    <div style={{ background: 'rgba(34, 197, 94, 0.1)', border: '1px solid #22c55e', padding: '12px 30px', borderRadius: '12px', color: '#22c55e', fontWeight: 700 }}>
-                        ✅ ACCESS GRANTED
-                    </div>
-                )}
-            </div>
-          </div>
-        )}
 
         {/* INACTIVE NOTICE */}
         {mounted && !user?.is_admin && !user?.is_active && (
@@ -808,292 +759,286 @@ export default function Dashboard() {
                 </div>
             </div>
         ) : (
-            <>
-            <div className="db-stats">
-              <div className="db-card">
-                <img src="/images/div (9).png" style={{ marginBottom: "10px" }} alt="Stat Icon" />
-                <span className="db-card-label">Overall</span>
-                <h3>{stats.total_signals}</h3>
-                <p>Total Signals</p>
-              </div>
-
-              <div className="db-card">
-                <img src="/images/div (10).png" style={{ marginBottom: "10px" }} alt="Stat Icon" />
-                <span className="db-card-label">Success</span>
-                <h3>{stats.success_rate}%</h3>
-                <p>Success Rate</p>
-              </div>
-
-              <div className="db-card">
-                <img src="/images/div (11).png" style={{ marginBottom: "10px" }} alt="Stat Icon" />
-                <span className="db-card-label">Now</span>
-                <h3>{stats.active_signals}</h3>
-                <p>Active Signals</p>
-              </div>
-
-              <div className="db-card">
-                <img src="/images/div (12).png" style={{ marginBottom: "10px" }} alt="Stat Icon" />
-                <span className="db-card-label">Total</span>
-                <h3>{stats.total_signals}</h3>
-                <p>Total Signals</p>
-              </div>
-            </div>
-
-            {/* REFERRAL / AFFILIATE SECTION */}
-            <div className="affiliate-center" style={{ 
-                background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.05) 0%, rgba(0, 0, 0, 0.3) 100%)', 
-                border: '1px solid rgba(212, 175, 55, 0.2)', 
-                borderRadius: '24px', 
-                padding: '2rem', 
-                marginBottom: '2.5rem',
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-                gap: '2rem',
-                position: 'relative',
-                overflow: 'hidden'
-            }}>
-                <div style={{ position: 'absolute', top: '-10px', right: '-10px', fontSize: '120px', opacity: 0.03, pointerEvents: 'none' }}>🤝</div>
-                
-                <div className="affiliate-info">
-                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '1rem' }}>
-                      <div style={{ background: '#d4af37', color: 'black', width: '40px', height: '40px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>💰</div>
-                      <h3 style={{ color: 'white', margin: 0, fontSize: '1.4rem' }}>Refer & Earn</h3>
-                   </div>
-                   <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: '1.6', marginBottom: '1.5rem' }}>
-                       Invite your community to AsianFX and earn <strong>$0.30</strong> for every <strong>$1</strong> they deposit. Build your passive income stream today!
-                   </p>
-                   
-                   <div style={{ background: 'rgba(0,0,0,0.5)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '15px' }}>
-                      <label style={{ display: 'block', fontSize: '0.75rem', color: '#d4af37', fontWeight: 700, textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '1px' }}>Your Referral Link</label>
-                      <div style={{ display: 'flex', gap: '10px' }}>
-                         <input 
-                            readOnly 
-                            value={mounted ? `${window.location.origin.includes('localhost') ? 'https://www.asianfxsignals.com' : window.location.origin}/register?ref=${user?.referral_code || ''}` : ''} 
-                            style={{ flex: 1, background: 'transparent', border: 'none', color: 'white', fontSize: '0.85rem', outline: 'none' }}
-                         />
-                         <button 
-                            onClick={() => {
-                                 const baseUrl = window.location.origin.includes('localhost') ? 'https://www.asianfxsignals.com' : window.location.origin;
-                                 const link = `${baseUrl}/register?ref=${user?.referral_code}`;
-                                navigator.clipboard.writeText(link);
-                                toast.success('Link copied!');
-                            }}
-                            style={{ background: '#d4af37', color: 'black', border: 'none', borderRadius: '6px', padding: '4px 12px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
-                         >COPY</button>
-                      </div>
-                   </div>
-                </div>
-
-                <div className="affiliate-stats-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                    <div style={{ background: 'rgba(212, 175, 55, 0.1)', border: '1px solid rgba(212, 175, 55, 0.2)', borderRadius: '16px', padding: '1.25rem', textAlign: 'center' }}>
-                       <span style={{ fontSize: '0.65rem', color: '#d4af37', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' }}>Total Referrals</span>
-                       <h3 style={{ fontSize: '1.5rem', margin: '5px 0', color: 'white' }}>{mounted ? (user?.referral_count || '0') : '0'}</h3>
-                    </div>
-                    <div style={{ background: 'rgba(212, 175, 55, 0.1)', border: '1px solid rgba(212, 175, 55, 0.2)', borderRadius: '16px', padding: '1.25rem', textAlign: 'center' }}>
-                       <span style={{ fontSize: '0.65rem', color: '#d4af37', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' }}>Referral Deposits</span>
-                       <h3 style={{ fontSize: '1.5rem', margin: '5px 0', color: 'white' }}>${mounted ? (user?.total_referral_deposits?.toFixed(2) || '0.00') : '0.00'}</h3>
-                    </div>
-                    <div style={{ background: 'rgba(212, 175, 55, 0.2)', border: '1px solid rgba(212, 175, 55, 0.4)', borderRadius: '16px', padding: '1.25rem', textAlign: 'center', gridColumn: 'span 2' }}>
-                       <span style={{ fontSize: '0.75rem', color: '#d4af37', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px' }}>Your Commission</span>
-                       <h2 style={{ fontSize: '2.2rem', margin: '5px 0', color: 'white' }}>${mounted ? (user?.affiliate_balance?.toFixed(2) || '0.00') : '0.00'}</h2>
-                       <button 
-                          style={{ marginTop: '0.75rem', background: '#d4af37', border: 'none', color: 'black', padding: '8px 20px', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer', width: '100%' }}
-                          onClick={() => toast.error('Minimum withdrawal for affiliate balance is $10')}
-                       >Withdraw Profits</button>
-                    </div>
-                </div>
-            </div>
-            </>
-        )}
-
-        {/*  TABLE - only for normal users */}
-        {!user?.is_admin && (
-          <div className="table-box">
-           <div className="table-wrapper">
-            <table>
-            <thead>
-              <tr>
-                <th>Symbol</th>
-                <th>Type</th>
-                <th>Entry</th>
-                <th>Target</th>
-                <th>Stop Loss</th>
-                <th>Status</th>
-                <th>Time</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {loading ? (
-                <tr><td colSpan="8" style={{ textAlign: 'center', padding: '40px' }}>Loading signals...</td></tr>
-              ) : currentSignals.length === 0 ? (
-                <tr><td colSpan="8" style={{ textAlign: 'center', padding: '40px' }}>No active signals found.</td></tr>
-              ) : (
-                currentSignals.map((signal, index) => (
-                  <tr key={signal.id || index}>
-                    <td>
-                      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                        <img src={getSymbolIcon(signal.symbol)} style={{ width: "42px", height: "42px" }} alt={signal.symbol} />
-                        <div>
-                          <div style={{ fontWeight: "600" }}>{signal.symbol}</div>
-                          <div style={{ fontSize: "12px", color: "#9ca3af", marginTop: "2px" }}>{getSymbolName(signal.symbol)}</div>
+            <div className="db-content-flex-wrapper">
+                <div className="db-main-content-column" style={{ flex: 1, minWidth: 0 }}>
+                    <div className="db-stats">
+                        <div className="db-card">
+                            <img src="/images/div (9).png" style={{ marginBottom: "10px" }} alt="Stat Icon" />
+                            <span className="db-card-label">Overall</span>
+                            <h3>{stats.total_signals}</h3>
+                            <p>Total Signals</p>
                         </div>
-                      </div>
-                    </td>
-                    <td>
-                      <span className={signal.type.toLowerCase()}>
-                        <img src={getTypeIcon(signal.type)} alt={signal.type} />
-                        {signal.type}
-                      </span>
-                    </td>
-                    <td>{signal.entry_price}</td>
-                    <td className="green">{signal.target_price}</td>
-                    <td className="red">{signal.stop_loss}</td>
-                    <td>
-                      <span className={`db-badge status ${signal.status.toLowerCase().includes('hit') ? 'hit' : signal.status.toLowerCase().includes('stop') ? 'loss' : signal.status.toLowerCase().includes('closed') ? 'close' : 'active'}`}>
-                        {signal.status}
-                      </span>
-                    </td>
-                     <td className="time">
-                       {signal.release_at && new Date(signal.release_at).getTime() > currentTime.getTime() 
-                        ? (
-                            <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                <span style={{ color: '#f59e0b', fontWeight: 700, fontSize: '0.8rem' }}>Release In</span>
-                                <span style={{ color: '#f59e0b', fontSize: '0.75rem' }}>{formatCountdown(signal.release_at)}</span>
+
+                        <div className="db-card">
+                            <img src="/images/div (10).png" style={{ marginBottom: "10px" }} alt="Stat Icon" />
+                            <span className="db-card-label">Success</span>
+                            <h3>{stats.success_rate}%</h3>
+                            <p>Success Rate</p>
+                        </div>
+
+                        <div className="db-card">
+                            <img src="/images/div (11).png" style={{ marginBottom: "10px" }} alt="Stat Icon" />
+                            <span className="db-card-label">Now</span>
+                            <h3>{stats.active_signals}</h3>
+                            <p>Active Signals</p>
+                        </div>
+
+                        <div className="db-card">
+                            <img src="/images/div (12).png" style={{ marginBottom: "10px" }} alt="Stat Icon" />
+                            <span className="db-card-label">Total</span>
+                            <h3>{stats.total_signals}</h3>
+                            <p>Total Signals</p>
+                        </div>
+                    </div>
+
+                    {/* REFERRAL / AFFILIATE SECTION */}
+                    <div className="affiliate-center" style={{ 
+                        background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.05) 0%, rgba(0, 0, 0, 0.3) 100%)', 
+                        border: '1px solid rgba(212, 175, 55, 0.2)', 
+                        borderRadius: '24px', 
+                        padding: '2rem', 
+                        marginBottom: '2.5rem',
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+                        gap: '2rem',
+                        position: 'relative',
+                        overflow: 'hidden'
+                    }}>
+                        <div style={{ position: 'absolute', top: '-10px', right: '-10px', fontSize: '120px', opacity: 0.03, pointerEvents: 'none' }}>🤝</div>
+                        
+                        <div className="affiliate-info">
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '1rem' }}>
+                                <div style={{ background: '#d4af37', color: 'black', width: '40px', height: '40px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>💰</div>
+                                <h3 style={{ color: 'white', margin: 0, fontSize: '1.4rem' }}>Refer & Earn</h3>
                             </div>
-                        )
-                        : new Date(signal.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                       }
-                     </td>
-                      <td className="Action" style={{ verticalAlign: 'middle', padding: '12px 0' }}>
-                       <div style={{ display: 'flex', alignItems: 'center', gap: '18px', justifyContent: 'center', minHeight: '42px' }}>
-                         <div style={{ position: 'relative', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                           {/* ALWAYS SHOW IMAGE BUTTON */}
-                           <img 
-                            src="/images/i (10).png" 
-                            alt="Take Signal" 
-                            title={signal.release_at && new Date(signal.release_at).getTime() > currentTime.getTime() ? `Unlocks in ${formatCountdown(signal.release_at)}` : "Take Signal"} 
-                            style={{ 
-                              cursor: signal.release_at && new Date(signal.release_at).getTime() > currentTime.getTime() ? 'not-allowed' : 'pointer',
-                              opacity: signal.release_at && new Date(signal.release_at).getTime() > currentTime.getTime() ? 0.25 : 1,
-                              filter: signal.release_at && new Date(signal.release_at).getTime() > currentTime.getTime() ? 'grayscale(1) brightness(0.5)' : 'none',
-                              width: '100%',
-                              height: '100%',
-                              objectFit: 'contain',
-                              transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-                              transform: 'scale(1)'
-                            }} 
-                            onMouseOver={(e) => { 
-                                if (!(signal.release_at && new Date(signal.release_at).getTime() > currentTime.getTime())) {
-                                    e.currentTarget.style.transform = 'scale(1.15)';
-                                    e.currentTarget.style.filter = 'drop-shadow(0 0 12px rgba(212, 175, 55, 0.6))';
-                                }
-                            }}
-                            onMouseOut={(e) => { 
-                                e.currentTarget.style.transform = 'scale(1)';
-                                e.currentTarget.style.filter = 'none';
-                            }}
-                            onClick={() => {
-                              if (signal.release_at && new Date(signal.release_at).getTime() > currentTime.getTime()) {
-                                  toast.error(`This signal is locked. Please wait ${formatCountdown(signal.release_at)} more.`);
-                                  return;
-                              }
-                              handleTakeSignal(signal);
-                            }}
-                           />
-                           
-                           {/* OVERLAY TIMER IF SCHEDULED */}
-                           {signal.release_at && new Date(signal.release_at).getTime() > currentTime.getTime() && (
-                              <div style={{ 
-                                  position: 'absolute', 
-                                  top: '50%', 
-                                  left: '50%', 
-                                  transform: 'translate(-50%, -50%)',
-                                  background: 'rgba(15, 23, 42, 0.95)',
-                                  border: '1px solid #d4af37',
-                                  borderRadius: '6px',
-                                  padding: '2px 6px',
-                                  pointerEvents: 'none',
-                                  whiteSpace: 'nowrap',
-                                  zIndex: 10,
-                                  boxShadow: '0 4px 12px rgba(0,0,0,0.5)'
-                              }}>
-                                  <div style={{ fontSize: '10px', color: '#d4af37', fontWeight: 900, fontFamily: 'monospace', letterSpacing: '0.5px' }}>
-                                      {formatCountdown(signal.release_at)}
-                                  </div>
-                              </div>
-                           )}
-                         </div>
+                            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', lineHeight: '1.6', marginBottom: '1.5rem' }}>
+                                Invite your community and earn <strong>$0.30</strong> for every <strong>$1</strong> they deposit.
+                            </p>
+                            
+                            <div style={{ background: 'rgba(0,0,0,0.5)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '12px' }}>
+                                <div style={{ display: 'flex', gap: '10px' }}>
+                                    <input 
+                                        readOnly 
+                                        value={mounted ? `${window.location.origin.includes('localhost') ? 'https://www.asianfxsignals.com' : window.location.origin}/register?ref=${user?.referral_code || ''}` : ''} 
+                                        style={{ flex: 1, background: 'transparent', border: 'none', color: 'white', fontSize: '0.8rem', outline: 'none' }}
+                                    />
+                                    <button 
+                                        onClick={() => {
+                                            const baseUrl = window.location.origin.includes('localhost') ? 'https://www.asianfxsignals.com' : window.location.origin;
+                                            const link = `${baseUrl}/register?ref=${user?.referral_code}`;
+                                            navigator.clipboard.writeText(link);
+                                            toast.success('Link copied!');
+                                        }}
+                                        style={{ background: '#d4af37', color: 'black', border: 'none', borderRadius: '6px', padding: '4px 10px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
+                                    >COPY</button>
+                                </div>
+                            </div>
+                        </div>
 
-                         {/* DELETE BUTTON - Only show for Admin OR if it's a Private Signal (targeted) */}
-                         {(user?.is_admin || (signal.target_user_id !== null && signal.target_user_id !== undefined)) && (
-                            <button 
-                                onClick={() => handleDeleteSignal(signal.id)}
-                                style={{ 
-                                    background: 'rgba(239, 68, 68, 0.05)', 
-                                    border: '1px solid rgba(239, 68, 68, 0.15)', 
-                                    color: '#f87171', 
-                                    width: '32px', 
-                                    height: '32px', 
-                                    borderRadius: '10px', 
-                                    cursor: 'pointer',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    fontSize: '1.1rem',
-                                    padding: 0,
-                                    transition: 'all 0.25s ease',
-                                    position: 'relative',
-                                    overflow: 'hidden'
-                                }}
-                                onMouseOver={(e) => { 
-                                    e.currentTarget.style.background = 'rgba(239, 68, 68, 0.15)';
-                                    e.currentTarget.style.borderColor = '#ef4444';
-                                    e.currentTarget.style.color = 'white';
-                                    e.currentTarget.style.transform = 'translateY(-1px)';
-                                }}
-                                onMouseOut={(e) => { 
-                                    e.currentTarget.style.background = 'rgba(239, 68, 68, 0.05)';
-                                    e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.15)';
-                                    e.currentTarget.style.color = '#f87171';
-                                    e.currentTarget.style.transform = 'translateY(0)';
-                                }}
-                                title="Remove Signal"
-                            >
-                                <span style={{ position: 'relative', top: '-1px', fontWeight: 'bold' }}>×</span>
-                            </button>
-                         )}
-                       </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-         </div>
+                        <div className="affiliate-stats-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                            <div style={{ background: 'rgba(212, 175, 55, 0.1)', border: '1px solid rgba(212, 175, 55, 0.2)', borderRadius: '12px', padding: '1rem', textAlign: 'center' }}>
+                                <span style={{ fontSize: '0.6rem', color: '#d4af37', fontWeight: 600, textTransform: 'uppercase' }}>Referrals</span>
+                                <h3 style={{ fontSize: '1.25rem', margin: '5px 0', color: 'white' }}>{mounted ? (user?.referral_count || '0') : '0'}</h3>
+                            </div>
+                            <div style={{ background: 'rgba(212, 175, 55, 0.1)', border: '1px solid rgba(212, 175, 55, 0.2)', borderRadius: '12px', padding: '1rem', textAlign: 'center' }}>
+                                <span style={{ fontSize: '0.6rem', color: '#d4af37', fontWeight: 600, textTransform: 'uppercase' }}>Deposits</span>
+                                <h3 style={{ fontSize: '1.25rem', margin: '5px 0', color: 'white' }}>${mounted ? (user?.total_referral_deposits?.toFixed(2) || '0.00') : '0.00'}</h3>
+                            </div>
+                            <div style={{ background: 'rgba(212, 175, 55, 0.2)', border: '1px solid rgba(212, 175, 55, 0.4)', borderRadius: '12px', padding: '1rem', textAlign: 'center', gridColumn: 'span 2' }}>
+                                <span style={{ fontSize: '0.65rem', color: '#d4af37', fontWeight: 700, textTransform: 'uppercase' }}>Commission</span>
+                                <h2 style={{ fontSize: '1.75rem', margin: '5px 0', color: 'white' }}>${mounted ? (user?.affiliate_balance?.toFixed(2) || '0.00') : '0.00'}</h2>
+                                <button 
+                                    style={{ marginTop: '0.5rem', background: '#d4af37', border: 'none', color: 'black', padding: '6px 15px', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 800, cursor: 'pointer', width: '100%' }}
+                                    onClick={() => toast.error('Minimum withdrawal is $10')}
+                                >Withdraw</button>
+                            </div>
+                        </div>
+                    </div>
 
-          {/*  TABLE FOOTER  */}
-          <div className="table-footer">
-            <div className="showing-text">
-              Showing {filteredSignals.length > 0 ? startIndex + 1 : 0}-{Math.min(startIndex + rowsPerPage, filteredSignals.length)} of {filteredSignals.length} signals
+                    {/*  TABLE - only for normal users */}
+                    {!user?.is_admin && (
+                        <div className="table-box">
+                            <div className="table-wrapper">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Symbol</th>
+                                            <th>Type</th>
+                                            <th>Entry</th>
+                                            <th>Target</th>
+                                            <th>Stop Loss</th>
+                                            <th>Status</th>
+                                            <th>Time</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {loading ? (
+                                            <tr><td colSpan="8" style={{ textAlign: 'center', padding: '40px' }}>Loading signals...</td></tr>
+                                        ) : currentSignals.length === 0 ? (
+                                            <tr><td colSpan="8" style={{ textAlign: 'center', padding: '40px' }}>No active signals found.</td></tr>
+                                        ) : (
+                                            currentSignals.map((signal, index) => (
+                                                <tr key={signal.id || index}>
+                                                    <td>
+                                                        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                                                            <img src={getSymbolIcon(signal.symbol)} style={{ width: "42px", height: "42px" }} alt={signal.symbol} />
+                                                            <div>
+                                                                <div style={{ fontWeight: "600" }}>{signal.symbol}</div>
+                                                                <div style={{ fontSize: "12px", color: "#9ca3af", marginTop: "2px" }}>{getSymbolName(signal.symbol)}</div>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        <span className={signal.type.toLowerCase()}>
+                                                            <img src={getTypeIcon(signal.type)} alt={signal.type} />
+                                                            {signal.type}
+                                                        </span>
+                                                    </td>
+                                                    <td>{signal.entry_price}</td>
+                                                    <td className="green">{signal.target_price}</td>
+                                                    <td className="red">{signal.stop_loss}</td>
+                                                    <td>
+                                                        <span className={`db-badge status ${signal.status.toLowerCase().includes('hit') ? 'hit' : signal.status.toLowerCase().includes('stop') ? 'loss' : signal.status.toLowerCase().includes('closed') ? 'close' : 'active'}`}>
+                                                            {signal.status}
+                                                        </span>
+                                                    </td>
+                                                    <td className="time">
+                                                        {signal.release_at && new Date(signal.release_at).getTime() > currentTime.getTime() 
+                                                            ? (
+                                                                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                                    <span style={{ color: '#f59e0b', fontWeight: 700, fontSize: '0.8rem' }}>Release In</span>
+                                                                    <span style={{ color: '#f59e0b', fontSize: '0.75rem' }}>{formatCountdown(signal.release_at)}</span>
+                                                                </div>
+                                                            )
+                                                            : new Date(signal.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                                                        }
+                                                    </td>
+                                                    <td className="Action" style={{ verticalAlign: 'middle', padding: '12px 0' }}>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '18px', justifyContent: 'center', minHeight: '42px' }}>
+                                                            <div style={{ position: 'relative', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                                <img 
+                                                                    src="/images/i (10).png" 
+                                                                    alt="Take Signal" 
+                                                                    title={signal.release_at && new Date(signal.release_at).getTime() > currentTime.getTime() ? `Unlocks in ${formatCountdown(signal.release_at)}` : "Take Signal"} 
+                                                                    style={{ 
+                                                                        cursor: signal.release_at && new Date(signal.release_at).getTime() > currentTime.getTime() ? 'not-allowed' : 'pointer',
+                                                                        opacity: signal.release_at && new Date(signal.release_at).getTime() > currentTime.getTime() ? 0.25 : 1,
+                                                                        filter: signal.release_at && new Date(signal.release_at).getTime() > currentTime.getTime() ? 'grayscale(1) brightness(0.5)' : 'none',
+                                                                        width: '100%',
+                                                                        height: '100%',
+                                                                        objectFit: 'contain',
+                                                                        transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                                                                        transform: 'scale(1)'
+                                                                    }} 
+                                                                    onMouseOver={(e) => { 
+                                                                        if (!(signal.release_at && new Date(signal.release_at).getTime() > currentTime.getTime())) {
+                                                                            e.currentTarget.style.transform = 'scale(1.15)';
+                                                                            e.currentTarget.style.filter = 'drop-shadow(0 0 12px rgba(212, 175, 55, 0.6))';
+                                                                        }
+                                                                    }}
+                                                                    onMouseOut={(e) => { 
+                                                                        e.currentTarget.style.transform = 'scale(1)';
+                                                                        e.currentTarget.style.filter = 'none';
+                                                                    }}
+                                                                    onClick={() => {
+                                                                        if (signal.release_at && new Date(signal.release_at).getTime() > currentTime.getTime()) {
+                                                                            toast.error(`This signal is locked. Please wait ${formatCountdown(signal.release_at)} more.`);
+                                                                            return;
+                                                                        }
+                                                                        handleTakeSignal(signal);
+                                                                    }}
+                                                                />
+                                                                {signal.release_at && new Date(signal.release_at).getTime() > currentTime.getTime() && (
+                                                                    <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'rgba(15, 23, 42, 0.95)', border: '1px solid #d4af37', borderRadius: '6px', padding: '2px 6px', pointerEvents: 'none', whiteSpace: 'nowrap', zIndex: 10, boxShadow: '0 4px 12px rgba(0,0,0,0.5)' }}>
+                                                                        <div style={{ fontSize: '10px', color: '#d4af37', fontWeight: 900, fontFamily: 'monospace', letterSpacing: '0.5px' }}>
+                                                                            {formatCountdown(signal.release_at)}
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+
+                                                            {(user?.is_admin || (signal.target_user_id !== null && signal.target_user_id !== undefined)) && (
+                                                                <button 
+                                                                    onClick={() => handleDeleteSignal(signal.id)}
+                                                                    style={{ background: 'rgba(239, 68, 68, 0.05)', border: '1px solid rgba(239, 68, 68, 0.15)', color: '#f87171', width: '32px', height: '32px', borderRadius: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem', padding: 0, transition: 'all 0.25s ease' }}
+                                                                    onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.15)'; e.currentTarget.style.borderColor = '#ef4444'; e.currentTarget.style.color = 'white'; }}
+                                                                    onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.05)'; e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.15)'; e.currentTarget.style.color = '#f87171'; }}
+                                                                >×</button>
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div className="table-footer">
+                                <div className="showing-text">
+                                    Showing {filteredSignals.length > 0 ? startIndex + 1 : 0}-{Math.min(startIndex + rowsPerPage, filteredSignals.length)} of {filteredSignals.length} signals
+                                </div>
+                                <div className="pagination">
+                                    <button className="page-btn prev" onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}>‹</button>
+                                    {Array.from({ length: totalPages }, (_, i) => (
+                                        <button key={i + 1} className={`page-number ${currentPage === i + 1 ? 'active' : ''}`} onClick={() => setCurrentPage(i + 1)}>{i + 1}</button>
+                                    ))}
+                                    <button className="page-btn next" onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}>›</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* STICKY SIDEBAR FOR GLOBAL TIMER */}
+                {mounted && !user?.is_admin && globalTimer && !isGlobalTimerHidden && (
+                    <aside className="db-sidebar-column">
+                        <div style={{ position: 'relative', zIndex: 100 }}>
+                            <div style={{ 
+                                background: 'linear-gradient(180deg, #1a1a1a 0%, #2c240a 100%)', 
+                                border: '1px solid #d4af37', 
+                                borderRadius: '20px', 
+                                padding: '1.25rem', 
+                                textAlign: 'center',
+                                boxShadow: '0 10px 25px rgba(0, 0, 0, 0.4), 0 0 15px rgba(212, 175, 55, 0.05)'
+                            }}>
+                                <div style={{ background: 'rgba(212, 175, 55, 0.1)', width: '40px', height: '40px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.75rem', fontSize: '1.2rem' }}>⌛</div>
+                                <h2 style={{ color: 'white', fontSize: '1rem', fontWeight: 800, marginBottom: '0.25rem', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                                    Next <span style={{ color: '#d4af37' }}>Gold</span> Signal
+                                </h2>
+                                
+                                <div style={{ margin: '1rem 0' }}>
+                                    <div style={{ fontSize: '2rem', fontWeight: 900, color: '#d4af37', fontFamily: 'monospace', textShadow: '0 0 8px rgba(212, 175, 55, 0.3)' }}>
+                                        {formatCountdown(globalTimer)}
+                                    </div>
+                                    <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', fontWeight: 700, letterSpacing: '2px', marginTop: '2px' }}>COUNTDOWN</div>
+                                </div>
+
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                    {!requestStatus ? (
+                                        <button 
+                                            onClick={handleRequestAccess}
+                                            disabled={isSubmitting}
+                                            style={{ width: '100%', background: '#d4af37', color: 'black', border: 'none', padding: '10px', borderRadius: '10px', fontWeight: 800, fontSize: '0.8rem', cursor: 'pointer', transition: '0.3s', boxShadow: '0 4px 10px rgba(212, 175, 55, 0.2)' }}
+                                        >
+                                            {isSubmitting ? 'Sending...' : 'REQUEST ACCESS'}
+                                        </button>
+                                    ) : requestStatus === 'pending' ? (
+                                        <div style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', padding: '10px', borderRadius: '10px', color: '#d4af37', fontWeight: 700, fontSize: '0.75rem' }}>
+                                            ⏳ PENDING
+                                        </div>
+                                    ) : (
+                                        <div style={{ background: 'rgba(34, 197, 94, 0.1)', border: '1px solid #22c55e', padding: '10px', borderRadius: '10px', color: '#22c55e', fontWeight: 700, fontSize: '0.75rem' }}>
+                                            ✅ GRANTED
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </aside>
+                )}
             </div>
-
-            <div className="pagination">
-              <button className="page-btn prev" onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}>‹</button>
-              {Array.from({ length: totalPages }, (_, i) => (
-                <button
-                  key={i + 1}
-                  className={`page-number ${currentPage === i + 1 ? 'active' : ''}`}
-                  onClick={() => setCurrentPage(i + 1)}
-                >
-                  {i + 1}
-                </button>
-              ))}
-              <button className="page-btn next" onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}>›</button>
-            </div>
-          </div>
-        </div>
         )}
 
         {/* TAKE SIGNAL CONFIRMATION MODAL */}

@@ -33,12 +33,12 @@
     color: var(--text-main);
     font-family: 'Inter', sans-serif;
     line-height: 1.5;
-    overflow-x: hidden;
 }
 .db-main-layout {
   width: 100%;
   max-width: 100%;
   margin: 0 auto;
+  overflow: visible !important;
 }
 
 .db-navbar {
@@ -1534,4 +1534,118 @@
 
 .notif-close:hover {
     color: var(--text-main);
+}
+
+.db-container {
+    padding: 0 2.5rem 3rem;
+    position: relative;
+    overflow: visible;
+}
+
+/* DASHBOARD FLEX LAYOUT */
+.db-sidebar-column {
+    width: 300px;
+    flex-shrink: 0;
+    position: sticky;
+    top: 130px;
+    align-self: flex-start;
+    height: auto;
+    z-index: 100;
+}
+
+.db-content-flex-wrapper {
+    display: flex;
+    gap: 2.5rem;
+    align-items: flex-start;
+    overflow: visible !important;
+}
+
+.db-main-content-column {
+    flex: 1;
+    min-width: 0;
+}
+
+/* Responsive adjustments for the new layout */
+@media (max-width: 1200px) {
+    .db-content-flex-wrapper {
+        gap: 1.5rem;
+    }
+    
+    .db-sidebar-column {
+        width: 300px;
+    }
+}
+
+
+/* RESPONSIVE DESIGN IMPROVEMENTS */
+@media (max-width: 992px) {
+    .db-container {
+        padding: 0 1.5rem 2rem;
+    }
+
+    .db-content-flex-wrapper {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1.5rem;
+    }
+
+    .db-sidebar-column {
+        width: 100% !important;
+        position: static !important;
+        margin-bottom: 2rem;
+        order: -1; /* Move timer to top on mobile for visibility */
+    }
+
+    .db-sidebar-column > div {
+        max-width: 100% !important;
+        margin: 0;
+    }
+}
+
+@media (max-width: 768px) {
+    .db-container {
+        padding: 0 1rem 1.5rem;
+    }
+
+    .db-top-bar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .db-stats {
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+
+    .affiliate-center {
+        grid-template-columns: 1fr !important;
+        padding: 1.5rem !important;
+        gap: 1.5rem !important;
+    }
+
+    .db-page-title {
+        font-size: 1.75rem;
+    }
+}
+
+@media (max-width: 500px) {
+    .db-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .db-navbar {
+        padding: 1rem;
+    }
+
+    .db-logo span {
+        display: none;
+    }
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.05); opacity: 0.8; }
+    100% { transform: scale(1); opacity: 1; }
 }

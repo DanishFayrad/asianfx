@@ -19,15 +19,19 @@ export const metadata = {
 
 import { Providers } from "@/redux/Providers";
 import { Toaster } from 'react-hot-toast';
+import AuthGuard from './AuthGuard';
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
       <body>
         <Providers>
-          {children}
+          <AuthGuard>
+            {children}
+          </AuthGuard>
           <Toaster 
             position="top-right"
+
             toastOptions={{
               style: {
                 background: '#1e293b',

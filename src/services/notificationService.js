@@ -1,23 +1,7 @@
-import axios from 'axios';
-import { API_BASE_URL, API_ENDPOINTS } from '../constants/apiConstants';
+import apiClient from './apiClient';
 
-const api = axios.create({
-    baseURL: API_BASE_URL,
-});
+const api = apiClient;
 
-// Add a request interceptor to include the token in every request
-api.interceptors.request.use(
-    (config) => {
-        const token = localStorage.getItem('token');
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
-        }
-        return config;
-    },
-    (error) => {
-        return Promise.reject(error);
-    }
-);
 
 const getMyNotifications = async () => {
     const response = await api.get('/api/notifications');
