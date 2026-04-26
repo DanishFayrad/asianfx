@@ -44,6 +44,12 @@ export default function AdminSignals() {
   const [globalTimerMinutes, setGlobalTimerMinutes] = useState('');
   const [signalRequests, setSignalRequests] = useState([]);
   const [activeGlobalTimer, setActiveGlobalTimer] = useState(null);
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
@@ -456,7 +462,12 @@ export default function AdminSignals() {
                     <div style={{ background: 'rgba(212, 175, 55, 0.1)', border: '1px solid #d4af37', borderRadius: '12px', padding: '1.5rem', textAlign: 'center', marginBottom: '1.5rem' }}>
                         <div style={{ fontSize: '0.75rem', color: '#d4af37', fontWeight: 800, textTransform: 'uppercase', marginBottom: '5px' }}>Active Timer</div>
                         <div style={{ fontSize: '2.5rem', fontWeight: 900, color: '#d4af37', fontFamily: 'monospace' }}>
-                            {Math.max(0, Math.ceil((new Date(activeGlobalTimer) - new Date()) / 60000))}m left
+                            {(() => {
+                                const totalSeconds = Math.max(0, Math.floor((new Date(activeGlobalTimer) - currentTime) / 1000));
+                                const mins = Math.floor(totalSeconds / 60);
+                                const secs = totalSeconds % 60;
+                                return `${mins}:${secs.toString().padStart(2, '0')}`;
+                            })()}
                         </div>
                         <button 
                             onClick={handleClearGlobalTimer}
@@ -549,7 +560,12 @@ export default function AdminSignals() {
                    {sig.release_at && new Date(sig.release_at) > new Date() && (
                        <div style={{ width: '100%', marginTop: '10px', paddingTop: '10px', borderTop: '1px dashed var(--admin-border-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
                            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#f59e0b' }}>
-                               ⏳ {Math.ceil((new Date(sig.release_at) - new Date()) / 60000)}m left
+                               ⏳ {(() => {
+                                   const totalSeconds = Math.max(0, Math.floor((new Date(sig.release_at) - currentTime) / 1000));
+                                   const mins = Math.floor(totalSeconds / 60);
+                                   const secs = totalSeconds % 60;
+                                   return `${mins}:${secs.toString().padStart(2, '0')}`;
+                               })()}
                            </span>
                            <button 
                                onClick={async () => {
