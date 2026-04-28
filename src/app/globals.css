@@ -107,3 +107,20 @@ a {
     color-scheme: dark;
   }
 }
+
+/* Button Spinner */
+.btn-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 1s ease-in-out infinite;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+.btn-spinner.dark {
+  border: 2px solid rgba(0, 0, 0, 0.2);
+  border-top-color: black;
+}

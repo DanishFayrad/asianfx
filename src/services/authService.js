@@ -1,5 +1,5 @@
 import apiClient from './apiClient';
-import { API_ENDPOINTS } from '../constants/apiConstants';
+import { API_ENDPOINTS } from '@/constants/apiConstants';
 
 const api = apiClient;
 

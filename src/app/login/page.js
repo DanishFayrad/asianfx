@@ -101,7 +101,7 @@ export default function Login() {
           <Link href="/forgot-password">Forgot password?</Link>
         </div>
         <button type="submit" className="login-btn" id="loginBtn" disabled={isLoading}>
-          {isLoading ? 'Signing In...' : 'Sign In'}
+          {isLoading ? <><span className="btn-spinner"></span>Signing In...</> : 'Sign In'}
         </button>
       </form>
 

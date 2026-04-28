@@ -167,6 +167,9 @@ export default function Transaction() {
         } else if (type === 'reject') {
             await transactionService.rejectTransaction(data);
             toast.success("Deposit request rejected.");
+        } else if (type === 'delete') {
+            await transactionService.deleteTransaction(data);
+            toast.success("Transaction deleted successfully.");
         }
         closeConfirmModal();
         fetchData();
@@ -177,16 +180,15 @@ export default function Transaction() {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm("Are you sure you want to delete this transaction record? This action cannot be undone.")) {
-      try {
-        await transactionService.deleteTransaction(id);
-        toast.success("Transaction deleted successfully.");
-        fetchData();
-      } catch (e) {
-        toast.error("Failed to delete transaction.");
-      }
-    }
+  const handleDelete = (id) => {
+    setConfirmModal({
+        isOpen: true,
+        title: 'Delete Transaction',
+        message: 'Are you sure you want to delete this transaction record? This action cannot be undone.',
+        type: 'delete',
+        data: id,
+        inputValue: ''
+    });
   };
 
   const openSignalModal = (userObj) => {
@@ -196,6 +198,7 @@ export default function Transaction() {
 
   const handleSendSignal = async () => {
     try {
+        setLoading(true);
         const payload = {
             ...signalData,
             target_user_id: targetUser.id,
@@ -207,7 +210,9 @@ export default function Transaction() {
         setIsSignalModalOpen(false);
     } catch (e) {
         console.error(e);
-        alert('Failed to send signal');
+        toast.error('Failed to send signal');
+    } finally {
+        setLoading(false);
     }
   };
 
@@ -503,7 +508,9 @@ export default function Transaction() {
 
 
                         <div style={{ display: 'flex', gap: '15px', marginTop: '0.5rem' }}>
-                            <button onClick={handleSendSignal} style={{ flex: 2, background: '#d4af37', border: 'none', padding: '14px', borderRadius: '10px', cursor: 'pointer', fontWeight: 700, color: 'black', fontSize: '1rem', transition: '0.3s' }}>Broadcast Signal</button>
+                            <button onClick={handleSendSignal} disabled={loading} style={{ flex: 2, background: '#d4af37', border: 'none', padding: '14px', borderRadius: '10px', cursor: 'pointer', fontWeight: 700, color: 'black', fontSize: '1rem', transition: '0.3s' }}>
+                                {loading ? <><span className="btn-spinner dark"></span>Sending...</> : 'Broadcast Signal'}
+                            </button>
                             <button onClick={() => setIsSignalModalOpen(false)} style={{ flex: 1, background: 'transparent', border: '1px solid #334155', color: 'white', padding: '14px', borderRadius: '10px', cursor: 'pointer' }}>Cancel</button>
                         </div>
                     </div>
@@ -538,9 +545,10 @@ export default function Transaction() {
                     <div style={{ display: 'flex', gap: '12px' }}>
                         <button 
                             onClick={executeConfirmAction} 
+                            disabled={isActionLoading}
                             style={{ flex: 2, background: confirmModal.type === 'approve' ? '#22c55e' : '#ef4444', border: 'none', padding: '14px', borderRadius: '12px', cursor: 'pointer', fontWeight: 700, color: 'white', fontSize: '1rem' }}
                         >
-                            {confirmModal.type === 'approve' ? 'Confirm Approval' : 'Yes, Reject'}
+                            {isActionLoading ? <><span className="btn-spinner"></span>Processing...</> : (confirmModal.type === 'approve' ? 'Confirm Approval' : confirmModal.type === 'delete' ? 'Yes, Delete' : 'Yes, Reject')}
                         </button>
                         <button 
                             onClick={closeConfirmModal} 

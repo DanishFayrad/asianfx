@@ -195,7 +195,7 @@ export default function Register() {
           </div>
 
           <button type="submit" className="signup-submit-btn" disabled={isLoading}>
-            {isLoading ? 'Creating Account...' : 'Create Account'}
+            {isLoading ? <><span className="btn-spinner dark"></span>Creating Account...</> : 'Create Account'}
           </button>
         </form>
 

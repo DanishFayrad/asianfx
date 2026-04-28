@@ -11,22 +11,17 @@ const apiClient = axios.create({
 
 export let serverTimeOffset = 0;
 
-export const syncClockWithHeuristic = (serverTimestampString) => {
-    if (!serverTimestampString) return;
-    const actualRemaining = new Date(serverTimestampString).getTime() - Date.now();
-    if (actualRemaining > 0) {
-        const snappedRemaining = Math.round(actualRemaining / 60000) * 60000;
-        const drift = actualRemaining - snappedRemaining;
-        // If drift is less than 15 seconds, assume it's clock skew and update the offset
-        if (Math.abs(drift) < 15000) {
-            serverTimeOffset = drift;
-        }
-    }
+export const updateServerTimeOffset = (serverTimeMs) => {
+    if (!serverTimeMs) return;
+    serverTimeOffset = serverTimeMs - Date.now();
 };
+
+
 
 // Add a request interceptor to include the token in every request
 apiClient.interceptors.request.use(
     (config) => {
+        config.metadata = { startTime: Date.now() };
         if (typeof window !== 'undefined') {
             const token = localStorage.getItem('token');
             if (token) {
@@ -43,10 +38,14 @@ apiClient.interceptors.request.use(
 // Add a response interceptor to handle 401 and 403 errors globally
 apiClient.interceptors.response.use(
     (response) => {
-        if (response.headers && response.headers.date) {
+        if (response.headers && response.headers.date && response.config?.metadata?.startTime) {
             const serverTime = new Date(response.headers.date).getTime();
             const localTime = Date.now();
-            serverTimeOffset = serverTime - localTime;
+            const requestDuration = localTime - response.config.metadata.startTime;
+            // Server date is generated during the request, usually halfway.
+            // HTTP Date headers round down to the nearest second, so we add 500ms for average correction.
+            const estimatedServerTime = serverTime + (requestDuration / 2) + 500;
+            serverTimeOffset = estimatedServerTime - localTime;
         }
         return response;
     },
@@ -81,7 +80,21 @@ apiClient.interceptors.response.use(
                 // Forbidden access
                 console.warn("Access denied: 403");
                 toast.error("Access denied. You do not have permission for this action.");
+            } else if (response.status >= 500) {
+                console.error("Server Error:", response.data);
+                toast.error("Server error occurred. Please try again later.");
             }
+        } else if (error.request) {
+            // The request was made but no response was received
+            console.error("Network Error:", error.request);
+            if (typeof window !== 'undefined' && !navigator.onLine) {
+                toast.error("You are offline. Please check your internet connection.");
+            } else {
+                toast.error("Network error. Unable to reach the server.");
+            }
+        } else {
+            // Something happened in setting up the request that triggered an Error
+            console.error("Request Error:", error.message);
         }
 
         return Promise.reject(error);

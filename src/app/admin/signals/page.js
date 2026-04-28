@@ -7,7 +7,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import signalService from '../../../services/signalService';
 import authService from '../../../services/authService';
 import transactionService from '../../../services/transactionService';
-import apiClient, { serverTimeOffset, syncClockWithHeuristic } from '../../../services/apiClient';
+import apiClient, { serverTimeOffset, updateServerTimeOffset } from '../../../services/apiClient';
 import { logout } from '../../../redux/slices/authSlice';
 import { io } from 'socket.io-client';
 import { API_BASE_URL } from '../../../constants/apiConstants';
@@ -45,6 +45,35 @@ export default function AdminSignals() {
   const [signalRequests, setSignalRequests] = useState([]);
   const [activeGlobalTimer, setActiveGlobalTimer] = useState(null);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [confirmModal, setConfirmModal] = useState({
+      isOpen: false,
+      title: '',
+      message: '',
+      type: '', 
+      data: null
+  });
+
+  const closeConfirmModal = () => setConfirmModal({...confirmModal, isOpen: false});
+
+  const executeConfirmAction = async () => {
+    const { type, data } = confirmModal;
+    setLoading(true);
+    try {
+        if (type === 'approve_request') {
+            await signalService.approveSignalRequest(data);
+            toast.success("Request approved");
+        } else if (type === 'clear_timer') {
+            await signalService.clearGlobalTimer();
+            toast.success("Global timer cleared");
+        }
+        closeConfirmModal();
+        fetchAllAdminData();
+    } catch (e) {
+        toast.error("Action failed");
+    } finally {
+        setLoading(false);
+    }
+  };
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date(Date.now() + serverTimeOffset)), 1000);
@@ -70,8 +99,8 @@ export default function AdminSignals() {
             setAdminStats(stats);
             
             const timerData = await signalService.getGlobalTimer();
-            if (timerData.expires_at) {
-                syncClockWithHeuristic(timerData.expires_at);
+            if (timerData.server_time) {
+                updateServerTimeOffset(timerData.server_time);
             }
             setActiveGlobalTimer(timerData.expires_at);
 
@@ -114,7 +143,7 @@ export default function AdminSignals() {
         });
 
         socket.on('global_timer_update', (data) => {
-            if (data.expires_at) syncClockWithHeuristic(data.expires_at);
+            if (data.server_time) updateServerTimeOffset(data.server_time);
             setActiveGlobalTimer(data.expires_at);
         });
 
@@ -200,24 +229,23 @@ export default function AdminSignals() {
       }
   };
 
-  const handleClearGlobalTimer = async () => {
-      try {
-          await signalService.clearGlobalTimer();
-          toast.success("Global timer cleared");
-          fetchAllAdminData();
-      } catch (e) {
-          toast.error("Failed to clear timer");
-      }
+  const handleClearGlobalTimer = () => {
+      setConfirmModal({
+          isOpen: true,
+          title: 'Clear Global Timer',
+          message: 'Are you sure you want to stop the active countdown timer? This will hide the banner for all users.',
+          type: 'clear_timer'
+      });
   };
 
-  const handleApproveRequest = async (id) => {
-      try {
-          await signalService.approveSignalRequest(id);
-          toast.success("Request approved");
-          fetchAllAdminData();
-      } catch (e) {
-          toast.error("Failed to approve request");
-      }
+  const handleApproveRequest = (id) => {
+      setConfirmModal({
+          isOpen: true,
+          title: 'Approve Signal Access',
+          message: 'Grant this user access to the upcoming signal?',
+          type: 'approve_request',
+          data: id
+      });
   };
 
   return (
@@ -438,7 +466,7 @@ export default function AdminSignals() {
                 )}
 
                 <button type="submit" className="admin-btn-broadcast" disabled={loading}>
-                   {loading ? 'Processing...' : (
+                   {loading ? <><span className="btn-spinner dark"></span>Processing...</> : (
                        <>
                         <img src="/images/svg (13).png" style={{ height: '18px', filter: 'invert(1)' }} alt="Broadcast" />
                         Broadcast Signal
@@ -494,7 +522,9 @@ export default function AdminSignals() {
                                 className="admin-btn-broadcast" 
                                 style={{ margin: 0, whiteSpace: 'nowrap', width: 'auto', padding: '0 20px' }}
                                 disabled={loading || !globalTimerMinutes}
-                            >Start Countdown</button>
+                            >
+                                {loading ? <><span className="btn-spinner dark"></span>Starting...</> : 'Start Countdown'}
+                            </button>
                         </div>
                     </div>
                 )}
@@ -592,6 +622,36 @@ export default function AdminSignals() {
               )}
            </div>
         </section>
+        {/* CUSTOM CONFIRM MODAL */}
+        {confirmModal.isOpen && (
+            <div className="admin-modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(10px)' }}>
+                <div className="admin-modal-content" style={{ background: '#0f172a', padding: '2.5rem', borderRadius: '24px', color: 'white', width: '400px', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}>
+                    <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+                        <div style={{ background: confirmModal.type === 'approve_request' ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)', width: '64px', height: '64px', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}>
+                            <span style={{ fontSize: '24px' }}>{confirmModal.type === 'approve_request' ? '✅' : '⚠️'}</span>
+                        </div>
+                        <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '0.5rem' }}>{confirmModal.title}</h2>
+                        <p style={{ color: '#94a3b8', fontSize: '0.95rem', lineHeight: '1.5' }}>{confirmModal.message}</p>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '12px' }}>
+                        <button 
+                            onClick={executeConfirmAction} 
+                            disabled={loading}
+                            style={{ flex: 2, background: confirmModal.type === 'approve_request' ? 'var(--admin-success)' : 'var(--admin-danger)', border: 'none', padding: '14px', borderRadius: '12px', cursor: 'pointer', fontWeight: 700, color: 'white', fontSize: '1rem' }}
+                        >
+                            {loading ? <><span className="btn-spinner"></span>Processing...</> : (confirmModal.type === 'approve_request' ? 'Confirm Approval' : 'Yes, Stop Timer')}
+                        </button>
+                        <button 
+                            onClick={closeConfirmModal} 
+                            style={{ flex: 1, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', padding: '14px', borderRadius: '12px', cursor: 'pointer', fontWeight: 600 }}
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
       </main>
     </div>
   );

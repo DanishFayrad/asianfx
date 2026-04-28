@@ -278,95 +278,17 @@ export default function Wallet() {
           </div>
         </div>
 
-        {/*  LOSS  */}
-        <div className="loss-card">
-          <div className="card-top">
-            <img src="/images/div (8).png" alt="Loss Icon" />
-          </div>
-          <p>Total Loss</p>
-          <h3>$22,160.00</h3>
-          <span className="loss">-17.8% ROI</span>
-        </div>
-
-        {/*  BOTTOM  */}
-        <div className="bottom">
-          {/*  LEFT  */}
-          <div className="graph-box">
-            <div className="box-header">
-              <h4>Profit & Loss Overview</h4>
-              <img src="/images/i (6).png" className="box-icon" alt="Information" />
+        {/*  SIGNAL FEES  */}
+        {!user?.is_admin && (
+            <div className="loss-card" style={{ background: 'rgba(212, 175, 55, 0.05)', border: '1px solid rgba(212, 175, 55, 0.2)' }}>
+              <div className="card-top">
+                <div style={{ background: '#d4af37', width: '32px', height: '32px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>💰</div>
+              </div>
+              <p style={{ color: 'var(--text-muted)' }}>Amount Spent on Signals</p>
+              <h3 style={{ color: '#d4af37' }}>${mounted ? (stats?.total_signal_fees?.toLocaleString() || '0') : '0'}</h3>
+              <span className="loss" style={{ background: 'rgba(212, 175, 55, 0.1)', color: '#d4af37' }}>Signal Purchase Fees</span>
             </div>
-
-            <div className="graph">
-              {/*  Graph Placeholder  */}
-              <div style={{ height: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#666', border: '1px dashed #444', borderRadius: '8px' }}>
-                Profit & Loss Graph
-              </div>
-            </div>
-
-            <div className="mini-cards">
-              <div className="mini green">
-                <span>
-                  <img src="/images/i (7).png" className="mini-icon" alt="Profit Trades" />
-                  Profit Trades
-                </span>
-                <h5>142</h5>
-                <small>71% Win Rate</small>
-              </div>
-
-              <div className="mini red">
-                <span>
-                  <img src="/images/i (8).png" className="mini-icon" alt="Loss Trades" />
-                  Loss Trades
-                </span>
-                <h5>58</h5>
-                <small>29% Loss Rate</small>
-              </div>
-            </div>
-          </div>
-
-          {/*  RIGHT  */}
-          <div className="graph-box big">
-            <div className="box-header">
-              <h4>Trade Performance</h4>
-              <div className="tabs">
-                <span className="active">7D</span>
-                <span>30D</span>
-                <span>90D</span>
-              </div>
-            </div>
-
-            <div className="stats">
-              <div className="stat dark">
-                <p>Total Trades</p>
-                <h3>200</h3>
-                <small>
-                  <img src="/images/Frame.png" className="small-icon" alt="Trend Icon" />
-                  +18 this week
-                </small>
-              </div>
-
-              <div className="stat green">
-                <p>Winning Trades</p>
-                <h3>142</h3>
-                <div className="bar green-bar"></div>
-              </div>
-
-              <div className="stat red">
-                <p>Losing Trades</p>
-                <h3>58</h3>
-                <div className="bar red-bar"></div>
-              </div>
-            </div>
-
-            <div className="graph">
-              {/*  Graph Placeholder  */}
-              <div style={{ height: '250px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#666', border: '1px dashed #444', borderRadius: '8px' }}>
-                Trade Performance Graph
-              </div>
-            </div>
-          </div>
-        </div>
+        )}
       </main>
     </div>
   );

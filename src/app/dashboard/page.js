@@ -13,7 +13,7 @@ import { setUser } from '../../redux/slices/authSlice';
 import { io } from 'socket.io-client';
 import toast from 'react-hot-toast';
 import { API_BASE_URL } from '../../constants/apiConstants';
-import { serverTimeOffset, syncClockWithHeuristic } from '../../services/apiClient';
+import { serverTimeOffset, updateServerTimeOffset } from '../../services/apiClient';
 import '../../styles/dashboard.css';
 
 export default function Dashboard() {
@@ -27,6 +27,10 @@ export default function Dashboard() {
   }, []);
   
   const handleDeposit = async () => {
+    if (!depositAmount || parseFloat(depositAmount) < 5) {
+      toast.error('Minimum deposit amount is $5');
+      return;
+    }
     if (!screenshot) {
       toast.error('Please upload a proof of payment screenshot');
       return;
@@ -35,7 +39,7 @@ export default function Dashboard() {
     setIsSubmitting(true);
     try {
         const formData = new FormData();
-        formData.append('amount', 0);
+        formData.append('amount', depositAmount);
         formData.append('payment_method', paymentMethod);
         formData.append('proof_image', screenshot);
         
@@ -104,6 +108,7 @@ export default function Dashboard() {
   };
   const [currentPage, setCurrentPage] = useState(1);
   const [signals, setSignals] = useState([]);
+  const [signalHistory, setSignalHistory] = useState([]);
   const [stats, setStats] = useState({ active_signals: 0, success_rate: 0, total_signals: 0, total_users: 0, platform_balance: '0', pending_deposits: 0 });
   const [adminStats, setAdminStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -187,7 +192,7 @@ export default function Dashboard() {
 
     socket.on('global_timer_update', (data) => {
         console.log("Global timer update:", data);
-        if (data.expires_at) syncClockWithHeuristic(data.expires_at);
+        if (data.server_time) updateServerTimeOffset(data.server_time);
         setGlobalTimer(data.expires_at);
         if (!data.expires_at) setRequestStatus(null);
     });
@@ -225,6 +230,15 @@ export default function Dashboard() {
       setSignals(data.active_signals || []);
       setStats(prev => ({ ...prev, ...data.stats }));
       
+      if (user && !user.is_admin) {
+          try {
+              const historyData = await signalService.getUserSignalHistory(user.id || user.user_id);
+              setSignalHistory(historyData || []);
+          } catch (e) {
+              console.error("Failed to fetch signal history", e);
+          }
+      }
+
       if (user?.is_admin) {
         const aStats = await transactionService.getAdminStats();
         setAdminStats(aStats);
@@ -264,7 +278,7 @@ export default function Dashboard() {
     // Fetch Global Timer
     try {
         const timerData = await signalService.getGlobalTimer();
-        if (timerData.expires_at) syncClockWithHeuristic(timerData.expires_at);
+        if (timerData.server_time) updateServerTimeOffset(timerData.server_time);
         setGlobalTimer(timerData.expires_at);
         setRequestStatus(timerData.requestStatus);
     } catch (e) { console.error(e); }
@@ -641,6 +655,18 @@ export default function Dashboard() {
                 </div>
               </div>
 
+              <div className="amount-input-group" style={{ marginBottom: '1rem' }}>
+                <label>Amount Sent (USDT)</label>
+                <input 
+                    type="number" 
+                    className="amount-input" 
+                    placeholder="Min $5"
+                    value={depositAmount}
+                    onChange={(e) => setDepositAmount(e.target.value)}
+                    style={{ fontSize: '0.85rem', padding: '12px' }}
+                />
+              </div>
+
               {/* Proof Upload */}
               <div className="amount-input-group">
                 <label>Upload Payment Proof (Screenshot)</label>
@@ -675,7 +701,7 @@ export default function Dashboard() {
                 onClick={handleDeposit}
                 disabled={isSubmitting || !screenshot}
               >
-                {isSubmitting ? 'Processing Transaction...' : 'I Have Paid'}
+                {isSubmitting ? <><span className="btn-spinner dark"></span>Processing...</> : 'I Have Paid'}
               </button>
 
               <p style={{ color: 'var(--text-muted)', fontSize: '0.7rem', textAlign: 'center', marginTop: '1.5rem' }}>
@@ -921,47 +947,53 @@ export default function Dashboard() {
                                                     </td>
                                                     <td className="Action" style={{ verticalAlign: 'middle', padding: '12px 0' }}>
                                                         <div style={{ display: 'flex', alignItems: 'center', gap: '18px', justifyContent: 'center', minHeight: '42px' }}>
-                                                            <div style={{ position: 'relative', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                                <img 
-                                                                    src="/images/i (10).png" 
-                                                                    alt="Take Signal" 
-                                                                    title={signal.release_at && new Date(signal.release_at).getTime() > currentTime.getTime() ? `Unlocks in ${formatCountdown(signal.release_at)}` : "Take Signal"} 
-                                                                    style={{ 
-                                                                        cursor: signal.release_at && new Date(signal.release_at).getTime() > currentTime.getTime() ? 'not-allowed' : 'pointer',
-                                                                        opacity: signal.release_at && new Date(signal.release_at).getTime() > currentTime.getTime() ? 0.25 : 1,
-                                                                        filter: signal.release_at && new Date(signal.release_at).getTime() > currentTime.getTime() ? 'grayscale(1) brightness(0.5)' : 'none',
-                                                                        width: '100%',
-                                                                        height: '100%',
-                                                                        objectFit: 'contain',
-                                                                        transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-                                                                        transform: 'scale(1)'
-                                                                    }} 
-                                                                    onMouseOver={(e) => { 
-                                                                        if (!(signal.release_at && new Date(signal.release_at).getTime() > currentTime.getTime())) {
-                                                                            e.currentTarget.style.transform = 'scale(1.15)';
-                                                                            e.currentTarget.style.filter = 'drop-shadow(0 0 12px rgba(212, 175, 55, 0.6))';
-                                                                        }
-                                                                    }}
-                                                                    onMouseOut={(e) => { 
-                                                                        e.currentTarget.style.transform = 'scale(1)';
-                                                                        e.currentTarget.style.filter = 'none';
-                                                                    }}
-                                                                    onClick={() => {
-                                                                        if (signal.release_at && new Date(signal.release_at).getTime() > currentTime.getTime()) {
-                                                                            toast.error(`This signal is locked. Please wait ${formatCountdown(signal.release_at)} more.`);
-                                                                            return;
-                                                                        }
-                                                                        handleTakeSignal(signal);
-                                                                    }}
-                                                                />
-                                                                {signal.release_at && new Date(signal.release_at).getTime() > currentTime.getTime() && (
-                                                                    <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'rgba(15, 23, 42, 0.95)', border: '1px solid #d4af37', borderRadius: '6px', padding: '2px 6px', pointerEvents: 'none', whiteSpace: 'nowrap', zIndex: 10, boxShadow: '0 4px 12px rgba(0,0,0,0.5)' }}>
-                                                                        <div style={{ fontSize: '10px', color: '#d4af37', fontWeight: 900, fontFamily: 'monospace', letterSpacing: '0.5px' }}>
-                                                                            {formatCountdown(signal.release_at)}
+                                                            {signalHistory.some(h => h.signal_id === signal.id) ? (
+                                                                <div style={{ background: 'rgba(34, 197, 94, 0.1)', color: '#22c55e', padding: '6px 12px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 700, border: '1px solid rgba(34, 197, 94, 0.2)' }}>
+                                                                    Purchased
+                                                                </div>
+                                                            ) : (
+                                                                <div style={{ position: 'relative', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                                    <img 
+                                                                        src="/images/i (10).png" 
+                                                                        alt="Take Signal" 
+                                                                        title={signal.release_at && new Date(signal.release_at).getTime() > currentTime.getTime() ? `Unlocks in ${formatCountdown(signal.release_at)}` : "Take Signal"} 
+                                                                        style={{ 
+                                                                            cursor: signal.release_at && new Date(signal.release_at).getTime() > currentTime.getTime() ? 'not-allowed' : 'pointer',
+                                                                            opacity: signal.release_at && new Date(signal.release_at).getTime() > currentTime.getTime() ? 0.25 : 1,
+                                                                            filter: signal.release_at && new Date(signal.release_at).getTime() > currentTime.getTime() ? 'grayscale(1) brightness(0.5)' : 'none',
+                                                                            width: '100%',
+                                                                            height: '100%',
+                                                                            objectFit: 'contain',
+                                                                            transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                                                                            transform: 'scale(1)'
+                                                                        }} 
+                                                                        onMouseOver={(e) => { 
+                                                                            if (!(signal.release_at && new Date(signal.release_at).getTime() > currentTime.getTime())) {
+                                                                                e.currentTarget.style.transform = 'scale(1.15)';
+                                                                                e.currentTarget.style.filter = 'drop-shadow(0 0 12px rgba(212, 175, 55, 0.6))';
+                                                                            }
+                                                                        }}
+                                                                        onMouseOut={(e) => { 
+                                                                            e.currentTarget.style.transform = 'scale(1)';
+                                                                            e.currentTarget.style.filter = 'none';
+                                                                        }}
+                                                                        onClick={() => {
+                                                                            if (signal.release_at && new Date(signal.release_at).getTime() > currentTime.getTime()) {
+                                                                                toast.error(`This signal is locked. Please wait ${formatCountdown(signal.release_at)} more.`);
+                                                                                return;
+                                                                            }
+                                                                            handleTakeSignal(signal);
+                                                                        }}
+                                                                    />
+                                                                    {signal.release_at && new Date(signal.release_at).getTime() > currentTime.getTime() && (
+                                                                        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'rgba(15, 23, 42, 0.95)', border: '1px solid #d4af37', borderRadius: '6px', padding: '2px 6px', pointerEvents: 'none', whiteSpace: 'nowrap', zIndex: 10, boxShadow: '0 4px 12px rgba(0,0,0,0.5)' }}>
+                                                                            <div style={{ fontSize: '10px', color: '#d4af37', fontWeight: 900, fontFamily: 'monospace', letterSpacing: '0.5px' }}>
+                                                                                {formatCountdown(signal.release_at)}
+                                                                            </div>
                                                                         </div>
-                                                                    </div>
-                                                                )}
-                                                            </div>
+                                                                    )}
+                                                                </div>
+                                                            )}
 
                                                             {(user?.is_admin || (signal.target_user_id !== null && signal.target_user_id !== undefined)) && (
                                                                 <button 
@@ -991,6 +1023,52 @@ export default function Dashboard() {
                                     ))}
                                     <button className="page-btn next" onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}>›</button>
                                 </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* MY PURCHASED SIGNALS SECTION */}
+                    {!user?.is_admin && signalHistory.length > 0 && (
+                        <div className="table-box" style={{ marginTop: '2.5rem' }}>
+                            <h3 style={{ padding: '1.5rem', margin: 0, color: 'white', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>My Purchased Signals</h3>
+                            <div className="table-wrapper">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Symbol</th>
+                                            <th>Type</th>
+                                            <th>Taken Price</th>
+                                            <th>Invested</th>
+                                            <th>Result</th>
+                                            <th>Date</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {signalHistory.map((history, idx) => (
+                                            <tr key={idx}>
+                                                <td>
+                                                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                                                        <img src={getSymbolIcon(history.Signal?.symbol || '')} style={{ width: "32px", height: "32px" }} alt={history.Signal?.symbol} />
+                                                        <div style={{ fontWeight: "600" }}>{history.Signal?.symbol}</div>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <span className={history.Signal?.type?.toLowerCase() || ''}>
+                                                        {history.Signal?.type}
+                                                    </span>
+                                                </td>
+                                                <td>{history.taken_price}</td>
+                                                <td>${history.invested_amount}</td>
+                                                <td>
+                                                    <span className={`db-badge status ${history.result === 'win' ? 'hit' : history.result === 'loss' ? 'loss' : 'active'}`}>
+                                                        {history.result}
+                                                    </span>
+                                                </td>
+                                                <td className="time">{new Date(history.taken_at).toLocaleDateString()}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     )}
@@ -1027,7 +1105,7 @@ export default function Dashboard() {
                                             disabled={isSubmitting}
                                             style={{ width: '100%', background: '#d4af37', color: 'black', border: 'none', padding: '10px', borderRadius: '10px', fontWeight: 800, fontSize: '0.8rem', cursor: 'pointer', transition: '0.3s', boxShadow: '0 4px 10px rgba(212, 175, 55, 0.2)' }}
                                         >
-                                            {isSubmitting ? 'Sending...' : 'REQUEST ACCESS'}
+                                            {isSubmitting ? <><span className="btn-spinner dark"></span>Sending...</> : 'REQUEST ACCESS'}
                                         </button>
                                     ) : requestStatus === 'pending' ? (
                                         <div style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', padding: '10px', borderRadius: '10px', color: '#d4af37', fontWeight: 700, fontSize: '0.75rem' }}>
@@ -1066,8 +1144,8 @@ export default function Dashboard() {
                             <span style={{ fontWeight: 700 }}>{signalToTake.entry_price}</span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <span style={{ color: '#64748b' }}>Investment</span>
-                            <span style={{ fontWeight: 700, color: '#d4af37' }}>$5.00</span>
+                            <span style={{ color: '#64748b' }}>Signal Fee</span>
+                            <span style={{ fontWeight: 700, color: '#d4af37' }}>$1.00</span>
                         </div>
                     </div>
 
