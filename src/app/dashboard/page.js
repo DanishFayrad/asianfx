@@ -438,7 +438,7 @@ export default function Dashboard() {
         <div className="db-nav-left">
           <div className="db-logo">
             <div className="logo-box">
-                <img src="/images/i (9).png" alt="Logo" />
+                <img src="/images/Background (2).png" alt="Logo" />
             </div>
             <span>AsianFX</span>
           </div>
@@ -589,7 +589,10 @@ export default function Dashboard() {
       {/*  MAIN  */}
       <div className="db-container">
         <div className="db-top-bar">
-          <h1 className="db-page-title">Trading Signals</h1>
+          <h1 className="db-page-title" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <img src="/images/Background (2).png" alt="Logo" style={{ width: '40px', height: 'auto' }} />
+            Trading Signals
+          </h1>
 
           <div className="right-actions">
             {mounted && !user?.is_admin && (

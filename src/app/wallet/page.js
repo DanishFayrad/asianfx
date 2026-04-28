@@ -73,7 +73,7 @@ export default function Wallet() {
       {/*  Sidebar  */}
       <aside className={`sidebar ${isSidebarOpen ? 'active' : ''}`}>
         <div className="logo">
-          <img src="/images/div (3).png" className="logo-icon" alt="Wallet Logo" />
+          <img src="/images/Background (2).png" className="logo-icon" alt="Wallet Logo" />
           <span>AsianFX</span>
         </div>
 

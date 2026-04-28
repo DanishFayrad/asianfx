@@ -244,7 +244,7 @@ export default function Transaction() {
       {/*  SIDEBAR  */}
       <aside className={`sidebar ${isSidebarOpen ? 'active' : ''}`}>
         <div className="logo" style={{ cursor: 'pointer' }} onClick={() => router.push('/dashboard')}>
-          <img src="/images/div (3).png" className="logo-icon" alt="Logo" />
+          <img src="/images/Background (2).png" alt="Logo" className="logo-icon" />
           <span>Asian FX</span>
         </div>
 

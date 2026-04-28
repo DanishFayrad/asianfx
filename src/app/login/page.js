@@ -41,7 +41,7 @@ export default function Login() {
   return (
     <div className="login-container">
       <div className="login-icon">
-        <img src="/images/arrow (1).png" className=".logo b" alt="Logo Icon" />
+        <img src="/images/Background (2).png" className="logo" alt="Logo" style={{ width: '80px', height: 'auto', marginBottom: '10px' }} />
       </div>
 
       <h1>Welcome Back</h1>

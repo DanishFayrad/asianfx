@@ -15,6 +15,9 @@ export const metadata = {
   title: "Asian FX Signals | Professional Trading & Wealth Management",
   description: "Get carefully analyzed Stock & Share Market signals. Join our professional trading management service with AI-driven strategies and a fair profit-sharing model.",
   keywords: "trading signals, stock market, share market, wealth management, forex signals, technical analysis",
+  icons: {
+    icon: '/icon.png',
+  },
 };
 
 import { Providers } from "@/redux/Providers";

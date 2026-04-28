@@ -979,7 +979,7 @@ We provide realistic expectations based on market conditions. Honesty and transp
 
         <div className="k-footer-brand">
           <div className="k-footer-logo">
-            <div className="k-footer-logo-icon"><span>ES</span></div>
+            <img src="/images/Background (2).png" alt="Logo" style={{ width: '40px', height: 'auto', marginRight: '10px' }} />
             <span className="k-footer-logo-text">Asian fx Signal</span>
           </div>
           <p className="k-footer-brand-desc">Professional trading management services with transparent profit-sharing. Your
