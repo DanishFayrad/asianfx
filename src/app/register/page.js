@@ -40,16 +40,17 @@ export default function Register() {
 
   const { name, email, password, phone, country } = formData;
 
-  const { isLoading, isError, isSuccess, message } = useSelector(
+  const { isLoading, isError, isSuccess, message, registrationEmail } = useSelector(
     (state) => state.auth
   );
 
   useEffect(() => {
-    if (isSuccess) {
-      router.push(`/verify-email?email=${encodeURIComponent(email)}`);
-      dispatch(reset());
+    if (isSuccess && registrationEmail) {
+      router.push(`/otp?email=${encodeURIComponent(registrationEmail)}`);
+      // We don't reset yet so that /otp page can read the state if needed, 
+      // or we rely on the URL param.
     }
-  }, [isSuccess, email, router, dispatch]);
+  }, [isSuccess, registrationEmail, router]);
 
   const onChange = (e) => {
     setFormData((prevState) => ({

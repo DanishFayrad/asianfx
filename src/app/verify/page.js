@@ -1,14 +1,17 @@
 'use client';
 
-import React from 'react';
-import { useRouter } from 'next/navigation';
+import React, { Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import '../../styles/verify.css';
 
-export default function Verify() {
+function VerifyClient() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const email = searchParams.get('email');
 
   const handleContinue = () => {
-    router.push('/otp');
+    const url = email ? `/otp?email=${encodeURIComponent(email)}` : '/otp';
+    router.push(url);
   };
 
   return (
@@ -40,4 +43,12 @@ export default function Verify() {
       </div>
     </div>
   );
+}
+
+export default function Verify() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <VerifyClient />
+        </Suspense>
+    );
 }

@@ -69,6 +69,7 @@ const initialState = {
     isSuccess: false,
     isLoading: false,
     message: '',
+    registrationEmail: null,
 };
 
 export const authSlice = createSlice({
@@ -80,6 +81,7 @@ export const authSlice = createSlice({
             state.isSuccess = false;
             state.isError = false;
             state.message = '';
+            state.registrationEmail = null;
         },
         logout: (state) => {
             localStorage.removeItem('token');
@@ -119,9 +121,11 @@ export const authSlice = createSlice({
             .addCase(registerUser.pending, (state) => {
                 state.isLoading = true;
             })
-            .addCase(registerUser.fulfilled, (state) => {
+            .addCase(registerUser.fulfilled, (state, action) => {
                 state.isLoading = false;
                 state.isSuccess = true;
+                // Store registration email for verification redirection
+                state.registrationEmail = action.meta.arg.email;
             })
             .addCase(registerUser.rejected, (state, action) => {
                 state.isLoading = false;
