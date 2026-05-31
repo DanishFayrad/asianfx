@@ -88,6 +88,16 @@
     width: auto;
 }
 
+/* Self-contained SVG logo badge: drop the gold wrapper so it isn't gold-on-gold */
+.db-logo .logo-box {
+    background: transparent;
+    padding: 0;
+}
+
+.db-logo .logo-box img {
+    height: 34px;
+}
+
 .db-nav-left nav a {
   color: var(--text-muted);
   text-decoration: none;

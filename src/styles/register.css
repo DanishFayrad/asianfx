@@ -50,7 +50,7 @@
 .register-logo-icon {
     width: 64px;
     height: 64px;
-    background: linear-gradient(135deg, #d4af37, #f59e0b);
+    background: transparent;
     border-radius: 16px;
     display: flex;
     justify-content: center;

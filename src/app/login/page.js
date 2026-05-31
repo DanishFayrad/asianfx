@@ -41,7 +41,7 @@ export default function Login() {
   return (
     <div className="login-container">
       <div className="login-icon">
-        <img src="/images/Background (2).png" className="logo" alt="Logo" style={{ width: '80px', height: 'auto', marginBottom: '10px' }} />
+        <img src="/images/logo-mark.svg" className="logo" alt="AsianFX Signals" style={{ width: '100%', height: '100%' }} />
       </div>
 
       <h1>Welcome Back</h1>

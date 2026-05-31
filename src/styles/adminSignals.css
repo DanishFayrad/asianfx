@@ -43,8 +43,8 @@
 }
 
 .admin-logo .logo-box {
-    background: var(--admin-primary);
-    padding: 8px;
+    background: transparent;
+    padding: 0;
     border-radius: 8px;
     display: flex;
 }

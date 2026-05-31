@@ -77,7 +77,7 @@ export default function Register() {
 
         <div className="register-header">
           <div className="register-logo-icon">
-            <img src="/images/Background (2).png" style={{ width: '32px' }} alt="Logo" />
+            <img src="/images/logo-mark.svg" style={{ width: '100%', height: '100%' }} alt="AsianFX Signals" />
           </div>
           <h1>Create Account</h1>
           <p>Start your professional trading journey</p>

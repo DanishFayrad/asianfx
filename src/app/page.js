@@ -2,10 +2,37 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import toast from 'react-hot-toast';
+import apiClient from '../services/apiClient';
 import '../styles/style.css';
 
 export default function Home() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
+
+    const handleConsultSubmit = async (e) => {
+        e.preventDefault();
+        const form = e.target;
+        const fullName = form.fullName.value.trim();
+        const email = form.email.value.trim();
+        const message = form.message.value.trim();
+
+        if (!fullName || !email) {
+            toast.error('Please enter your name and email.');
+            return;
+        }
+
+        try {
+            setSubmitting(true);
+            const { data } = await apiClient.post('/api/contact', { fullName, email, message });
+            toast.success(data?.message || 'Thank you! We will get back to you shortly.');
+            form.reset();
+        } catch (err) {
+            toast.error(err?.response?.data?.message || 'Could not send your message. Please try again.');
+        } finally {
+            setSubmitting(false);
+        }
+    };
 
     React.useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
@@ -21,8 +48,8 @@ export default function Home() {
 <header className="navbar">
   <div className="nav-container">
     <div className="logo">
-      <img src="/images/Background (2).png" alt="Logo" />
-      Asian fx Signal
+      <img src="/images/logo-mark.svg" alt="AsianFX Signals" />
+      AsianFX
     </div>
 
     <div className="hamburger" id="hamburger" onClick={() => setIsMenuOpen(!isMenuOpen)}>
@@ -49,7 +76,7 @@ export default function Home() {
     <p className="badge">Professional Trading Management</p>
 
     <h1>
-      <span>Earn Money Safely</span><br />
+      <span>AsianFX</span><br />
       
       Your Wealth, Our Strategy
 
@@ -93,7 +120,7 @@ export default function Home() {
 <section id="about" className="about">
   <div className="container">
 
-    <h2>About <span>Earn Money Safely</span></h2>
+    <h2>About <span>AsianFX</span></h2>
 
     <p className="about-desc">
     We're not just another trading service. We're your strategic partner in building wealth through<br />
@@ -112,7 +139,7 @@ transparency.
         <h3>Your Success is Our Mission</h3>
 
         <p>
-          At Earn Money Safely, we understand that both Stock Market and Share
+          At AsianFX, we understand that both Stock Market and Share
 Market trading can be complex and risky. That's why we've created a system<br />
 where you don't have to be a trading expert to benefit from the financial
 markets.<br />
@@ -356,7 +383,7 @@ protected.
 <div className="ems-container">
 
 <h2 className="ems-heading">
-Why Choose <span>Earn Money Safely</span>?
+Why Choose <span>AsianFX</span>?
 </h2>
 
 <p className="ems-subtitle">
@@ -579,7 +606,7 @@ We provide realistic expectations based on market conditions. Honesty and transp
     </h2>
 
     <p className="cs-subtitle">
-      Don't just take our word for it. Here's what our clients have to say about their experience with<br /> Earn Money Safely.
+      Don't just take our word for it. Here's what our clients have to say about their experience with<br /> AsianFX.
     </p>
 
     <div className="cs-grid">
@@ -594,7 +621,7 @@ We provide realistic expectations based on market conditions. Honesty and transp
           <img src="/images/Container.png" className="stars" /></span>
         </div>
         <p className="cs-text">
-          "I've been with Earn Money Safely for 8
+          "I've been with AsianFX for 8
            months and my portfolio has grown by
            47%. The transparency and
            professionalism are unmatched. I finally
@@ -814,7 +841,7 @@ We provide realistic expectations based on market conditions. Honesty and transp
           </div>
           <ul className="k-block-list">
             <li>Our compensation is earned exclusively from profits generated on your account.</li>
-            <li>Profit sharing ranges from 30-40% equity for Earn Money Safely, with 60-70% retained by the client.</li>
+            <li>Profit sharing ranges from 30-40% equity for AsianFX, with 60-70% retained by the client.</li>
             <li>If no profit is generated in a given period, no fees are charged to the client.</li>
             <li>All profit calculations are based on net profit after accounting for any trading losses.</li>
           </ul>
@@ -831,14 +858,14 @@ We provide realistic expectations based on market conditions. Honesty and transp
         <ul className="k-block-list">
           <li>You maintain full ownership and control of your brokerage account at all times.</li>
           <li>You are responsible for understanding the risks associated with trading and your account activity.</li>
-          <li>Figma Make and Earn Money Safely are not intended for collecting personally identifiable information (PII)
+          <li>AsianFX is not intended for collecting personally identifiable information (PII)
             or securing highly sensitive data.</li>
           <li>You should only invest funds that you can afford to lose without affecting your financial stability.</li>
         </ul>
         <div className="k-bottom-box">
 
           <p className="k-footer-note">
-            Earn Money Safely operates as a trading consultancy service. We recommend consulting with a financial
+            AsianFX operates as a trading consultancy service. We recommend consulting with a financial
             advisor
             before making investment decisions. This website and its content do not constitute financial advice and
             should
@@ -936,37 +963,28 @@ We provide realistic expectations based on market conditions. Honesty and transp
 
         </div>
 
-        <form className="k-consult-right" id="consultForm">
+        <form className="k-consult-right" id="consultForm" onSubmit={handleConsultSubmit}>
           <div className="k-form-group">
-            <label className="k-form-label">Full Name <span className="k-required">*</span></label>
-            <input type="text" className="k-form-input" placeholder="John Doe" id="fullName" />
+            <label className="k-form-label" htmlFor="fullName">Full Name <span className="k-required">*</span></label>
+            <input type="text" className="k-form-input" placeholder="John Doe" id="fullName" name="fullName" autoComplete="name" />
           </div>
           <div className="k-form-group">
-            <label className="k-form-label">Email Address <span className="k-required">*</span></label>
-            <input type="email" className="k-form-input" placeholder="john@example.com" id="emailAddress" />
+            <label className="k-form-label" htmlFor="emailAddress">Email Address <span className="k-required">*</span></label>
+            <input type="email" className="k-form-input" placeholder="john@example.com" id="emailAddress" name="email" autoComplete="email" />
           </div>
           <div className="k-form-group">
-            <label className="k-form-label">Phone Number</label>
-            <input type="tel" className="k-form-input" placeholder="+1 (555) 123-4567" id="phoneNumber" />
-          </div>
-          <div className="k-form-group">
-            <label className="k-form-label">Password</label>
-           <input type="password" className="k-form-input"  placeholder="Enter a Password" id="password" />
-           </div>
-        
-          <div className="k-form-group">
-            <label className="k-form-label">Message</label>
+            <label className="k-form-label" htmlFor="message">Message</label>
             <textarea className="k-form-input k-form-textarea" placeholder="Tell us about your trading goals..."
-              id="message" rows="4"></textarea>
+              id="message" name="message" rows="4"></textarea>
           </div>
-         <button type="submit" className="k-submit-btn" id="submitBtn">
+         <button type="submit" className="k-submit-btn" id="submitBtn" disabled={submitting}>
             <svg viewBox="0 0 20 20" fill="none" width="18" height="18">
               <rect x="2" y="4" width="16" height="12" rx="2" stroke="currentColor" strokeWidth="1.5" />
               <path d="M2 7l8 5 8-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
-            Create Your Account
+            {submitting ? 'Sending...' : 'Book Free Consultation'}
           </button>
-          <p className="k-form-disclaimer">By submitting this form, you agree to be contacted by Earn Money Safely
+          <p className="k-form-disclaimer">By submitting this form, you agree to be contacted by AsianFX
             regarding our services.</p>
         </form>
       </div>
@@ -979,8 +997,8 @@ We provide realistic expectations based on market conditions. Honesty and transp
 
         <div className="k-footer-brand">
           <div className="k-footer-logo">
-            <img src="/images/Background (2).png" alt="Logo" style={{ width: '40px', height: 'auto', marginRight: '10px' }} />
-            <span className="k-footer-logo-text">Asian fx Signal</span>
+            <img src="/images/logo-mark.svg" alt="AsianFX Signals" style={{ width: '40px', height: 'auto', marginRight: '10px' }} />
+            <span className="k-footer-logo-text">AsianFX</span>
           </div>
           <p className="k-footer-brand-desc">Professional trading management services with transparent profit-sharing. Your
             wealth, our strategy.</p>
@@ -1058,7 +1076,7 @@ We provide realistic expectations based on market conditions. Honesty and transp
       <div className="k-footer-divider"></div>
 
       <div className="k-footer-bottom">
-        <p className="k-footer-copyright">&copy; 2026 Earn Money Safely. All rights reserved.</p>
+        <p className="k-footer-copyright">&copy; 2026 AsianFX. All rights reserved.</p>
         <div className="k-footer-legal">
           <a href="#">Privacy Policy</a>
           <a href="#">Terms of Service</a>

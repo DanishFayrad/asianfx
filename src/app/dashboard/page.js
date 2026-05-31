@@ -14,6 +14,9 @@ import { io } from 'socket.io-client';
 import toast from 'react-hot-toast';
 import { API_BASE_URL } from '../../constants/apiConstants';
 import { serverTimeOffset, updateServerTimeOffset } from '../../services/apiClient';
+import AdminSidebar from '../../components/AdminSidebar';
+import AdminDashboardStats from '../../components/AdminDashboardStats';
+import AdminUsersTable from '../../components/AdminUsersTable';
 import '../../styles/dashboard.css';
 
 export default function Dashboard() {
@@ -111,6 +114,8 @@ export default function Dashboard() {
   const [signalHistory, setSignalHistory] = useState([]);
   const [stats, setStats] = useState({ active_signals: 0, success_rate: 0, total_signals: 0, total_users: 0, platform_balance: '0', pending_deposits: 0 });
   const [adminStats, setAdminStats] = useState(null);
+  const [adminUsers, setAdminUsers] = useState([]);
+  const [usersLoading, setUsersLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const rowsPerPage = 6;
@@ -242,6 +247,16 @@ export default function Dashboard() {
       if (user?.is_admin) {
         const aStats = await transactionService.getAdminStats();
         setAdminStats(aStats);
+
+        try {
+          setUsersLoading(true);
+          const usersList = await transactionService.getAllUsers();
+          setAdminUsers(Array.isArray(usersList) ? usersList : []);
+        } catch (e) {
+          console.error("Failed to fetch users list", e);
+        } finally {
+          setUsersLoading(false);
+        }
       }
     } catch (error) {
       console.error("Error fetching signals:", error);
@@ -432,13 +447,63 @@ export default function Dashboard() {
     if (isProfileOpen) setIsProfileOpen(false);
   };
 
+  // Admins get the unified admin shell (sidebar) instead of the user top-navbar.
+  if (mounted && user?.is_admin) {
+    return (
+      <div className="admin-layout">
+        <AdminSidebar
+          active="dashboard"
+          user={user}
+          pendingDeposits={adminStats?.pending_deposits || 0}
+          onLogout={handleLogout}
+          isOpen={isMenuOpen}
+          onClose={() => setIsMenuOpen(false)}
+        />
+
+        {isMenuOpen && <div className="admin-backdrop" onClick={() => setIsMenuOpen(false)}></div>}
+
+        <main className="admin-main-content">
+          <header className="admin-top-navbar">
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <button className="admin-btn-hamburger" onClick={toggleMenu}>☰</button>
+              <div>
+                <h2 className="admin-page-title">Admin Dashboard</h2>
+                <p className="admin-subtitle">Global Platform Overview & Business Analytics</p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => router.push('/admin/signals')}
+              style={{ background: 'var(--admin-primary)', color: '#0a0b10', border: 'none', padding: '10px 18px', borderRadius: '8px', cursor: 'pointer', fontWeight: 700 }}
+            >
+              + New Signal
+            </button>
+          </header>
+
+          {adminNotification && (
+            <div style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid #ef4444', borderRadius: '12px', padding: '12px 16px', margin: '0 2rem', color: '#ef4444', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '15px' }}>
+              <span style={{ fontWeight: 600 }}>{adminNotification}</span>
+              <button onClick={() => router.push('/transaction')} style={{ background: '#ef4444', color: 'white', border: 'none', padding: '4px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}>Review Now</button>
+              <button onClick={() => setAdminNotification(null)} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '1rem' }}>✕</button>
+            </div>
+          )}
+
+          <div style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+            <AdminDashboardStats adminStats={adminStats} onNav={(p) => router.push(p)} />
+            <AdminUsersTable users={adminUsers} loading={usersLoading} />
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="db-main-layout">
       <header className="db-navbar">
         <div className="db-nav-left">
           <div className="db-logo">
             <div className="logo-box">
-                <img src="/images/Background (2).png" alt="Logo" />
+                <img src="/images/logo-mark.svg" alt="AsianFX Signals" />
             </div>
             <span>AsianFX</span>
           </div>
@@ -590,7 +655,7 @@ export default function Dashboard() {
       <div className="db-container">
         <div className="db-top-bar">
           <h1 className="db-page-title" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-            <img src="/images/Background (2).png" alt="Logo" style={{ width: '40px', height: 'auto' }} />
+            <img src="/images/logo-mark.svg" alt="AsianFX Signals" style={{ width: '40px', height: 'auto' }} />
             Trading Signals
           </h1>
 
@@ -721,77 +786,7 @@ export default function Dashboard() {
         )}
 
         {mounted && user?.is_admin ? (
-            /* PREMIUM ADMIN BUSINESS DASHBOARD */
-            <div className="admin-business-suite" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-                <div className="db-stats" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))' }}>
-                    <div className="db-card admin-kpi" style={{ borderLeft: '4px solid #a78bfa' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
-                            <span className="db-card-label" style={{ color: '#a78bfa' }}>GLOBAL BALANCE</span>
-                            <div style={{ background: 'rgba(167, 139, 250, 0.1)', padding: '4px', borderRadius: '6px' }}>💰</div>
-                        </div>
-                        <h3>${adminStats?.platform_balance || '0.00'}</h3>
-                        <p style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-                            <span>Users Wallet Total</span>
-                            <span style={{ color: '#22c55e' }}>ONLINE</span>
-                        </p>
-                    </div>
-
-                    <div className="db-card admin-kpi" style={{ borderLeft: '4px solid #22c55e' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
-                            <span className="db-card-label" style={{ color: '#22c55e' }}>TOTAL REVENUE</span>
-                            <div style={{ background: 'rgba(34, 197, 94, 0.1)', padding: '4px', borderRadius: '6px' }}>📈</div>
-                        </div>
-                        <h3>${adminStats?.total_deposit || '0.00'}</h3>
-                        <p>Accumulated Deposits</p>
-                    </div>
-
-                    <div className="db-card admin-kpi" style={{ borderLeft: '4px solid #f59e0b' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
-                            <span className="db-card-label" style={{ color: '#f59e0b' }}>PENDING ACTION</span>
-                            <div style={{ background: 'rgba(245, 158, 11, 0.1)', padding: '4px', borderRadius: '6px' }}>⏳</div>
-                        </div>
-                        <h3>{adminStats?.pending_deposits || 0}</h3>
-                        <p>Awaiting Verification</p>
-                    </div>
-
-                    <div className="db-card admin-kpi" style={{ borderLeft: '4px solid #60a5fa' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
-                            <span className="db-card-label" style={{ color: '#60a5fa' }}>PLATFORM PROFIT</span>
-                            <div style={{ background: 'rgba(96, 165, 250, 0.1)', padding: '4px', borderRadius: '6px' }}>💎</div>
-                        </div>
-                        <h3>${adminStats?.total_profit || '0.00'}</h3>
-                        <p>Net Earnings</p>
-                    </div>
-                </div>
-
-                {/* QUICK NAV GRID FOR ADMIN */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
-                    <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '20px', padding: '1.5rem', display: 'flex', gap: '20px', alignItems: 'center', cursor: 'pointer', transition: '0.3s' }} onClick={() => router.push('/transaction')}>
-                         <div style={{ background: '#ef4444', color: 'white', width: '50px', height: '50px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem' }}>💵</div>
-                         <div>
-                            <h4 style={{ margin: 0, fontSize: '1.1rem' }}>Transaction Desk</h4>
-                            <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-dim)' }}>Approve deposits & send signals</p>
-                         </div>
-                         <div style={{ marginLeft: 'auto', background: 'rgba(255,255,255,0.1)', padding: '4px 10px', borderRadius: '20px', fontSize: '0.75rem' }}>{adminStats?.pending_deposits || 0} Alert</div>
-                    </div>
-
-                    <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '20px', padding: '1.5rem', display: 'flex', gap: '20px', alignItems: 'center', cursor: 'pointer', transition: '0.3s' }} onClick={() => router.push('/admin/signals')}>
-                         <div style={{ background: '#d4af37', color: 'black', width: '50px', height: '50px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem' }}>📢</div>
-                         <div>
-                            <h4 style={{ margin: 0, fontSize: '1.1rem' }}>Global Center</h4>
-                            <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-dim)' }}>Manage signals & market trends</p>
-                         </div>
-                    </div>
-
-                    <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '20px', padding: '1.5rem', display: 'flex', gap: '20px', alignItems: 'center', cursor: 'pointer', transition: '0.3s' }}>
-                         <div style={{ background: '#3b82f6', color: 'white', width: '50px', height: '50px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem' }}>👥</div>
-                         <div>
-                            <h4 style={{ margin: 0, fontSize: '1.1rem' }}>Users Matrix</h4>
-                            <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-dim)' }}>{adminStats?.total_users || 0} Registered Members</p>
-                         </div>
-                    </div>
-                </div>
-            </div>
+            <AdminDashboardStats adminStats={adminStats} onNav={(p) => router.push(p)} />
         ) : (
             <div className="db-content-flex-wrapper">
                 <div className="db-main-content-column" style={{ flex: 1, minWidth: 0 }}>

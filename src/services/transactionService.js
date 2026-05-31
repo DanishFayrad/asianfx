@@ -48,6 +48,11 @@ const getWalletStats = async () => {
     return response.data;
 };
 
+const getAllUsers = async () => {
+    const response = await api.get(API_ENDPOINTS.TRANSACTIONS.USERS);
+    return response.data;
+};
+
 const deleteTransaction = async (id) => {
     const response = await api.delete(API_ENDPOINTS.TRANSACTIONS.DELETE(id));
     return response.data;
@@ -62,6 +67,7 @@ const transactionService = {
     getAllTransactions,
     getAdminStats,
     getWalletStats,
+    getAllUsers,
     deleteTransaction
 };
 

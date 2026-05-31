@@ -30,5 +30,6 @@ export const API_ENDPOINTS = {
         ALL: '/api/transactions/all',
         ADMIN_STATS: '/api/transactions/admin-stats',
         WALLET_STATS: '/api/transactions/wallet-stats',
+        USERS: '/api/transactions/users',
     }
 };

@@ -12,12 +12,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Asian FX Signals | Professional Trading & Wealth Management",
+  title: "AsianFX | Professional Trading & Wealth Management",
   description: "Get carefully analyzed Stock & Share Market signals. Join our professional trading management service with AI-driven strategies and a fair profit-sharing model.",
   keywords: "trading signals, stock market, share market, wealth management, forex signals, technical analysis",
-  icons: {
-    icon: '/icon.png',
-  },
+  // Favicon is provided by the app/icon.svg file convention (the AsianFX logo).
 };
 
 import { Providers } from "@/redux/Providers";

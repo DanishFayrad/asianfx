@@ -12,6 +12,8 @@ import { io } from 'socket.io-client';
 import { useDispatch } from 'react-redux';
 import toast from 'react-hot-toast';
 import { API_BASE_URL } from '../../constants/apiConstants';
+import AdminSidebar from '../../components/AdminSidebar';
+import '../../styles/adminSignals.css';
 import '../../styles/transaction.css';
 
 export default function Transaction() {
@@ -240,50 +242,22 @@ export default function Transaction() {
   }
 
   return (
-    <div className="layout">
+    <div className="admin-layout">
       {/*  SIDEBAR  */}
-      <aside className={`sidebar ${isSidebarOpen ? 'active' : ''}`}>
-        <div className="logo" style={{ cursor: 'pointer' }} onClick={() => router.push('/dashboard')}>
-          <img src="/images/Background (2).png" alt="Logo" className="logo-icon" />
-          <span>Asian FX</span>
-        </div>
-
-        <div className="menu" onClick={() => { setIsSidebarOpen(false); router.push('/dashboard'); }}>
-          <img src="/images/i (5).png" alt="Dashboard" />
-          <span>Dashboard</span>
-        </div>
-
-        <div className="menu" onClick={() => { setIsSidebarOpen(false); router.push('/wallet'); }}>
-          <img src="/images/i (2).png" alt="Wallet" />
-          <span>Wallet</span>
-        </div>
-
-        <div className="menu active" onClick={() => { setIsSidebarOpen(false); router.push('/transaction'); }}>
-          <img src="/images/svg (15).png" alt="Transactions" style={{ filter: 'brightness(0) invert(1)' }} />
-          <span>Transactions</span>
-          {pendingDeposits.length > 0 && (
-            <span style={{ background: '#ef4444', color: 'white', borderRadius: '50%', width: '18px', height: '18px', fontSize: '10px', display: 'flex', alignItems: 'center', justifySelf: 'flex-end', justifyContent: 'center', marginLeft: 'auto' }}>
-                {pendingDeposits.length}
-            </span>
-          )}
-        </div>
-
-        <div className="menu" onClick={() => { setIsSidebarOpen(false); router.push('/admin/signals'); }}>
-            <img src="/images/i (11).png" alt="Admin" />
-            <span>Admin</span>
-        </div>
-
-        <div className="menu" onClick={handleLogout} style={{ marginTop: 'auto', borderTop: '1px solid rgba(255,255,255,0.05)', color: '#ef4444' }}>
-            <img src="/images/arrow (1).png" alt="Logout" style={{ filter: 'invert(1) sepia(1) saturate(5) hue-rotate(-50deg)' }} />
-            <span>Logout</span>
-        </div>
-      </aside>
+      <AdminSidebar
+        active="transactions"
+        user={user}
+        pendingDeposits={pendingDeposits.length}
+        onLogout={handleLogout}
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+      />
 
       {/* BACKDROP FOR MOBILE */}
-      {isSidebarOpen && <div className="backdrop" onClick={() => setIsSidebarOpen(false)}></div>}
+      {isSidebarOpen && <div className="admin-backdrop" onClick={() => setIsSidebarOpen(false)}></div>}
 
       {/*  MAIN  */}
-      <main className="main">
+      <main className="admin-main-content">
         {/*  HEADER  */}
         <div className="header-box">
           <header className="header">

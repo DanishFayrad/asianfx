@@ -12,6 +12,7 @@ import { logout } from '../../../redux/slices/authSlice';
 import { io } from 'socket.io-client';
 import { API_BASE_URL } from '../../../constants/apiConstants';
 import toast from 'react-hot-toast';
+import AdminSidebar from '../../../components/AdminSidebar';
 import '../../../styles/adminSignals.css';
 
 export default function AdminSignals() {
@@ -251,53 +252,14 @@ export default function AdminSignals() {
   return (
     <div className="admin-layout">
       {/* SIDEBAR */}
-      <aside className={`admin-sidebar ${isSidebarOpen ? 'show' : ''}`}>
-        <div className="admin-logo">
-          <div className="logo-box">
-             <img src="/images/i (9).png" alt="Logo" style={{ height: '24px' }} />
-          </div>
-          <span>AsianFX Admin</span>
-        </div>
-
-        <nav className="admin-nav">
-          <Link href="/dashboard" className="admin-item" onClick={() => setIsSidebarOpen(false)}>
-             <img src="/images/i (5).png" alt="Dashboard" style={{ filter: 'brightness(0) invert(1)', width: '20px' }} /> User Dashboard
-          </Link>
-          <Link href="/admin/signals" className="admin-item active" onClick={() => setIsSidebarOpen(false)}>
-             <img src="/images/i (11).png" alt="Broadcast" style={{ filter: 'brightness(0) invert(1)', width: '20px' }} /> Broadcast Signal
-          </Link>
-          <Link href="/wallet" className="admin-item" onClick={() => setIsSidebarOpen(false)}>
-             <img src="/images/i (2).png" alt="Wallet" style={{ filter: 'brightness(0) invert(1)', width: '20px' }} /> Wallet
-          </Link>
-          <Link href="/transaction" className="admin-item" onClick={() => setIsSidebarOpen(false)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <img src="/images/svg (15).png" alt="Transactions" style={{ filter: 'brightness(0) invert(1)', width: '20px' }} /> 
-                Transactions
-              </div>
-              {adminStats?.pending_deposits > 0 && (
-                <span style={{ 
-                  background: '#ef4444', 
-                  color: 'white', 
-                  borderRadius: '50%', 
-                  width: '18px', 
-                  height: '18px', 
-                  fontSize: '10px', 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center' 
-                }}>{adminStats.pending_deposits}</span>
-              )}
-          </Link>
-        </nav>
-
-        <div className="admin-footer">
-          <img src="/images/img.png" alt="Profile" className="admin-avatar" />
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>{mounted ? (user?.name || 'Administrator') : 'Administrator'}</span>
-            <span style={{ fontSize: '0.75rem', color: 'var(--admin-text-muted)' }}>Admin Account</span>
-          </div>
-        </div>
-      </aside>
+      <AdminSidebar
+        active="signals"
+        user={mounted ? user : null}
+        pendingDeposits={adminStats?.pending_deposits || 0}
+        onLogout={handleLogout}
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+      />
 
       {/* BACKDROP */}
       {isSidebarOpen && <div className="admin-backdrop" onClick={() => setIsSidebarOpen(false)}></div>}
@@ -319,13 +281,6 @@ export default function AdminSignals() {
                <div style={{ width: '8px', height: '8px', background: 'var(--admin-success)', borderRadius: '50%', boxShadow: '0 0 8px var(--admin-success)' }}></div>
                <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--admin-success)' }}>{liveClientsCount} active on web</span>
             </div>
-            
-            <button 
-                onClick={handleLogout}
-                style={{ background: 'transparent', border: '1px solid var(--admin-danger)', color: 'var(--admin-danger)', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}
-            >
-                Log Out
-            </button>
           </div>
         </header>
 

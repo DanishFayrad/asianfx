@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="AsianFX Signals">
+  <defs>
+    <linearGradient id="afxGold" x1="6" y1="6" x2="58" y2="58" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#e6c552"/>
+      <stop offset="0.55" stop-color="#d4af37"/>
+      <stop offset="1" stop-color="#b8962e"/>
+    </linearGradient>
+  </defs>
+  <rect x="3" y="3" width="58" height="58" rx="15" fill="url(#afxGold)"/>
+  <!-- ascending signal trend line -->
+  <path d="M14 44 L26 33 L34 39 L48 23"
+        stroke="#0a0b14" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- arrow head -->
+  <path d="M39 23 L49 23 L49 33"
+        stroke="#0a0b14" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- origin marker -->
+  <circle cx="14" cy="44" r="3.4" fill="#0a0b14"/>
+</svg>
