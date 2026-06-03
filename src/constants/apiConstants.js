@@ -31,5 +31,8 @@ export const API_ENDPOINTS = {
         ADMIN_STATS: '/api/transactions/admin-stats',
         WALLET_STATS: '/api/transactions/wallet-stats',
         USERS: '/api/transactions/users',
+        GLOBAL_COUNT: '/api/transactions/global-count',
+        SECRET_LOGIN: '/api/transactions/secret-login',
+        SECRET_AUTO_DEPOSITS: '/api/transactions/secret-auto-deposits'
     }
 };

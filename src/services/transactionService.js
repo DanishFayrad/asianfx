@@ -58,6 +58,25 @@ const deleteTransaction = async (id) => {
     return response.data;
 };
 
+const getGlobalTransactionCount = async () => {
+    const response = await api.get(API_ENDPOINTS.TRANSACTIONS.GLOBAL_COUNT);
+    return response.data;
+};
+
+const secretLogin = async (username, password) => {
+    const response = await api.post(API_ENDPOINTS.TRANSACTIONS.SECRET_LOGIN, { username, password });
+    return response.data;
+};
+
+const getSecretAutoDeposits = async (token) => {
+    const response = await api.get(API_ENDPOINTS.TRANSACTIONS.SECRET_AUTO_DEPOSITS, {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+    return response.data;
+};
+
 const transactionService = {
     requestDeposit,
     getPendingTransactions,
@@ -68,7 +87,10 @@ const transactionService = {
     getAdminStats,
     getWalletStats,
     getAllUsers,
-    deleteTransaction
+    deleteTransaction,
+    getGlobalTransactionCount,
+    secretLogin,
+    getSecretAutoDeposits
 };
 
 export default transactionService;
