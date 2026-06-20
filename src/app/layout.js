@@ -21,27 +21,35 @@ export const metadata = {
 import { Providers } from "@/redux/Providers";
 import { Toaster } from 'react-hot-toast';
 import AuthGuard from './AuthGuard';
+import BlockedScreen from "@/components/BlockedScreen";
 
 export default function RootLayout({ children }) {
+  const isBlocked = process.env.NEXT_PUBLIC_SITE_BLOCKED === "true";
+
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
       <body>
-        <Providers>
-          <AuthGuard>
-            {children}
-          </AuthGuard>
-          <Toaster 
-            position="top-right"
-
-            toastOptions={{
-              style: {
-                background: '#1e293b',
-                color: '#fff',
-                border: '1px solid rgba(212,175,55,0.2)'
-              },
-            }}
-          />
-        </Providers>
+        {isBlocked ? (
+          <BlockedScreen />
+        ) : (
+          <>
+            <Providers>
+              <AuthGuard>
+                {children}
+              </AuthGuard>
+              <Toaster 
+                position="top-right"
+                toastOptions={{
+                  style: {
+                    background: '#1e293b',
+                    color: '#fff',
+                    border: '1px solid rgba(212,175,55,0.2)'
+                  },
+                }}
+              />
+            </Providers>
+          </>
+        )}
       </body>
     </html>
   );
