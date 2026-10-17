@@ -25,14 +25,24 @@
 
 /* ICON */
 .login-icon{
-  width: 60px;
-  height: 60px;
+  width: 72px;
+  height: 72px;
   background: transparent;
   border-radius: 12px;
   display: flex;
   justify-content: center;
   align-items: center;
   margin: 0 auto 20px;
+}
+
+/* Unique class name: a global ".logo" rule elsewhere (wallet/transaction CSS) used to shrink it */
+.login-logo{
+  display: block;
+  width: 72px;
+  height: 72px;
+  padding: 0;
+  margin: 0;
+  filter: drop-shadow(0 8px 20px rgba(var(--t-accent-rgb), 0.25));
 }
 
 /* HEADING */

@@ -43,7 +43,7 @@ export default function Login() {
     <div className="login-page">
     <div className="login-container">
       <div className="login-icon">
-        <img src="/images/logo-mark.svg" className="logo" alt="AsianFX Signals" style={{ width: '100%', height: '100%' }} />
+        <img src="/images/logo-mark.svg" className="login-logo" alt="AsianFX Signals" width={72} height={72} />
       </div>
 
       <h1>Welcome Back</h1>
