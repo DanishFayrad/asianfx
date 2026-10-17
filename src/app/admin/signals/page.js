@@ -7,10 +7,9 @@ import { useSelector, useDispatch } from 'react-redux';
 import signalService from '../../../services/signalService';
 import authService from '../../../services/authService';
 import transactionService from '../../../services/transactionService';
-import apiClient, { serverTimeOffset, updateServerTimeOffset } from '../../../services/apiClient';
+import { serverTimeOffset, updateServerTimeOffset } from '../../../services/serverTime';
 import { logout } from '../../../redux/slices/authSlice';
-import { io } from 'socket.io-client';
-import { API_BASE_URL } from '../../../constants/apiConstants';
+import { connectRealtime } from '../../../services/realtimeService';
 import toast from 'react-hot-toast';
 import AdminSidebar from '../../../components/AdminSidebar';
 import '../../../styles/adminSignals.css';
@@ -127,15 +126,18 @@ export default function AdminSignals() {
 
     // Set up Real-time listener for badges
     if (user?.is_admin) {
-        const socket = io(API_BASE_URL);
-        
+        const socket = connectRealtime(user);
+
         socket.on('connect', () => {
-            console.log("Admin Socket connected:", socket.id);
-            socket.emit('join_admin');
+            console.log("Admin realtime connected");
         });
 
         socket.on('admin_notification', (notif) => {
             console.log("Admin page real-time update:", notif);
+            fetchAllAdminData();
+        });
+
+        socket.on('signal_request', () => {
             fetchAllAdminData();
         });
 
@@ -559,7 +561,7 @@ export default function AdminSignals() {
                            <button 
                                onClick={async () => {
                                    try {
-                                       await apiClient.post(`/api/signals/${sig.id}/extend-timer`, { additional_minutes: 2 });
+                                       await signalService.extendSignalTimer(sig.id, 2);
                                        fetchAllAdminData();
                                        toast.success("Timer extended by 2 minutes");
                                    } catch (e) { toast.error("Failed to extend timer"); }

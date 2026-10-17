@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useDispatch, useSelector } from 'react-redux';
 import { loginUser, reset } from '@/redux/slices/authSlice';
+import authService from '@/services/authService';
 import Link from 'next/link';
 import '../../styles/login.css';
 
@@ -33,9 +34,15 @@ export default function Login() {
     setShowPassword(!showPassword);
   };
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    dispatch(loginUser({ email, password }));
+    const res = await dispatch(loginUser({ email, password }));
+    // Account exists but email isn't verified yet — send a fresh code and go verify.
+    if (res.meta.requestStatus === 'rejected' && /not confirmed/i.test(res.payload || '')) {
+      try { await authService.resendOTP({ email }); } catch {}
+      dispatch(reset());
+      router.push(`/otp?email=${encodeURIComponent(email)}`);
+    }
   };
 
   return (

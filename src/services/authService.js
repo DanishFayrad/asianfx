@@ -1,47 +1,56 @@
-import apiClient from './apiClient';
-import { API_ENDPOINTS } from '@/constants/apiConstants';
+import { supabase, unwrap, toError, getSessionUserId } from '@/lib/supabaseClient';
 
-const api = apiClient;
-
-
-const login = async (userData) => {
-    const response = await api.post(API_ENDPOINTS.LOGIN, userData);
-    return response.data;
+const getProfile = async () => {
+    const userId = await getSessionUserId();
+    return unwrap(await supabase.from('profiles').select('*').eq('id', userId).single());
 };
 
-const register = async (userData) => {
-    const response = await api.post(API_ENDPOINTS.REGISTER, userData);
-    return response.data;
+const login = async ({ email, password }) => {
+    const { session } = unwrap(await supabase.auth.signInWithPassword({ email, password }));
+    const user = await getProfile();
+    return { access_token: session.access_token, user };
+};
+
+const register = async ({ name, email, password, phone, country, referral_code }) => {
+    const data = unwrap(await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+            data: { name, phone, country, referral_code: referral_code?.trim() || null },
+        },
+    }));
+    // Supabase returns a user with no identities when the email is already registered.
+    if (data.user && data.user.identities?.length === 0) {
+        throw toError('An account with this email already exists.');
+    }
+    return { message: 'Registration successful. Check your email for the verification code.' };
 };
 
 const logout = async () => {
-    const response = await api.post(API_ENDPOINTS.LOGOUT);
-    return response.data;
+    unwrap(await supabase.auth.signOut());
+    return { message: 'Logged out' };
 };
 
-const getProfile = async () => {
-    const response = await api.get(API_ENDPOINTS.PROFILE);
-    return response.data;
+const verifyOTP = async ({ email, otp }) => {
+    unwrap(await supabase.auth.verifyOtp({ email, token: otp, type: 'signup' }));
+    return { message: 'Email verified' };
 };
 
-const verifyOTP = async (data) => {
-    const response = await api.post(API_ENDPOINTS.VERIFY_OTP, data);
-    return response.data;
+const resendOTP = async ({ email }) => {
+    unwrap(await supabase.auth.resend({ type: 'signup', email }));
+    return { message: 'Code sent' };
 };
 
-const resendOTP = async (data) => {
-    const response = await api.post(API_ENDPOINTS.RESEND_OTP, data);
-    return response.data;
+const forgotPassword = async ({ email }) => {
+    unwrap(await supabase.auth.resetPasswordForEmail(email));
+    return { message: 'Reset code sent' };
 };
 
-const forgotPassword = async (data) => {
-    const response = await api.post(API_ENDPOINTS.FORGOT_PASSWORD, data);
-    return response.data;
-};
-
-const resetPassword = async (data) => {
-    const response = await api.post(API_ENDPOINTS.RESET_PASSWORD, data);
-    return response.data;
+const resetPassword = async ({ email, otp, newPassword }) => {
+    unwrap(await supabase.auth.verifyOtp({ email, token: otp, type: 'recovery' }));
+    unwrap(await supabase.auth.updateUser({ password: newPassword }));
+    await supabase.auth.signOut();
+    return { message: 'Password updated' };
 };
 
 const authService = {

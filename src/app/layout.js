@@ -24,7 +24,7 @@ import AuthGuard from './AuthGuard';
 import BlockedScreen from "@/components/BlockedScreen";
 
 export default function RootLayout({ children }) {
-  const isBlocked = true; // Set to false to unblock the site
+  const isBlocked = false; // Set to true to block the site
 
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>

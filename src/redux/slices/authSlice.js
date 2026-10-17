@@ -1,10 +1,11 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import authService from '../../services/authService';
 
-// Function to safely get token from localStorage on client side
+// Cached copies so pages render instantly on reload; AuthGuard reconciles them
+// with the real Supabase session on mount.
 const getInitialToken = () => {
     if (typeof window !== 'undefined') {
-        return localStorage.getItem('token') || null;
+        return localStorage.getItem('token');
     }
     return null;
 };
@@ -12,7 +13,11 @@ const getInitialToken = () => {
 const getInitialUser = () => {
     if (typeof window !== 'undefined') {
         const user = localStorage.getItem('user');
-        return user ? JSON.parse(user) : null;
+        if (user) {
+            try {
+                return JSON.parse(user);
+            } catch (e) {}
+        }
     }
     return null;
 };
@@ -22,15 +27,8 @@ export const loginUser = createAsyncThunk(
     async (userData, thunkAPI) => {
         try {
             const data = await authService.login(userData);
-            if (data.access_token) {
-                localStorage.setItem('token', data.access_token);
-                // Also store user data
-                if (data.user) {
-                    localStorage.setItem('user', JSON.stringify(data.user));
-                } else {
-                    localStorage.setItem('user', JSON.stringify(data));
-                }
-            }
+            localStorage.setItem('token', data.access_token);
+            localStorage.setItem('user', JSON.stringify(data.user));
             return data;
         } catch (error) {
             const message = error.response?.data?.message || error.message || 'Login failed';
@@ -98,18 +96,28 @@ export const authSlice = createSlice({
                 localStorage.setItem('user', JSON.stringify(action.payload));
             }
         },
+        setAuth: (state, action) => {
+            state.user = action.payload.user;
+            state.token = action.payload.token;
+            if (typeof window !== 'undefined') {
+                localStorage.setItem('user', JSON.stringify(action.payload.user));
+                localStorage.setItem('token', action.payload.token);
+            }
+        },
     },
     extraReducers: (builder) => {
         builder
             // Login
             .addCase(loginUser.pending, (state) => {
                 state.isLoading = true;
+                state.isError = false;
+                state.message = '';
             })
             .addCase(loginUser.fulfilled, (state, action) => {
                 state.isLoading = false;
                 state.isSuccess = true;
                 state.token = action.payload.access_token;
-                state.user = action.payload.user || action.payload; // Capture all fields if user is top-level
+                state.user = action.payload.user;
             })
             .addCase(loginUser.rejected, (state, action) => {
                 state.isLoading = false;
@@ -120,6 +128,8 @@ export const authSlice = createSlice({
             // Register
             .addCase(registerUser.pending, (state) => {
                 state.isLoading = true;
+                state.isError = false;
+                state.message = '';
             })
             .addCase(registerUser.fulfilled, (state, action) => {
                 state.isLoading = false;
@@ -143,15 +153,9 @@ export const authSlice = createSlice({
             })
             .addCase(checkAuth.rejected, (state) => {
                 state.isLoading = false;
-                state.user = null;
-                state.token = null;
-                if (typeof window !== 'undefined') {
-                    localStorage.removeItem('token');
-                    localStorage.removeItem('user');
-                }
             });
     },
 });
 
-export const { reset, logout, setUser } = authSlice.actions;
+export const { reset, logout, setUser, setAuth } = authSlice.actions;
 export default authSlice.reducer;

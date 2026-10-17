@@ -10,10 +10,9 @@ import { logout } from '../../redux/slices/authSlice';
 import transactionService from '../../services/transactionService';
 import notificationService from '../../services/notificationService';
 import { setUser } from '../../redux/slices/authSlice';
-import { io } from 'socket.io-client';
+import { connectRealtime } from '../../services/realtimeService';
 import toast from 'react-hot-toast';
-import { API_BASE_URL } from '../../constants/apiConstants';
-import { serverTimeOffset, updateServerTimeOffset } from '../../services/apiClient';
+import { serverTimeOffset, updateServerTimeOffset } from '../../services/serverTime';
 import AdminSidebar from '../../components/AdminSidebar';
 import AdminDashboardStats from '../../components/AdminDashboardStats';
 import AdminUsersTable from '../../components/AdminUsersTable';
@@ -27,6 +26,12 @@ export default function Dashboard() {
   
   useEffect(() => {
     setMounted(true);
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('deposit') === 'true') {
+        setIsDepositModalOpen(true);
+      }
+    }
   }, []);
   
   const handleDeposit = async () => {
@@ -136,8 +141,8 @@ export default function Dashboard() {
   useEffect(() => {
     if (!user) return;
 
-    // Connect to socket
-    const socket = io(API_BASE_URL);
+    // Connect to Supabase Realtime
+    const socket = connectRealtime(user);
     
     socket.on('connect', () => {
         console.log("Socket connected:", socket.id);

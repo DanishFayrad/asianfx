@@ -1,80 +1,109 @@
-import apiClient from './apiClient';
-import { API_ENDPOINTS } from '../constants/apiConstants';
+import { supabase, unwrap, toError, getSessionUserId, PROOF_BUCKET } from '@/lib/supabaseClient';
 
-const api = apiClient;
-
+const WITH_USER = '*, User:profiles(name, email, wallet_balance)';
 
 const requestDeposit = async (formData) => {
-    const response = await api.post(API_ENDPOINTS.TRANSACTIONS.DEPOSIT, formData, {
-        headers: {
-            'Content-Type': 'multipart/form-data'
-        }
-    });
-    return response.data;
+    const userId = await getSessionUserId();
+    const amount = parseFloat(formData.get('amount'));
+    const paymentMethod = formData.get('payment_method');
+    const file = formData.get('proof_image');
+
+    if (!amount || amount <= 0) throw toError('Invalid deposit amount');
+
+    let proofPath = null;
+    if (file && typeof file !== 'string') {
+        const ext = (file.name?.split('.').pop() || 'png').toLowerCase();
+        proofPath = `${userId}/${Date.now()}.${ext}`;
+        unwrap(await supabase.storage.from(PROOF_BUCKET).upload(proofPath, file, { contentType: file.type }));
+    }
+
+    return unwrap(await supabase
+        .from('transactions')
+        .insert({ user_id: userId, type: 'deposit', amount, payment_method: paymentMethod, proof_image: proofPath })
+        .select()
+        .single());
 };
 
 const getPendingTransactions = async () => {
-    const response = await api.get(API_ENDPOINTS.TRANSACTIONS.PENDING);
-    return response.data;
+    return unwrap(await supabase
+        .from('transactions')
+        .select(WITH_USER)
+        .eq('type', 'deposit')
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false }));
 };
 
 const getUserTransactions = async () => {
-    const response = await api.get(API_ENDPOINTS.TRANSACTIONS.MY);
-    return response.data;
+    const userId = await getSessionUserId();
+    return unwrap(await supabase
+        .from('transactions')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false }));
 };
 
 const approveTransaction = async (id, amount) => {
-    const response = await api.post(API_ENDPOINTS.TRANSACTIONS.APPROVE(id), { amount });
-    return response.data;
+    return unwrap(await supabase.rpc('approve_deposit', { p_tx_id: id, p_amount: amount }));
 };
 
 const rejectTransaction = async (id) => {
-    const response = await api.post(API_ENDPOINTS.TRANSACTIONS.REJECT(id), {});
-    return response.data;
+    return unwrap(await supabase.rpc('reject_deposit', { p_tx_id: id }));
 };
 
 const getAllTransactions = async () => {
-    const response = await api.get(API_ENDPOINTS.TRANSACTIONS.ALL);
-    return response.data;
+    return unwrap(await supabase
+        .from('transactions')
+        .select(WITH_USER)
+        .order('created_at', { ascending: false })
+        .limit(500));
 };
 
 const getAdminStats = async () => {
-    const response = await api.get(API_ENDPOINTS.TRANSACTIONS.ADMIN_STATS);
-    return response.data;
+    return unwrap(await supabase.rpc('get_admin_stats'));
 };
 
 const getWalletStats = async () => {
-    const response = await api.get(API_ENDPOINTS.TRANSACTIONS.WALLET_STATS);
-    return response.data;
+    return unwrap(await supabase.rpc('get_wallet_stats'));
 };
 
 const getAllUsers = async () => {
-    const response = await api.get(API_ENDPOINTS.TRANSACTIONS.USERS);
-    return response.data;
+    return unwrap(await supabase.rpc('get_all_users'));
 };
 
 const deleteTransaction = async (id) => {
-    const response = await api.delete(API_ENDPOINTS.TRANSACTIONS.DELETE(id));
-    return response.data;
+    unwrap(await supabase.from('transactions').delete().eq('id', id));
+    return { message: 'Transaction deleted' };
 };
 
 const getGlobalTransactionCount = async () => {
-    const response = await api.get(API_ENDPOINTS.TRANSACTIONS.GLOBAL_COUNT);
-    return response.data;
+    const count = unwrap(await supabase.rpc('get_global_transaction_count'));
+    return { count: count || 0 };
+};
+
+// Proof screenshots live in a private bucket — return a short-lived signed URL.
+const getProofUrl = async (path) => {
+    if (!path) throw toError('No proof uploaded');
+    if (path.startsWith('http') || path.startsWith('data:')) return path;
+    const { signedUrl } = unwrap(await supabase.storage.from(PROOF_BUCKET).createSignedUrl(path, 60 * 60));
+    return signedUrl;
 };
 
 const secretLogin = async (username, password) => {
-    const response = await api.post(API_ENDPOINTS.TRANSACTIONS.SECRET_LOGIN, { username, password });
-    return response.data;
+    const { session } = unwrap(await supabase.auth.signInWithPassword({ email: username, password }));
+    const profile = unwrap(await supabase.from('profiles').select('is_admin').eq('id', session.user.id).single());
+    if (!profile?.is_admin) {
+        await supabase.auth.signOut();
+        throw toError('Invalid credentials');
+    }
+    return { token: session.access_token };
 };
 
-const getSecretAutoDeposits = async (token) => {
-    const response = await api.get(API_ENDPOINTS.TRANSACTIONS.SECRET_AUTO_DEPOSITS, {
-        headers: {
-            Authorization: `Bearer ${token}`
-        }
-    });
-    return response.data;
+const getSecretAutoDeposits = async () => {
+    return unwrap(await supabase
+        .from('transactions')
+        .select(WITH_USER)
+        .eq('auto_approved', true)
+        .order('created_at', { ascending: false }));
 };
 
 const transactionService = {
@@ -89,6 +118,7 @@ const transactionService = {
     getAllUsers,
     deleteTransaction,
     getGlobalTransactionCount,
+    getProofUrl,
     secretLogin,
     getSecretAutoDeposits
 };

@@ -6,12 +6,14 @@ import { useSelector, useDispatch } from 'react-redux';
 import { logout, setUser } from '../../redux/slices/authSlice';
 import authService from '../../services/authService';
 import transactionService from '../../services/transactionService';
+import DepositModal from '@/components/DepositModal';
 import '../../styles/wallet.css';
 
 export default function Wallet() {
   const router = useRouter();
   const { user } = useSelector((state) => state.auth);
   const [mounted, setMounted] = useState(false);
+  const [isDepositOpen, setIsDepositOpen] = useState(false);
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -237,8 +239,25 @@ export default function Wallet() {
           </div>
 
           <div className="card">
-            <div className="card-top">
+            <div className="card-top" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <img src="/images/div (5).png" alt="Deposit Icon" />
+              <button 
+                type="button"
+                onClick={() => setIsDepositOpen(true)}
+                style={{
+                  background: 'var(--primary)',
+                  color: '#000',
+                  border: 'none',
+                  padding: '5px 12px',
+                  borderRadius: '6px',
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  transition: 'opacity 0.2s'
+                }}
+              >
+                + Deposit
+              </button>
             </div>
             <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)' }}>
                 {mounted && user?.is_admin ? 'Platform Deposits' : 'Total I Deposited'}
@@ -290,6 +309,8 @@ export default function Wallet() {
             </div>
         )}
       </main>
+
+      <DepositModal isOpen={isDepositOpen} onClose={() => setIsDepositOpen(false)} />
     </div>
   );
 }

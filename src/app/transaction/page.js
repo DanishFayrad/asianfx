@@ -8,10 +8,9 @@ import transactionService from '../../services/transactionService';
 import signalService from '../../services/signalService';
 import authService from '../../services/authService';
 import { setUser, logout } from '../../redux/slices/authSlice';
-import { io } from 'socket.io-client';
+import { connectRealtime } from '../../services/realtimeService';
 import { useDispatch } from 'react-redux';
 import toast from 'react-hot-toast';
-import { API_BASE_URL } from '../../constants/apiConstants';
 import AdminSidebar from '../../components/AdminSidebar';
 import '../../styles/adminSignals.css';
 import '../../styles/transaction.css';
@@ -112,13 +111,11 @@ export default function Transaction() {
     fetchData();
 
     if (user?.is_admin) {
-        const socket = io(API_BASE_URL);
-        socket.emit('join_admin');
+        const socket = connectRealtime(user);
 
         socket.on('admin_notification', (notif) => {
             console.log("Real-time admin update:", notif);
             if (notif.type === 'NEW_DEPOSIT') {
-                setPendingDeposits(prev => [notif.transaction, ...prev]);
                 // Refresh all stats (including badges) immediately
                 fetchData();
             }
@@ -405,14 +402,17 @@ export default function Transaction() {
                                         )}
 
                                         <button 
-                                            onClick={() => {
-                                                const url = tx.proof_image;
-                                                if (url?.startsWith('data:') || url?.startsWith('http')) {
-                                                    window.open(url, '_blank');
-                                                } else {
-                                                    window.open(`${BACKEND_URL}${url}`, '_blank');
+                                            onClick={async () => {
+                                                // Open the tab synchronously so the popup isn't blocked, then point it at the signed URL.
+                                                const win = window.open('', '_blank');
+                                                try {
+                                                    const url = await transactionService.getProofUrl(tx.proof_image);
+                                                    if (win) win.location.href = url; else window.open(url, '_blank');
+                                                } catch (e) {
+                                                    if (win) win.close();
+                                                    toast.error(e.response?.data?.message || 'Could not open proof');
                                                 }
-                                            }} 
+                                            }}
                                             style={{ background: 'rgba(255,255,255,0.1)', color: 'white', border: 'none', width: '28px', height: '28px', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                                             title="View Proof"
                                         >🖼️</button>

@@ -1,81 +1,55 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef } from 'react';
+import { useDispatch } from 'react-redux';
 import { useRouter, usePathname } from 'next/navigation';
-import { useSelector, useDispatch } from 'react-redux';
-import { checkAuth } from '@/redux/slices/authSlice';
+import { supabase } from '@/lib/supabaseClient';
+import authService from '@/services/authService';
+import { setAuth, logout } from '@/redux/slices/authSlice';
 
+const PROTECTED_PREFIXES = ['/dashboard', '/wallet', '/transaction', '/admin'];
+
+// Keeps Redux in sync with the Supabase session and sends logged-out
+// visitors away from protected pages.
 export default function AuthGuard({ children }) {
-    const { user, token, isLoading } = useSelector((state) => state.auth);
+    const dispatch = useDispatch();
     const router = useRouter();
     const pathname = usePathname();
-    const dispatch = useDispatch();
-    const [mounted, setMounted] = useState(false);
+    const pathRef = useRef(pathname);
+    pathRef.current = pathname;
+    // undefined = not checked yet, null = logged out
+    const sessionRef = useRef(undefined);
 
     useEffect(() => {
-        setMounted(true);
-    }, []);
+        if (sessionRef.current === null && PROTECTED_PREFIXES.some((p) => pathname?.startsWith(p))) {
+            router.replace('/login');
+        }
+    }, [pathname, router]);
 
     useEffect(() => {
-        if (!mounted) return;
+        const sync = async (session) => {
+            sessionRef.current = session;
+            if (!session) {
+                dispatch(logout());
+                if (PROTECTED_PREFIXES.some((p) => pathRef.current?.startsWith(p))) {
+                    router.replace('/login');
+                }
+                return;
+            }
+            try {
+                const profile = await authService.getProfile();
+                dispatch(setAuth({ user: profile, token: session.access_token }));
+            } catch (e) {
+                console.error('Failed to load profile', e);
+            }
+        };
 
-        const publicPaths = ['/login', '/register', '/forgot-password', '/reset-password', '/verify', '/otp', '/'];
-        const isPublicPath = publicPaths.includes(pathname);
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+            // Defer: Supabase recommends not awaiting other calls inside this callback.
+            setTimeout(() => sync(session), 0);
+        });
 
-        console.log(`AuthGuard: pathname=${pathname}, token=${!!token}, isPublic=${isPublicPath}`);
-
-        // If no token and not a public path, redirect to login
-        if (!token && !isPublicPath) {
-            console.log("AuthGuard: No token, redirecting to login");
-            router.push('/login');
-            return;
-        }
-
-        // Validate token on mount if present
-        if (token && !isPublicPath) {
-            console.log("AuthGuard: Token present, dispatching checkAuth");
-            dispatch(checkAuth());
-        }
-    }, [token, pathname, router, mounted, dispatch]);
-
-    const publicPaths = ['/login', '/register', '/forgot-password', '/reset-password', '/verify', '/otp', '/'];
-    const isPublicPath = publicPaths.includes(pathname);
-
-    // To prevent hydration mismatch, ensure the first client render matches the server.
-    // The server doesn't have the token, so it renders null for protected paths and children for public paths.
-    if (!mounted) {
-        if (!isPublicPath) return null;
-        return children;
-    }
-
-    // Show loading while checking auth
-    if (isLoading && token) {
-        return (
-            <div style={{ 
-                height: '100vh', 
-                display: 'flex', 
-                justifyContent: 'center', 
-                alignItems: 'center', 
-                background: 'radial-gradient(circle at center, #1e293b 0%, #0f172a 100%)',
-                color: '#fff',
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                zIndex: 9999
-            }}>
-                <div className="loader-container">
-                    <div className="premium-loader"></div>
-                    <div className="loader-text">Verifying Session</div>
-                </div>
-            </div>
-        );
-    }
-
-    // If there's no token and it's not a public path, don't render children to prevent flash of protected content
-    if (!token && !isPublicPath) {
-        return null;
-    }
+        return () => subscription.unsubscribe();
+    }, [dispatch, router]);
 
     return children;
 }

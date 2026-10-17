@@ -3,11 +3,13 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
-import apiClient from '../services/apiClient';
+import { supabase, unwrap } from '../lib/supabaseClient';
+import DepositModal from '../components/DepositModal';
 import '../styles/style.css';
 
 export default function Home() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [isDepositOpen, setIsDepositOpen] = useState(false);
     const [submitting, setSubmitting] = useState(false);
 
     const handleConsultSubmit = async (e) => {
@@ -24,8 +26,8 @@ export default function Home() {
 
         try {
             setSubmitting(true);
-            const { data } = await apiClient.post('/api/contact', { fullName, email, message });
-            toast.success(data?.message || 'Thank you! We will get back to you shortly.');
+            unwrap(await supabase.from('contact_messages').insert({ full_name: fullName, email, message }));
+            toast.success('Thank you! We will get back to you shortly.');
             form.reset();
         } catch (err) {
             toast.error(err?.response?.data?.message || 'Could not send your message. Please try again.');
@@ -61,7 +63,8 @@ export default function Home() {
       <a href="#about" onClick={() => setIsMenuOpen(false)}>About</a>
       <a href="#trade" onClick={() => setIsMenuOpen(false)}>Trading</a>
       <a href="#why" onClick={() => setIsMenuOpen(false)}>Why Us</a>
-      {/* <Link href="/dashboard" onClick={() => setIsMenuOpen(false)}>Dashboard</Link> */}
+      <Link href="/dashboard" onClick={() => setIsMenuOpen(false)}>Dashboard</Link>
+      <Link href="/admin/signals" onClick={() => setIsMenuOpen(false)}>Admin</Link>
       <div className="nav-btns">
         <Link href="/login"><button className="btn-yellow">Log in</button></Link>
         <Link href="/register"><button className="btn-outline-small">Join Now</button></Link>
@@ -87,9 +90,27 @@ export default function Home() {
     </p>
  
     <div className="hero-buttons">
-      <Link className='' style={{width:"200px"}} href="/login"><button className="btn-yellow curser-pointer">Deposit</button></Link>
-      <button className="btn-outline">See How It Works</button>
+      <button 
+        type="button"
+        className="btn-yellow curser-pointer" 
+        style={{ width: "200px" }}
+        onClick={() => setIsDepositOpen(true)}
+      >
+        Deposit
+      </button>
+      <button 
+        type="button" 
+        className="btn-outline" 
+        onClick={() => {
+          const el = document.getElementById('trade') || document.getElementById('why');
+          if (el) el.scrollIntoView({ behavior: 'smooth' });
+        }}
+      >
+        See How It Works
+      </button>
     </div>
+
+    <DepositModal isOpen={isDepositOpen} onClose={() => setIsDepositOpen(false)} />
         <div className="stats">
     <div className="stat-card">
   <img src="/images/SVG (2).png" className="stat-icon" />
