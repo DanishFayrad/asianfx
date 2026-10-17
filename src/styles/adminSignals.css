@@ -2,12 +2,12 @@
 :root {
   --admin-primary: #d4af37;
   --admin-primary-hover: #b8962e;
-  --admin-bg-main: #0a0b10;
-  --admin-bg-card: #16171d;
-  --admin-bg-sidebar: #0f1016;
-  --admin-border-color: rgba(255, 255, 255, 0.08);
-  --admin-text-main: #ffffff;
-  --admin-text-muted: #9ca3af;
+  --admin-bg-main: var(--t-bg);
+  --admin-bg-card: var(--t-surface);
+  --admin-bg-sidebar: var(--t-bg);
+  --admin-border-color: var(--tw-08);
+  --admin-text-main: var(--t-text);
+  --admin-text-muted: var(--t-text-muted);
   --admin-success: #22c55e;
   --admin-danger: #ef4444;
   --admin-warning: #f59e0b;
@@ -21,7 +21,7 @@
     max-width: 100% !important;
     background: var(--admin-bg-main);
     color: var(--admin-text-main);
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-geist-sans), system-ui, sans-serif;
     overflow: hidden;
 }
 
@@ -75,14 +75,14 @@
 
 .admin-item:hover {
     background: rgba(212, 175, 55, 0.1);
-    color: var(--admin-primary);
+    color: var(--t-gold);
 }
 
 .admin-item.active {
     background: rgba(212, 175, 55, 0.1);
     border-right: 3px solid var(--admin-primary);
     border-radius: 8px 0 0 8px;
-    color: var(--admin-primary);
+    color: var(--t-gold);
 }
 
 .admin-footer {
@@ -165,7 +165,7 @@
     border: 1px solid var(--admin-border-color);
     padding: 12px 15px 12px 40px;
     border-radius: 10px;
-    color: white;
+    color: var(--t-text);
 }
 
 .admin-asset-grid {
@@ -243,11 +243,11 @@
 
 .admin-form-input {
     width: 100%;
-    background: rgba(255, 255, 255, 0.03);
+    background: var(--tw-03);
     border: 1px solid var(--admin-border-color);
     padding: 10px 14px;
     border-radius: 8px;
-    color: white;
+    color: var(--t-text);
     font-size: 0.95rem;
 }
 
@@ -263,7 +263,7 @@
     text-align: center;
     border-radius: 8px;
     border: 1px solid var(--admin-border-color);
-    background: rgba(255, 255, 255, 0.03);
+    background: var(--tw-03);
     color: var(--admin-text-muted);
     cursor: pointer;
     font-weight: 600;
@@ -413,7 +413,7 @@
         display: flex !important;
         background: var(--admin-bg-card);
         border: 1px solid var(--admin-border-color);
-        color: white;
+        color: var(--t-text);
         padding: 8px;
         border-radius: 8px;
         cursor: pointer;

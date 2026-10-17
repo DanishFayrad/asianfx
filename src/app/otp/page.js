@@ -67,9 +67,9 @@ function OtpClient() {
         setLoading(true);
         try {
             await authService.verifyOTP({ email, otp: otpString });
-            toast.success('Email verified successfully! You can now login.');
+            toast.success('Email verified! Welcome to AsianFX.');
             dispatch(reset());
-            router.push('/login');
+            router.push('/dashboard');
         } catch (error) {
             toast.error(error.response?.data?.message || 'Verification failed. Incorrect OTP.');
         } finally {
@@ -165,7 +165,7 @@ export default function Otp() {
             <div className="otp-container">
                 <div className="otp-card" style={{ textAlign: 'center', padding: '50px' }}>
                     <div className="loading-spinner"></div>
-                    <p style={{ color: 'white', marginTop: '20px' }}>Loading verification page...</p>
+                    <p style={{ color: 'var(--t-text)', marginTop: '20px' }}>Loading verification page...</p>
                 </div>
             </div>
         }>

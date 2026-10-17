@@ -9,7 +9,7 @@ export default function VerifyEmailPage() {
             <div className="forgot-password-container">
                 <div className="forgot-password-card" style={{ textAlign: 'center', padding: '50px' }}>
                     <div className="loading-spinner"></div>
-                    <p style={{ color: 'white', marginTop: '20px' }}>Loading verification page...</p>
+                    <p style={{ color: 'var(--t-text)', marginTop: '20px' }}>Loading verification page...</p>
                 </div>
             </div>
         }>

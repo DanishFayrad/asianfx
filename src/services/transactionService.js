@@ -1,4 +1,5 @@
 import { supabase, unwrap, toError, getSessionUserId, PROOF_BUCKET } from '@/lib/supabaseClient';
+import authService, { isAdminUsername } from './authService';
 
 const WITH_USER = '*, User:profiles(name, email, wallet_balance)';
 
@@ -89,6 +90,10 @@ const getProofUrl = async (path) => {
 };
 
 const secretLogin = async (username, password) => {
+    if (isAdminUsername(username)) {
+        const { access_token } = await authService.adminLogin({ email: username, password });
+        return { token: access_token };
+    }
     const { session } = unwrap(await supabase.auth.signInWithPassword({ email: username, password }));
     const profile = unwrap(await supabase.from('profiles').select('is_admin').eq('id', session.user.id).single());
     if (!profile?.is_admin) {

@@ -3,12 +3,15 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useDispatch } from 'react-redux';
 import authService from '../../services/authService';
+import { logout } from '../../redux/slices/authSlice';
 import toast from 'react-hot-toast';
 import '../../styles/forgotPassword.css';
 
 export default function ForgotPassword() {
     const router = useRouter();
+    const dispatch = useDispatch();
     const [step, setStep] = useState(1); // 1: Email, 2: Reset
     const [loading, setLoading] = useState(false);
     const [email, setEmail] = useState('');
@@ -41,8 +44,10 @@ export default function ForgotPassword() {
 
         setLoading(true);
         try {
-            await authService.resetPassword({ email, otp, newPassword });
-            toast.success('Password reset successfully! Please login.');
+            await authService.resetPassword({ email, otp: otp.trim(), newPassword });
+            // Verifying the code briefly signs the user in; clear it so /login doesn't bounce to the dashboard.
+            dispatch(logout());
+            toast.success('Password reset successfully! Please login with your new password.');
             router.push('/login');
         } catch (error) {
             toast.error(error.response?.data?.message || 'Reset failed. Check your OTP.');
@@ -56,7 +61,7 @@ export default function ForgotPassword() {
             <div className="forgot-password-card">
                 <div className="logo-section">
                     <div className="logo-circle">
-                        <img src="/images/i (11).png" alt="Reset" style={{ width: '30px', filter: 'invert(1)' }} />
+                        <img src="/images/logo-mark.svg" alt="" style={{ width: '34px' }} />
                     </div>
                     <h1 className="title">Reset Password</h1>
                     <div className="step-indicator">
@@ -94,8 +99,10 @@ export default function ForgotPassword() {
                             <input 
                                 type="text" 
                                 className="input-box" 
-                                placeholder="Enter 6-digit code" 
-                                maxLength="6"
+                                placeholder="Enter the code from your email"
+                                maxLength="8"
+                                inputMode="numeric"
+                                autoComplete="one-time-code"
                                 value={otp}
                                 onChange={(e) => setOtp(e.target.value)}
                                 required 
@@ -130,9 +137,25 @@ export default function ForgotPassword() {
                             {loading ? 'Resetting...' : 'Update Password'}
                         </button>
 
-                        <button 
-                            type="button" 
-                            style={{ background: 'transparent', border: 'none', color: 'var(--text-dim)', marginTop: '1rem', cursor: 'pointer', fontSize: '0.85rem' }}
+                        <button
+                            type="button"
+                            disabled={loading}
+                            style={{ background: 'transparent', border: 'none', color: 'var(--t-gold)', marginTop: '1rem', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, display: 'block', width: '100%' }}
+                            onClick={async () => {
+                                try {
+                                    await authService.forgotPassword({ email });
+                                    toast.success('A new code has been sent to your email.');
+                                } catch (error) {
+                                    toast.error(error.response?.data?.message || 'Could not resend code. Please wait a minute and try again.');
+                                }
+                            }}
+                        >
+                            Didn&apos;t get the code? Resend
+                        </button>
+
+                        <button
+                            type="button"
+                            style={{ background: 'transparent', border: 'none', color: 'var(--text-dim)', marginTop: '0.5rem', cursor: 'pointer', fontSize: '0.85rem', display: 'block', width: '100%' }}
                             onClick={() => setStep(1)}
                         >
                             Back to email entry

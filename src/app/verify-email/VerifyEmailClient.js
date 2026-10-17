@@ -28,8 +28,8 @@ export default function VerifyEmailClient() {
         setLoading(true);
         try {
             await authService.verifyOTP({ email, otp });
-            toast.success('Email verified successfully! You can now login.');
-            router.push('/login');
+            toast.success('Email verified! Welcome to AsianFX.');
+            router.push('/dashboard');
         } catch (error) {
             toast.error(error.response?.data?.message || 'Verification failed. Incorrect OTP.');
         } finally {

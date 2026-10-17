@@ -171,8 +171,11 @@ begin
     select p.id,
            'signal',
            case when new.target_user_id is null then 'New Signal Available!' else 'New Private Signal!' end,
-           format('%s %s @ %s', upper(new.type), new.symbol, new.entry_price),
-           jsonb_build_object('signal', to_jsonb(new))
+           format('%s %s — open your dashboard to unlock it', upper(new.type), new.symbol),
+           -- No prices here: Entry / TP / SL are only revealed after the member pays for the signal.
+           jsonb_build_object('signal', jsonb_build_object(
+               'id', new.id, 'symbol', new.symbol, 'type', new.type, 'signal_type', new.signal_type,
+               'release_at', new.release_at, 'target_user_id', new.target_user_id, 'created_at', new.created_at))
     from public.profiles p
     where not p.is_admin
       and (new.target_user_id is null or p.id = new.target_user_id);
@@ -210,10 +213,11 @@ create policy profiles_update on public.profiles for update to authenticated
 revoke update on public.profiles from authenticated, anon;
 grant update (name, phone, country, profile_image) on public.profiles to authenticated;
 
--- signals: broadcast signals are visible to all logged-in users, private ones only to the target.
+-- signals: ONLY admins read the table directly. Members go through get_member_signals(),
+-- which hides Entry / TP / SL until the member has paid for (taken) the signal.
 drop policy if exists signals_select on public.signals;
 create policy signals_select on public.signals for select to authenticated
-    using (target_user_id is null or target_user_id = auth.uid() or public.is_admin());
+    using (public.is_admin());
 
 drop policy if exists signals_insert on public.signals;
 create policy signals_insert on public.signals for insert to authenticated
@@ -225,7 +229,7 @@ create policy signals_update on public.signals for update to authenticated
 
 drop policy if exists signals_delete on public.signals;
 create policy signals_delete on public.signals for delete to authenticated
-    using (public.is_admin() or target_user_id = auth.uid());
+    using (public.is_admin());
 
 -- user_signals: read own (writes go through take_signal()).
 drop policy if exists user_signals_select on public.user_signals;
@@ -320,7 +324,8 @@ begin
         insert into public.user_signals (user_id, signal_id, taken_price, invested_amount)
             values (v_p.id, p_signal_id, v_s.entry_price, 0);
         update public.signals set total_taken = total_taken + 1 where id = p_signal_id;
-        return json_build_object('message', 'Signal taken using your FREE signal credit!');
+        return json_build_object('message', 'Signal taken using your FREE signal credit!', 'signal_id', v_s.id, 'symbol', v_s.symbol, 'type', v_s.type,
+                                 'entry_price', v_s.entry_price, 'target_price', v_s.target_price, 'stop_loss', v_s.stop_loss);
     end if;
 
     if v_p.wallet_balance < v_fee then
@@ -334,8 +339,9 @@ begin
         values (v_p.id, 'signal_fee', v_fee, 'approved', now());
     update public.signals set total_taken = total_taken + 1 where id = p_signal_id;
 
-    return json_build_object('message', 'Signal taken successfully!');
-end $$;
+    return json_build_object('message', 'Signal taken successfully!', 'signal_id', v_s.id, 'symbol', v_s.symbol, 'type', v_s.type,
+                                 'entry_price', v_s.entry_price, 'target_price', v_s.target_price, 'stop_loss', v_s.stop_loss);
+end $;
 
 create or replace function public.approve_deposit(p_tx_id bigint, p_amount numeric)
 returns json language plpgsql security definer set search_path = public as $$
@@ -470,16 +476,54 @@ begin
     return json_build_object('message', 'Timer extended');
 end $$;
 
--- Stats for the signals table cards (respects RLS — users only count signals they can see).
+-- Stats for the signals table cards — counts only the signals this member can see.
 create or replace function public.get_signal_stats()
-returns json language sql stable security invoker set search_path = public as $$
+returns json language sql stable security definer set search_path = public as $$
     select json_build_object(
         'total_signals',  count(*),
         'active_signals', count(*) filter (where status = 'Active' and (release_at is null or release_at <= now())),
         'success_rate',   coalesce(round(100.0 * count(*) filter (where status ilike '%hit%')
                                  / nullif(count(*) filter (where status <> 'Active'), 0)), 0)
     )
-    from public.signals;
+    from public.signals
+    where auth.uid() is not null
+      and (target_user_id is null or target_user_id = auth.uid() or public.is_admin());
+$$;
+
+-- Signals list for the dashboard. Entry / TP / SL are returned only when the caller is an
+-- admin, has taken (paid for) the signal, or the signal is already closed (public record).
+create or replace function public.get_member_signals()
+returns json language sql stable security definer set search_path = public as $$
+    select coalesce(json_agg(x order by x.created_at desc), '[]'::json)
+    from (
+        select s.id, s.symbol, s.type, s.signal_type, s.description, s.status,
+               s.target_user_id, s.release_at, s.total_taken, s.created_at,
+               (us.id is not null) as purchased,
+               case when public.is_admin() or us.id is not null or s.status <> 'Active' then s.entry_price  end as entry_price,
+               case when public.is_admin() or us.id is not null or s.status <> 'Active' then s.target_price end as target_price,
+               case when public.is_admin() or us.id is not null or s.status <> 'Active' then s.stop_loss    end as stop_loss
+        from public.signals s
+        left join public.user_signals us on us.signal_id = s.id and us.user_id = auth.uid()
+        where auth.uid() is not null
+          and (s.target_user_id is null or s.target_user_id = auth.uid() or public.is_admin())
+        order by s.created_at desc
+        limit 100
+    ) x;
+$$;
+
+-- The member's purchased signals, with full levels (they paid for them).
+create or replace function public.get_my_signal_history()
+returns json language sql stable security definer set search_path = public as $$
+    select coalesce(json_agg(h order by h.taken_at desc), '[]'::json)
+    from (
+        select us.id, us.signal_id, us.taken_price, us.invested_amount, us.result, us.profit, us.taken_at,
+               json_build_object('symbol', s.symbol, 'type', s.type, 'status', s.status,
+                                 'entry_price', s.entry_price, 'target_price', s.target_price,
+                                 'stop_loss', s.stop_loss) as "Signal"
+        from public.user_signals us
+        left join public.signals s on s.id = us.signal_id
+        where us.user_id = auth.uid()
+    ) h;
 $$;
 
 create or replace function public.get_wallet_stats()

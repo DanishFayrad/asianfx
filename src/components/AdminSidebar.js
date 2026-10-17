@@ -54,6 +54,9 @@ export default function AdminSidebar({ active, user, pendingDeposits = 0, onLogo
                         }}>{pendingDeposits}</span>
                     )}
                 </Link>
+                <Link href="/wallet" className={`admin-item ${active === 'wallet' ? 'active' : ''}`} onClick={onClose}>
+                    <img src="/images/i (2).png" alt="Wallet" style={iconStyle} /> Platform Wallet
+                </Link>
             </nav>
 
             <div className="admin-footer" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>

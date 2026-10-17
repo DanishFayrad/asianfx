@@ -1,20 +1,37 @@
-import { supabase, unwrap } from '@/lib/supabaseClient';
+import { supabase, unwrap, toError } from '@/lib/supabaseClient';
 import { serverTimeOffset } from './serverTime';
 
 const toNumber = (v) => (v === '' || v === null || v === undefined ? null : parseFloat(v));
 
+// Entry / TP / SL come back only for signals the member has paid for (admins see all).
 const getSignalsDashboard = async () => {
     const [signals, stats] = await Promise.all([
-        supabase.from('signals').select('*').order('created_at', { ascending: false }).limit(100).then(unwrap),
+        supabase.rpc('get_member_signals').then(unwrap),
         supabase.rpc('get_signal_stats').then(unwrap),
     ]);
     return { active_signals: signals || [], stats: stats || {} };
 };
 
+// Catch typos before a wrong signal reaches paying members.
+const validateSignal = ({ symbol, type, entry_price, target_price, stop_loss }) => {
+    if (!symbol || !String(symbol).trim()) throw toError('Symbol is required');
+    const side = String(type || '').toLowerCase();
+    if (side !== 'buy' && side !== 'sell') throw toError('Choose BUY or SELL');
+    if ([entry_price, target_price, stop_loss].some((v) => v === null || Number.isNaN(v) || v <= 0)) {
+        throw toError('Entry, Take Profit and Stop Loss must all be valid prices');
+    }
+    if (side === 'buy' && !(target_price > entry_price && stop_loss < entry_price)) {
+        throw toError('For a BUY: Take Profit must be above Entry and Stop Loss below Entry');
+    }
+    if (side === 'sell' && !(target_price < entry_price && stop_loss > entry_price)) {
+        throw toError('For a SELL: Take Profit must be below Entry and Stop Loss above Entry');
+    }
+};
+
 const createSignal = async (signalData) => {
     const minutes = parseFloat(signalData.timer_minutes);
     const row = {
-        symbol: signalData.symbol,
+        symbol: String(signalData.symbol || '').trim().toUpperCase(),
         type: signalData.type,
         entry_price: toNumber(signalData.entry_price),
         target_price: toNumber(signalData.target_price),
@@ -26,19 +43,36 @@ const createSignal = async (signalData) => {
             ? new Date(Date.now() + serverTimeOffset + minutes * 60000).toISOString()
             : null,
     };
-    return unwrap(await supabase.from('signals').insert(row).select().single());
+    validateSignal(row);
+    const signal = unwrap(await supabase.from('signals').insert(row).select().single());
+    signal.email = await notifySignalByEmail(signal.id);
+    return signal;
+};
+
+// Ask the server to email the signal's recipients. Never throws — the signal is
+// already published, so an email problem must not look like a failed broadcast.
+const notifySignalByEmail = async (signalId) => {
+    try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const res = await fetch('/api/notify-signal', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json', authorization: `Bearer ${session?.access_token}` },
+            body: JSON.stringify({ signal_id: signalId }),
+        });
+        const body = await res.json().catch(() => ({}));
+        return res.ok ? { sent: body.sent || 0, failed: body.failed || 0 } : { error: body.message || 'Email failed' };
+    } catch (e) {
+        return { error: e.message };
+    }
 };
 
 const takeSignal = async ({ signal_id }) => {
     return unwrap(await supabase.rpc('take_signal', { p_signal_id: signal_id }));
 };
 
-const getUserSignalHistory = async (userId) => {
-    return unwrap(await supabase
-        .from('user_signals')
-        .select('*, Signal:signals(symbol, type)')
-        .eq('user_id', userId)
-        .order('taken_at', { ascending: false }));
+// The signed-in member's purchased signals (with full levels).
+const getUserSignalHistory = async () => {
+    return unwrap(await supabase.rpc('get_my_signal_history'));
 };
 
 const deleteSignal = async (id) => {

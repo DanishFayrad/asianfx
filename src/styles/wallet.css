@@ -1,10 +1,10 @@
 :root {
   --primary: #d4af37;
-  --bg-dark: #001220;
-  --bg-card: #0a1f33;
-  --bg-hover: #0d2842;
-  --text-main: #ffffff;
-  --text-dim: #94a3b8;
+  --bg-dark: var(--t-bg);
+  --bg-card: var(--t-surface);
+  --bg-hover: var(--t-surface-2);
+  --text-main: var(--t-text);
+  --text-dim: var(--t-text-muted);
   --border: rgba(212, 175, 55, 0.2);
   --success: #10b981;
   --danger: #ef4444;
@@ -24,7 +24,6 @@ html, body {
 }
 
 body {
-  font-family: 'Inter', sans-serif;
   background-color: var(--bg-dark);
   color: var(--text-main);
   overflow-x: hidden;
@@ -56,7 +55,7 @@ body {
   padding: 0 24px 32px;
   font-size: 20px;
   font-weight: 700;
-  color: var(--primary);
+  color: var(--t-gold);
 }
 
 .logo-icon {
@@ -76,7 +75,7 @@ body {
 
 .menu.active {
   background: rgba(212, 175, 55, 0.1);
-  color: var(--primary);
+  color: var(--t-gold);
   border-left: 3px solid var(--primary);
 }
 
@@ -159,7 +158,7 @@ body {
 }
 
 .card.total {
-  background: linear-gradient(135deg, var(--bg-card), #082d44);
+  background: linear-gradient(135deg, var(--bg-card), var(--t-surface-2));
   border-color: var(--primary);
 }
 
@@ -289,4 +288,61 @@ body {
     padding: 6px 12px;
     font-size: 13px;
   }
+}
+
+/* ---------- Wallet page inside the shared member / admin shells ---------- */
+.wallet-page .cards {
+  padding: 0;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+}
+
+.wallet-page .card {
+  position: relative; /* keeps the hover gold line inside the card */
+  overflow: hidden;
+  padding: 18px;
+  gap: 6px;
+  border-radius: 14px;
+}
+
+.wallet-page .card img {
+  height: 36px;
+  margin-bottom: 4px;
+}
+
+.wallet-page .card .badge {
+  font-size: 0.65rem;
+  padding: 3px 8px;
+}
+
+.wallet-label {
+  font-size: 0.8rem;
+  color: var(--t-text-muted);
+}
+
+.wallet-amount {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--t-text);
+  margin: 0;
+}
+
+.wallet-amount--big {
+  font-size: 1.6rem;
+  font-weight: 800;
+}
+
+.wallet-page .card small {
+  font-size: 0.75rem;
+}
+
+.wallet-fee-icon {
+  background: #d4af37;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  font-size: 1.05rem;
+  margin-bottom: 4px;
 }

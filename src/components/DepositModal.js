@@ -93,7 +93,7 @@ export default function DepositModal({ isOpen, onClose }) {
         className="deposit-modal-card" 
         onClick={(e) => e.stopPropagation()}
         style={{
-          background: 'linear-gradient(180deg, #131722 0%, #0d111c 100%)',
+          background: 'linear-gradient(180deg, var(--t-surface) 0%, var(--t-surface) 100%)',
           width: '100%',
           maxWidth: '520px',
           maxHeight: '92vh',
@@ -103,7 +103,7 @@ export default function DepositModal({ isOpen, onClose }) {
           padding: '30px 26px',
           position: 'relative',
           boxShadow: '0 25px 60px rgba(0, 0, 0, 0.85), 0 0 40px rgba(212, 175, 55, 0.1)',
-          color: '#ffffff',
+          color: 'var(--t-text)',
           fontFamily: 'inherit'
         }}
       >
@@ -115,9 +115,9 @@ export default function DepositModal({ isOpen, onClose }) {
             position: 'absolute',
             top: '20px',
             right: '20px',
-            background: 'rgba(255, 255, 255, 0.06)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            color: '#cbd5e1',
+            background: 'var(--tw-05)',
+            border: '1px solid var(--tw-10)',
+            color: 'var(--t-text-muted)',
             width: '36px',
             height: '36px',
             borderRadius: '50%',
@@ -134,9 +134,9 @@ export default function DepositModal({ isOpen, onClose }) {
             e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.4)';
           }}
           onMouseOut={(e) => {
-            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)';
-            e.currentTarget.style.color = '#cbd5e1';
-            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+            e.currentTarget.style.background = 'var(--tw-05)';
+            e.currentTarget.style.color = 'var(--t-text-muted)';
+            e.currentTarget.style.borderColor = 'var(--tw-10)';
           }}
         >
           ✕
@@ -157,26 +157,26 @@ export default function DepositModal({ isOpen, onClose }) {
           }}>
             <span style={{ fontSize: '26px' }}>💰</span>
           </div>
-          <h2 style={{ fontSize: '1.6rem', fontWeight: 800, margin: '0 0 6px 0', color: '#ffffff', letterSpacing: '-0.3px' }}>
+          <h2 style={{ fontSize: '1.6rem', fontWeight: 800, margin: '0 0 6px 0', color: 'var(--t-text)', letterSpacing: '-0.3px' }}>
             Deposit Funds
           </h2>
-          <p style={{ color: '#94a3b8', fontSize: '0.88rem', margin: 0, lineHeight: 1.4 }}>
+          <p style={{ color: 'var(--t-text-muted)', fontSize: '0.88rem', margin: 0, lineHeight: 1.4 }}>
             Transfer USDT and upload payment screenshot proof below
           </p>
         </div>
 
         {/* Binance / USDT TRC20 Wallet Box */}
         <div style={{
-          background: 'rgba(255, 255, 255, 0.03)',
+          background: 'var(--tw-03)',
           border: '1px solid rgba(212, 175, 55, 0.25)',
           borderRadius: '16px',
           padding: '16px 18px',
           marginBottom: '20px'
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-            <span style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 600 }}>USDT Deposit Address:</span>
+            <span style={{ fontSize: '0.8rem', color: 'var(--t-text-muted)', fontWeight: 600 }}>USDT Deposit Address:</span>
             <div style={{ display: 'flex', gap: '6px' }}>
-              <span style={{ background: 'rgba(212, 175, 55, 0.15)', color: '#d4af37', padding: '2px 8px', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 700 }}>
+              <span style={{ background: 'rgba(212, 175, 55, 0.15)', color: 'var(--t-gold)', padding: '2px 8px', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 700 }}>
                 TRC20
               </span>
               <span style={{ background: 'rgba(34, 197, 94, 0.15)', color: '#22c55e', padding: '2px 8px', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 700 }}>
@@ -224,7 +224,7 @@ export default function DepositModal({ isOpen, onClose }) {
             </button>
           </div>
 
-          <p style={{ margin: '8px 0 0 0', fontSize: '0.72rem', color: '#64748b', textAlign: 'center' }}>
+          <p style={{ margin: '8px 0 0 0', fontSize: '0.72rem', color: 'var(--t-text-dim)', textAlign: 'center' }}>
             ⚠️ Only send USDT via TRC20 network to this address. Minimum deposit is $5.
           </p>
         </div>
@@ -232,11 +232,11 @@ export default function DepositModal({ isOpen, onClose }) {
         <form onSubmit={handleSubmit}>
           {/* Amount Input */}
           <div style={{ marginBottom: '18px' }}>
-            <label style={{ display: 'block', fontSize: '0.82rem', color: '#e2e8f0', fontWeight: 600, marginBottom: '8px' }}>
+            <label style={{ display: 'block', fontSize: '0.82rem', color: 'var(--t-text)', fontWeight: 600, marginBottom: '8px' }}>
               Amount Sent (USDT)
             </label>
             <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-              <span style={{ position: 'absolute', left: '14px', color: '#d4af37', fontWeight: 800, fontSize: '1.2rem' }}>$</span>
+              <span style={{ position: 'absolute', left: '14px', color: 'var(--t-gold)', fontWeight: 800, fontSize: '1.2rem' }}>$</span>
               <input
                 type="number"
                 min="5"
@@ -247,18 +247,18 @@ export default function DepositModal({ isOpen, onClose }) {
                 onChange={(e) => setDepositAmount(e.target.value)}
                 style={{
                   width: '100%',
-                  background: 'rgba(255, 255, 255, 0.04)',
-                  border: '1px solid rgba(255, 255, 255, 0.12)',
+                  background: 'var(--tw-03)',
+                  border: '1px solid var(--tw-10)',
                   borderRadius: '12px',
                   padding: '12px 14px 12px 34px',
                   fontSize: '1.1rem',
                   fontWeight: 700,
-                  color: '#ffffff',
+                  color: 'var(--t-text)',
                   outline: 'none',
                   transition: 'border-color 0.2s'
                 }}
                 onFocus={(e) => e.target.style.borderColor = '#d4af37'}
-                onBlur={(e) => e.target.style.borderColor = 'rgba(255, 255, 255, 0.12)'}
+                onBlur={(e) => e.target.style.borderColor = 'var(--tw-10)'}
               />
             </div>
 
@@ -270,8 +270,8 @@ export default function DepositModal({ isOpen, onClose }) {
                   type="button"
                   onClick={() => setDepositAmount(amt.toString())}
                   style={{
-                    background: depositAmount === amt.toString() ? 'rgba(212, 175, 55, 0.25)' : 'rgba(255, 255, 255, 0.05)',
-                    border: depositAmount === amt.toString() ? '1px solid #d4af37' : '1px solid rgba(255, 255, 255, 0.1)',
+                    background: depositAmount === amt.toString() ? 'rgba(212, 175, 55, 0.25)' : 'var(--tw-05)',
+                    border: depositAmount === amt.toString() ? '1px solid #d4af37' : '1px solid var(--tw-10)',
                     color: depositAmount === amt.toString() ? '#facc15' : '#cbd5e1',
                     padding: '4px 10px',
                     borderRadius: '8px',
@@ -289,7 +289,7 @@ export default function DepositModal({ isOpen, onClose }) {
 
           {/* Screenshot Upload */}
           <div style={{ marginBottom: '22px' }}>
-            <label style={{ display: 'block', fontSize: '0.82rem', color: '#e2e8f0', fontWeight: 600, marginBottom: '8px' }}>
+            <label style={{ display: 'block', fontSize: '0.82rem', color: 'var(--t-text)', fontWeight: 600, marginBottom: '8px' }}>
               Upload Payment Proof (Screenshot)
             </label>
             <div style={{
@@ -297,7 +297,7 @@ export default function DepositModal({ isOpen, onClose }) {
               borderRadius: '14px',
               padding: '18px',
               textAlign: 'center',
-              background: 'rgba(255, 255, 255, 0.02)',
+              background: 'var(--tw-02)',
               cursor: 'pointer',
               position: 'relative'
             }}>
@@ -335,10 +335,10 @@ export default function DepositModal({ isOpen, onClose }) {
               ) : (
                 <div>
                   <div style={{ fontSize: '28px', marginBottom: '4px' }}>📷</div>
-                  <p style={{ margin: '0 0 4px 0', fontSize: '0.85rem', fontWeight: 600, color: '#f1f5f9' }}>
+                  <p style={{ margin: '0 0 4px 0', fontSize: '0.85rem', fontWeight: 600, color: 'var(--t-text)' }}>
                     Click or drag & drop payment proof
                   </p>
-                  <p style={{ margin: 0, fontSize: '0.72rem', color: '#64748b' }}>
+                  <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--t-text-dim)' }}>
                     PNG, JPG, JPEG up to 10MB
                   </p>
                 </div>
@@ -382,7 +382,7 @@ export default function DepositModal({ isOpen, onClose }) {
           </button>
         </form>
 
-        <p style={{ color: '#64748b', fontSize: '0.72rem', textAlign: 'center', margin: '16px 0 0 0' }}>
+        <p style={{ color: 'var(--t-text-dim)', fontSize: '0.72rem', textAlign: 'center', margin: '16px 0 0 0' }}>
           ⭐ Admin will verify your transaction and credit your account balance.
         </p>
       </div>

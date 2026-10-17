@@ -1,4 +1,4 @@
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -9,6 +9,13 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+});
+
+// Display font for headings — gives the site its own fintech character.
+const spaceGrotesk = Space_Grotesk({
+  variable: "--font-display",
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
 });
 
 export const metadata = {
@@ -22,12 +29,19 @@ import { Providers } from "@/redux/Providers";
 import { Toaster } from 'react-hot-toast';
 import AuthGuard from './AuthGuard';
 import BlockedScreen from "@/components/BlockedScreen";
+import ThemeToggle from "@/components/ThemeToggle";
+
+// Runs before first paint: saved choice (or ?theme=light|dark) wins, otherwise dark.
+const themeInitScript = `(function(){try{var q=new URLSearchParams(location.search).get('theme');if(q==='light'||q==='dark'){localStorage.setItem('theme',q);}var t=localStorage.getItem('theme');if(t!=='light'&&t!=='dark'){t='dark';}document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();`;
 
 export default function RootLayout({ children }) {
   const isBlocked = false; // Set to true to block the site
 
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
+    <html lang="en" data-theme="dark" className={`${geistSans.variable} ${geistMono.variable} ${spaceGrotesk.variable}`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
       <body>
         {isBlocked ? (
           <BlockedScreen />
@@ -37,13 +51,14 @@ export default function RootLayout({ children }) {
               <AuthGuard>
                 {children}
               </AuthGuard>
-              <Toaster 
+              <ThemeToggle floating />
+              <Toaster
                 position="top-right"
                 toastOptions={{
                   style: {
-                    background: '#1e293b',
-                    color: '#fff',
-                    border: '1px solid rgba(212,175,55,0.2)'
+                    background: 'var(--t-surface-2)',
+                    color: 'var(--t-text)',
+                    border: '1px solid rgba(212,175,55,0.25)'
                   },
                 }}
               />

@@ -58,16 +58,16 @@ export default function SecretPage() {
 
     if (!token) {
         return (
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#0a0a0a', color: 'white', fontFamily: 'system-ui' }}>
-                <form onSubmit={handleLogin} style={{ background: '#111', padding: '2rem', borderRadius: '12px', width: '350px', border: '1px solid #333' }}>
-                    <h2 style={{ marginBottom: '1.5rem', textAlign: 'center', color: '#d4af37' }}>Secret Access</h2>
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: 'var(--t-bg)', color: 'var(--t-text)', fontFamily: 'system-ui' }}>
+                <form onSubmit={handleLogin} style={{ background: 'var(--t-surface)', padding: '2rem', borderRadius: '12px', width: '350px', border: '1px solid var(--t-input-border)' }}>
+                    <h2 style={{ marginBottom: '1.5rem', textAlign: 'center', color: 'var(--t-gold)' }}>Secret Access</h2>
                     {error && <p style={{ color: '#ff4444', marginBottom: '1rem', fontSize: '0.9rem', textAlign: 'center' }}>{error}</p>}
                     <input 
                         type="text" 
                         placeholder="Email (e.g. boss23@gmail.com)" 
                         value={username} 
                         onChange={(e) => setUsername(e.target.value)}
-                        style={{ width: '100%', padding: '0.75rem', marginBottom: '1rem', background: '#222', border: '1px solid #444', color: 'white', borderRadius: '6px' }}
+                        style={{ width: '100%', padding: '0.75rem', marginBottom: '1rem', background: 'var(--t-surface-2)', border: '1px solid var(--t-input-border)', color: 'var(--t-text)', borderRadius: '6px' }}
                         required
                     />
                     <input 
@@ -75,7 +75,7 @@ export default function SecretPage() {
                         placeholder="Password" 
                         value={password} 
                         onChange={(e) => setPassword(e.target.value)}
-                        style={{ width: '100%', padding: '0.75rem', marginBottom: '1.5rem', background: '#222', border: '1px solid #444', color: 'white', borderRadius: '6px' }}
+                        style={{ width: '100%', padding: '0.75rem', marginBottom: '1.5rem', background: 'var(--t-surface-2)', border: '1px solid var(--t-input-border)', color: 'var(--t-text)', borderRadius: '6px' }}
                         required
                     />
                     <button type="submit" disabled={loading} style={{ width: '100%', padding: '0.75rem', background: '#d4af37', color: 'black', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: loading ? 'not-allowed' : 'pointer' }}>
@@ -87,10 +87,10 @@ export default function SecretPage() {
     }
 
     return (
-        <div style={{ padding: '2rem', background: '#0a0a0a', minHeight: '100vh', color: 'white', fontFamily: 'system-ui' }}>
+        <div style={{ padding: '2rem', background: 'var(--t-bg)', minHeight: '100vh', color: 'var(--t-text)', fontFamily: 'system-ui' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-                <h1 style={{ color: '#d4af37' }}>Secret Auto-Approved Transactions</h1>
-                <button onClick={handleLogout} style={{ padding: '0.5rem 1rem', background: '#ff4444', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>Logout</button>
+                <h1 style={{ color: 'var(--t-gold)' }}>Secret Auto-Approved Transactions</h1>
+                <button onClick={handleLogout} style={{ padding: '0.5rem 1rem', background: '#ff4444', color: 'var(--t-text)', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>Logout</button>
             </div>
             
             {loading ? (
@@ -101,7 +101,7 @@ export default function SecretPage() {
                 <div style={{ overflowX: 'auto' }}>
                     <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                         <thead>
-                            <tr style={{ background: '#1a1a1a', borderBottom: '2px solid #333' }}>
+                            <tr style={{ background: 'var(--t-surface)', borderBottom: '2px solid var(--t-input-border)' }}>
                                 <th style={{ padding: '1rem' }}>ID</th>
                                 <th style={{ padding: '1rem' }}>Date</th>
                                 <th style={{ padding: '1rem' }}>User</th>

@@ -6,9 +6,33 @@ const getProfile = async () => {
 };
 
 const login = async ({ email, password }) => {
+    if (isAdminUsername(email)) return adminLogin({ email, password });
     const { session } = unwrap(await supabase.auth.signInWithPassword({ email, password }));
     const user = await getProfile();
     return { access_token: session.access_token, user };
+};
+
+// The admin signs in with a username (e.g. "asiansfx@admin786"), not a real email address.
+// Real emails always have a dot in the domain part; the admin username doesn't.
+export const isAdminUsername = (value = '') => {
+    const v = String(value).trim();
+    const domain = v.includes('@') ? v.split('@').pop() : '';
+    return !v.includes('@') || !domain.includes('.');
+};
+
+// Admin credentials are checked on the server against the Vercel env vars.
+const adminLogin = async ({ email: username, password }) => {
+    const res = await fetch('/api/admin-login', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) throw toError(body.message || 'Admin login failed');
+
+    unwrap(await supabase.auth.setSession({ access_token: body.access_token, refresh_token: body.refresh_token }));
+    const user = await getProfile();
+    return { access_token: body.access_token, user };
 };
 
 const register = async ({ name, email, password, phone, country, referral_code }) => {
@@ -55,6 +79,7 @@ const resetPassword = async ({ email, otp, newPassword }) => {
 
 const authService = {
     login,
+    adminLogin,
     register,
     logout,
     getProfile,

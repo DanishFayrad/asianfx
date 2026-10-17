@@ -7,56 +7,52 @@ import { logout, setUser } from '../../redux/slices/authSlice';
 import authService from '../../services/authService';
 import transactionService from '../../services/transactionService';
 import DepositModal from '@/components/DepositModal';
+import ThemeToggle from '@/components/ThemeToggle';
+import UserNavbar from '@/components/UserNavbar';
+import AdminSidebar from '@/components/AdminSidebar';
 import '../../styles/wallet.css';
+
+const money = (n) => Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 export default function Wallet() {
   const router = useRouter();
+  const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
   const [mounted, setMounted] = useState(false);
   const [isDepositOpen, setIsDepositOpen] = useState(false);
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-  const dispatch = useDispatch();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const toggleProfile = () => setIsProfileOpen(!isProfileOpen);
-  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
-  
   const [stats, setStats] = useState(null);
-  const [loading, setLoading] = useState(true);
+
+  useEffect(() => { setMounted(true); }, []);
+
+  const isAdmin = mounted && !!user?.is_admin;
 
   const fetchStats = async () => {
     try {
-        setLoading(true);
-        let data;
-        if (user?.is_admin) {
-            data = await transactionService.getAdminStats();
-        } else {
-            data = await transactionService.getWalletStats();
-        }
-        setStats(data);
+      const data = user?.is_admin
+        ? await transactionService.getAdminStats()
+        : await transactionService.getWalletStats();
+      setStats(data);
     } catch (e) {
-        console.error("Failed to fetch wallet stats", e);
-    } finally {
-        setLoading(false);
+      console.error("Failed to fetch wallet stats", e);
     }
   };
 
   const refreshUserProfile = async () => {
     try {
-        const freshUser = await authService.getProfile();
-        dispatch(setUser(freshUser));
+      const freshUser = await authService.getProfile();
+      dispatch(setUser(freshUser));
     } catch (e) {
-        console.error("Failed to refresh profile", e);
+      console.error("Failed to refresh profile", e);
     }
   };
 
   useEffect(() => {
     if (user) {
-        fetchStats();
-        refreshUserProfile();
+      fetchStats();
+      refreshUserProfile();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
   const handleLogout = async () => {
@@ -70,247 +66,123 @@ export default function Wallet() {
     }
   };
 
-  return (
-    <div className="layout">
-      {/*  Sidebar  */}
-      <aside className={`sidebar ${isSidebarOpen ? 'active' : ''}`}>
-        <div className="logo">
-          <img src="/images/logo-mark.svg" className="logo-icon" alt="AsianFX Signals" />
-          <span>AsianFX</span>
+  const profit = Number(stats?.total_profit || 0);
+
+  const content = (
+    <>
+      <div className="cards">
+        <div className="card total">
+          <div className="card-top">
+            <img src="/images/div (4).png" alt="" />
+            <div className="badge">
+              <span className="dot"></span> {isAdmin ? 'PLATFORM' : 'PERSONAL'}
+            </div>
+          </div>
+          <p className="wallet-label">{isAdmin ? 'Total Platform Balance' : 'Current Wallet Balance'}</p>
+          <h3 className="wallet-amount wallet-amount--big">
+            ${money(isAdmin ? stats?.platform_balance : (stats?.balance ?? user?.wallet_balance))}
+          </h3>
+          {!isAdmin && user?.free_signals > 0 && (
+            <small style={{ color: 'var(--t-gold)', fontWeight: 600 }}>
+              🎁 {user.free_signals} free signal credit{user.free_signals > 1 ? 's' : ''}
+            </small>
+          )}
         </div>
 
-        <div className="menu" onClick={() => { setIsSidebarOpen(false); router.push('/dashboard'); }}>
-          <img src="/images/i (5).png" alt="Dashboard" />
-          <span>Dashboard</span>
+        <div className="card">
+          <div className="card-top">
+            <img src="/images/div (5).png" alt="" />
+          </div>
+          <p className="wallet-label">{isAdmin ? 'Platform Deposits' : 'Total Deposited'}</p>
+          <h3 className="wallet-amount">${money(stats?.total_deposit)}</h3>
+          <small style={{ color: 'var(--t-gold)', fontWeight: 600 }}>{stats?.deposit_count || 0} approved</small>
         </div>
 
-        <div className="menu active" onClick={() => { setIsSidebarOpen(false); router.push('/wallet'); }}>
-          <img src="/images/i (2).png" alt="Wallet" style={{ height: '20px', filter: 'brightness(0) invert(1)' }} />
-          <span>Wallet</span>
+        <div className="card">
+          <div className="card-top">
+            <img src="/images/div (6).png" alt="" />
+          </div>
+          <p className="wallet-label">{isAdmin ? 'Platform Withdrawals' : 'Total Withdrawn'}</p>
+          <h3 className="wallet-amount">${money(stats?.total_withdrawal)}</h3>
+          <small style={{ color: 'var(--t-text-muted)' }}>{stats?.withdrawal_count || 0} processed</small>
         </div>
 
-        {mounted && user?.is_admin && (
-          <div className="menu" onClick={() => { setIsSidebarOpen(false); router.push('/transaction'); }}>
-            <img src="/images/svg (15).png" alt="Transactions" />
-            <span>Transactions</span>
-            {stats?.pending_deposits > 0 && (
-                <span style={{ 
-                    background: '#ef4444', 
-                    color: 'white', 
-                    borderRadius: '50%', 
-                    width: '18px', 
-                    height: '18px', 
-                    fontSize: '10px', 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'center', 
-                    marginLeft: 'auto' 
-                }}>{stats.pending_deposits}</span>
-            )}
+        <div className="card profit">
+          <div className="card-top">
+            <img src="/images/div (7).png" alt="" />
+          </div>
+          <p className="wallet-label">{isAdmin ? 'Signal Fee Revenue' : 'My Total Signal Profit'}</p>
+          <h3 className="wallet-amount" style={{ color: profit >= 0 ? 'var(--success)' : '#ef4444' }}>
+            {profit < 0 ? '-' : ''}${money(Math.abs(profit))}
+          </h3>
+          <small style={{ color: 'var(--t-text-muted)' }}>Updated live</small>
+        </div>
+
+        {!isAdmin && (
+          <div className="card">
+            <div className="card-top">
+              <div className="wallet-fee-icon">💰</div>
+            </div>
+            <p className="wallet-label">Amount Spent on Signals</p>
+            <h3 className="wallet-amount" style={{ color: 'var(--t-gold)' }}>${money(stats?.total_signal_fees)}</h3>
+            <small style={{ color: 'var(--t-text-muted)' }}>$1 per signal · free after a Stop Loss</small>
           </div>
         )}
-        
-        {mounted && user?.is_admin && (
-          <div className="menu" onClick={() => { setIsSidebarOpen(false); router.push('/admin/signals'); }}>
-            <img src="/images/i (11).png" alt="Admin" style={{ height: '20px', filter: 'brightness(0) invert(1)' }} />
-            <span>Admin</span>
-          </div>
-        )}
+      </div>
+    </>
+  );
 
-        <div className="menu" onClick={handleLogout} style={{ marginTop: 'auto', borderTop: '1px solid rgba(255,255,255,0.05)', color: '#ef4444' }}>
-            <img src="/images/arrow (1).png" alt="Logout" style={{ filter: 'invert(1) sepia(1) saturate(5) hue-rotate(-50deg)' }} />
-            <span>Logout</span>
-        </div>
-      </aside>
+  // Admins: same admin shell as every other admin page.
+  if (isAdmin) {
+    return (
+      <div className="admin-layout">
+        <AdminSidebar
+          active="wallet"
+          user={user}
+          pendingDeposits={stats?.pending_deposits || 0}
+          onLogout={handleLogout}
+          isOpen={isSidebarOpen}
+          onClose={() => setIsSidebarOpen(false)}
+        />
+        {isSidebarOpen && <div className="admin-backdrop" onClick={() => setIsSidebarOpen(false)}></div>}
 
-      {/* BACKDROP FOR MOBILE */}
-      {isSidebarOpen && <div className="backdrop" onClick={() => setIsSidebarOpen(false)}></div>}
-
-      {/*  Main  */}
-      <main className="main">
-        {/*  🔥 HEADER INSIDE MAIN  */}
-        <div className="header-box">
-          <header className="header">
-            <div className="hamburger" onClick={toggleSidebar}>
-              ☰
-            </div>
-            <div className="header-left">
-              <h2>Wallet Overview</h2>
-              <p>Track your financial performance</p>
-            </div>
-
-            <div className="header-right">
-
-
-              <div className="live">
-                <span className="dot"></span> Live
-              </div>
-
-
-              <div style={{ position: 'relative' }}>
-                {user?.profile_image ? (
-                  <img 
-                    src={user.profile_image} 
-                    className="avatar" 
-                    alt="User" 
-                    onClick={toggleProfile} 
-                    style={{ cursor: 'pointer', border: isProfileOpen ? '2px solid var(--primary)' : '2px solid transparent', width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} 
-                  />
-                ) : (
-                  <div 
-                    onClick={toggleProfile}
-                    className="avatar"
-                    style={{ 
-                      width: '40px', 
-                      height: '40px', 
-                      borderRadius: '50%', 
-                      background: 'rgba(212, 175, 55, 0.1)', 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      justifyContent: 'center', 
-                      cursor: 'pointer',
-                      border: isProfileOpen ? '2px solid var(--primary)' : '1px solid rgba(255,255,255,0.1)' 
-                    }}
-                  >
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                      <circle cx="12" cy="7" r="4"></circle>
-                    </svg>
-                  </div>
-                )}
-
-                {/* Profile Dropdown */}
-                {isProfileOpen && (
-                    <div className="profile-dropdown show" style={{ 
-                        position: 'absolute', 
-                        top: '50px', 
-                        right: '0', 
-                        width: '240px', 
-                        background: '#111827', 
-                        border: '1px solid rgba(212,175,55,0.3)', 
-                        borderRadius: '12px', 
-                        padding: '1.25rem', 
-                        boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
-                        zIndex: 3000
-                    }}>
-                        <div style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '12px', marginBottom: '12px' }}>
-                            <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>{mounted ? (user?.name || 'Trader') : 'Trader'}</div>
-                            <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{mounted ? user?.email : ''}</div>
-                        </div>
-                        <button 
-                            onClick={handleLogout} 
-                            style={{ 
-                                width: '100%', 
-                                padding: '10px', 
-                                background: 'rgba(239, 68, 68, 0.1)', 
-                                border: '1px solid #ef4444', 
-                                color: '#ef4444', 
-                                borderRadius: '8px', 
-                                cursor: 'pointer', 
-                                fontWeight: 700,
-                                fontSize: '0.85rem'
-                            }}
-                        >Log Out</button>
-                    </div>
-                )}
+        <main className="admin-main-content">
+          <header className="admin-top-navbar">
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <button className="admin-btn-hamburger" onClick={() => setIsSidebarOpen(true)}>☰</button>
+              <div>
+                <h2 className="admin-page-title">Platform Wallet</h2>
+                <p className="admin-subtitle">Balances, deposits and revenue across all members</p>
               </div>
             </div>
+            <ThemeToggle />
           </header>
-        </div>
-        {/*  CARDS  */}
-        <div className="cards">
-          <div className="card total">
-            <div className="card-top">
-              <img src="/images/div (4).png" alt="Balance Icon" />
-              <div className="badge">
-                <span className="dot"></span> {mounted && user?.is_admin ? 'ADMIN' : 'PERSONAL'}
-              </div>
-            </div>
-            <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)', marginBottom: '8px' }}>
-                {mounted && user?.is_admin ? 'Total Platform Balance' : 'Current Wallet Balance'}
-            </p>
-            <h3 style={{ fontSize: '2.5rem', fontWeight: 800, margin: '5px 0' }}>
-                ${mounted && user?.is_admin ? stats?.platform_balance || '0' : stats?.balance?.toLocaleString() || '0'}
-            </h3>
-            <div className="growth" style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.5)', display: 'flex', alignItems: 'center', gap: '5px' }}>
-              <img src="/images/svg (16).png" className="trend-icon" alt="Trend" style={{ height: '14px', width: 'auto' }} />
-              Live Profile Updates
-            </div>
-          </div>
+          <div className="wallet-page" style={{ padding: '2rem' }}>{content}</div>
+        </main>
+      </div>
+    );
+  }
 
-          <div className="card">
-            <div className="card-top" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <img src="/images/div (5).png" alt="Deposit Icon" />
-              <button 
-                type="button"
-                onClick={() => setIsDepositOpen(true)}
-                style={{
-                  background: 'var(--primary)',
-                  color: '#000',
-                  border: 'none',
-                  padding: '5px 12px',
-                  borderRadius: '6px',
-                  fontSize: '0.75rem',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  transition: 'opacity 0.2s'
-                }}
-              >
-                + Deposit
-              </button>
-            </div>
-            <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)' }}>
-                {mounted && user?.is_admin ? 'Platform Deposits' : 'Total I Deposited'}
-            </p>
-            <h3 style={{ fontSize: '1.75rem', fontWeight: 700 }}>${stats?.total_deposit?.toLocaleString() || '0'}</h3>
-            <small style={{ color: 'var(--primary)', fontWeight: 600 }}>{stats?.deposit_count || 0} Successful</small>
-          </div>
+  // Members: same top navbar as the Signals page.
+  return (
+    <div className="db-main-layout">
+      <UserNavbar active="wallet" user={mounted ? user : null} onLogout={handleLogout} />
 
-          <div className="card">
-            <div className="card-top">
-              <img src="/images/div (6).png" alt="Withdrawal Icon" />
-            </div>
-            <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)' }}>
-                {mounted && user?.is_admin ? 'Platform Withdrawals' : 'Total I Withdrew'}
-            </p>
-            <h3 style={{ fontSize: '1.75rem', fontWeight: 700 }}>${stats?.total_withdrawal?.toLocaleString() || '0'}</h3>
-            <small style={{ color: '#94a3b8' }}>{stats?.withdrawal_count || 0} Processed</small>
+      <div className="db-container wallet-page">
+        <div className="db-top-bar">
+          <div>
+            <h1 className="db-page-title">Wallet</h1>
+            <p className="db-subtitle">Your balance, deposits and signal spending</p>
+          </div>
+          <div className="right-actions">
+            <button className="deposit" onClick={() => setIsDepositOpen(true)}>Deposit</button>
           </div>
         </div>
 
-        <div className="cards secondary">
-          <div className="card profit">
-            <div className="card-top">
-              <img src="/images/div (7).png" alt="Profit Icon" />
-            </div>
-            <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)' }}>
-                {mounted && user?.is_admin ? 'Platform Estimated ROI' : 'My Total Signal Profit'}
-            </p>
-            <h3 style={{ 
-                fontSize: '1.75rem', 
-                fontWeight: 700,
-                color: (stats?.total_profit >= 0) ? 'var(--success)' : '#ef4444' 
-            }}>
-                {stats?.total_profit < 0 ? `-$${Math.abs(stats?.total_profit).toLocaleString()}` : `$${stats?.total_profit?.toLocaleString() || '0'}`}
-            </h3>
-            <small>Updated Live</small>
-          </div>
-        </div>
+        {content}
+      </div>
 
-        {/*  SIGNAL FEES  */}
-        {!user?.is_admin && (
-            <div className="loss-card" style={{ background: 'rgba(212, 175, 55, 0.05)', border: '1px solid rgba(212, 175, 55, 0.2)' }}>
-              <div className="card-top">
-                <div style={{ background: '#d4af37', width: '32px', height: '32px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>💰</div>
-              </div>
-              <p style={{ color: 'var(--text-muted)' }}>Amount Spent on Signals</p>
-              <h3 style={{ color: '#d4af37' }}>${mounted ? (stats?.total_signal_fees?.toLocaleString() || '0') : '0'}</h3>
-              <span className="loss" style={{ background: 'rgba(212, 175, 55, 0.1)', color: '#d4af37' }}>Signal Purchase Fees</span>
-            </div>
-        )}
-      </main>
-
-      <DepositModal isOpen={isDepositOpen} onClose={() => setIsDepositOpen(false)} />
+      <DepositModal isOpen={isDepositOpen} onClose={() => { setIsDepositOpen(false); refreshUserProfile(); fetchStats(); }} />
     </div>
   );
 }

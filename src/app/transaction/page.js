@@ -11,6 +11,7 @@ import { setUser, logout } from '../../redux/slices/authSlice';
 import { connectRealtime } from '../../services/realtimeService';
 import { useDispatch } from 'react-redux';
 import toast from 'react-hot-toast';
+import ThemeToggle from '@/components/ThemeToggle';
 import AdminSidebar from '../../components/AdminSidebar';
 import '../../styles/adminSignals.css';
 import '../../styles/transaction.css';
@@ -204,12 +205,14 @@ export default function Transaction() {
             timer_minutes: signalData.releaseMinutes || null
         };
 
-        await signalService.createSignal(payload);
+        const created = await signalService.createSignal(payload);
         toast.success(`Signal sent successfully to ${targetUser.name}`);
+        if (created.email?.error) toast.error(`Email not sent: ${created.email.error}`);
+        else if (created.email?.sent) toast.success(`Email sent to ${targetUser.name}`);
         setIsSignalModalOpen(false);
     } catch (e) {
         console.error(e);
-        toast.error('Failed to send signal');
+        toast.error(e.response?.data?.message || 'Failed to send signal');
     } finally {
         setLoading(false);
     }
@@ -228,7 +231,7 @@ export default function Transaction() {
 
   if (!mounted || (isAuthorizing && !user)) {
       return (
-          <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0a0d14', color: 'white' }}>
+          <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--t-bg)', color: 'var(--t-text)' }}>
               <div className="loader">Loading Admin Panel...</div>
           </div>
       );
@@ -267,6 +270,7 @@ export default function Transaction() {
             </div>
 
             <div className="header-right">
+              <ThemeToggle />
 
               <div style={{ position: 'relative' }}>
                 {user?.profile_image ? (
@@ -290,7 +294,7 @@ export default function Transaction() {
                       alignItems: 'center', 
                       justifyContent: 'center', 
                       cursor: 'pointer',
-                      border: isProfileOpen ? '2px solid var(--primary)' : '1px solid rgba(255,255,255,0.1)' 
+                      border: isProfileOpen ? '2px solid var(--primary)' : '1px solid var(--tw-10)' 
                     }}
                   >
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -307,16 +311,16 @@ export default function Transaction() {
                         top: '50px', 
                         right: '0', 
                         width: '240px', 
-                        background: '#111827', 
+                        background: 'var(--t-surface)', 
                         border: '1px solid rgba(212,175,55,0.3)', 
                         borderRadius: '12px', 
                         padding: '1.25rem', 
                         boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
                         zIndex: 3000
                     }}>
-                        <div style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '12px', marginBottom: '12px' }}>
+                        <div style={{ borderBottom: '1px solid var(--tw-05)', paddingBottom: '12px', marginBottom: '12px' }}>
                             <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>{mounted ? user?.name : ''}</div>
-                            <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{mounted ? user?.email : ''}</div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--t-text-muted)' }}>{mounted ? user?.email : ''}</div>
                         </div>
                         <button 
                             onClick={handleLogout} 
@@ -342,7 +346,7 @@ export default function Transaction() {
         {/* ADMIN DEPOSIT MANAGEMENT CARD */}
         <div className="card" style={{ marginBottom: '2rem', border: '1px solid rgba(212,175,55,0.3)' }}>
           <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ color: '#d4af37' }}>💰 Deposit Management</h3>
+              <h3 style={{ color: 'var(--t-gold)' }}>💰 Deposit Management</h3>
               <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>
                 Showing all recent requests (Manual Delete)
               </div>
@@ -356,7 +360,7 @@ export default function Transaction() {
               ) : (
                 <table style={{ width: '100%', minWidth: '800px', borderCollapse: 'collapse' }}>
                     <thead>
-                        <tr style={{ background: 'rgba(255,255,255,0.05)', textAlign: 'left' }}>
+                        <tr style={{ background: 'var(--tw-05)', textAlign: 'left' }}>
                             <th style={{ padding: '15px' }}>Date</th>
                             <th style={{ padding: '15px' }}>User</th>
                             <th style={{ padding: '15px' }}>Amount</th>
@@ -366,12 +370,12 @@ export default function Transaction() {
                     </thead>
                     <tbody>
                         {userTransactions.filter(t => t.type === 'deposit').slice(0, 20).map(tx => (
-                            <tr key={tx.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', background: (tx.status === 'completed' || tx.status === 'approved') ? 'rgba(34, 197, 94, 0.02)' : 'transparent' }}>
+                            <tr key={tx.id} style={{ borderBottom: '1px solid var(--tw-05)', background: (tx.status === 'completed' || tx.status === 'approved') ? 'rgba(34, 197, 94, 0.02)' : 'transparent' }}>
                                 <td style={{ padding: '15px' }}>
                                     {new Date(tx.created_at).toLocaleDateString()}
                                 </td>
                                 <td style={{ padding: '15px' }}>
-                                    <div style={{ color: 'white', fontWeight: 'bold' }}>{tx.User?.name || 'User #' + tx.user_id}</div>
+                                    <div style={{ color: 'var(--t-text)', fontWeight: 'bold' }}>{tx.User?.name || 'User #' + tx.user_id}</div>
                                     <small style={{ color: 'var(--text-dim)' }}>{tx.User?.email}</small>
                                 </td>
                                 <td style={{ padding: '15px', color: '#22c55e', fontWeight: 'bold' }}>${tx.amount}</td>
@@ -413,7 +417,7 @@ export default function Transaction() {
                                                     toast.error(e.response?.data?.message || 'Could not open proof');
                                                 }
                                             }}
-                                            style={{ background: 'rgba(255,255,255,0.1)', color: 'white', border: 'none', width: '28px', height: '28px', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                            style={{ background: 'var(--tw-10)', color: 'var(--t-text)', border: 'none', width: '28px', height: '28px', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                                             title="View Proof"
                                         >🖼️</button>
 
@@ -433,24 +437,24 @@ export default function Transaction() {
         {/* SIGNAL MODAL */}
         {isSignalModalOpen && (
             <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(5px)' }}>
-                <div className="modal-content" style={{ background: '#0f172a', padding: '2.5rem', borderRadius: '20px', color: 'white', width: '450px', border: '1px solid #d4af37', boxShadow: '0 0 50px rgba(212, 175, 55, 0.2)' }}>
+                <div className="modal-content" style={{ background: 'var(--t-surface)', padding: '2.5rem', borderRadius: '20px', color: 'var(--t-text)', width: '450px', border: '1px solid #d4af37', boxShadow: '0 0 50px rgba(212, 175, 55, 0.2)' }}>
                     <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
                         <div style={{ background: 'rgba(212, 175, 55, 0.1)', width: '60px', height: '60px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem' }}>
                             <img src="/images/i (11).png" style={{ width: '30px', filter: 'invert(1)' }} alt="Signal" />
                         </div>
-                        <h2 style={{ fontSize: '1.5rem', color: '#d4af37' }}>Send Private Signal</h2>
+                        <h2 style={{ fontSize: '1.5rem', color: 'var(--t-gold)' }}>Send Private Signal</h2>
                         <p style={{ color: 'var(--text-dim)', fontSize: '0.9rem' }}>Recipient: <strong>{targetUser?.name}</strong></p>
                     </div>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
                             <div>
-                                <label style={{ fontSize: '0.75rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 700, display: 'block', marginBottom: '6px' }}>Symbol</label>
-                                <input style={{ width: '100%', background: '#1e293b', border: '1px solid #334155', color: 'white', padding: '12px', borderRadius: '10px', outline: 'none' }} value={signalData.symbol} onChange={(e) => setSignalData({...signalData, symbol: e.target.value})} />
+                                <label style={{ fontSize: '0.75rem', color: 'var(--t-text-muted)', textTransform: 'uppercase', fontWeight: 700, display: 'block', marginBottom: '6px' }}>Symbol</label>
+                                <input style={{ width: '100%', background: 'var(--t-surface-2)', border: '1px solid var(--t-input-border)', color: 'var(--t-text)', padding: '12px', borderRadius: '10px', outline: 'none' }} value={signalData.symbol} onChange={(e) => setSignalData({...signalData, symbol: e.target.value})} />
                             </div>
                             <div>
-                                <label style={{ fontSize: '0.75rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 700, display: 'block', marginBottom: '6px' }}>Signal Type</label>
-                                <select style={{ width: '100%', background: '#1e293b', border: '1px solid #334155', color: 'white', padding: '12px', borderRadius: '10px', outline: 'none' }} value={signalData.signal_type} onChange={(e) => setSignalData({...signalData, signal_type: e.target.value})}>
+                                <label style={{ fontSize: '0.75rem', color: 'var(--t-text-muted)', textTransform: 'uppercase', fontWeight: 700, display: 'block', marginBottom: '6px' }}>Signal Type</label>
+                                <select style={{ width: '100%', background: 'var(--t-surface-2)', border: '1px solid var(--t-input-border)', color: 'var(--t-text)', padding: '12px', borderRadius: '10px', outline: 'none' }} value={signalData.signal_type} onChange={(e) => setSignalData({...signalData, signal_type: e.target.value})}>
                                     <option value="premium">💎 Premium</option>
                                     <option value="free">🌐 Free</option>
                                 </select>
@@ -458,25 +462,25 @@ export default function Transaction() {
                         </div>
 
                         <div>
-                            <label style={{ fontSize: '0.75rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 700, display: 'block', marginBottom: '6px' }}>Order Type</label>
+                            <label style={{ fontSize: '0.75rem', color: 'var(--t-text-muted)', textTransform: 'uppercase', fontWeight: 700, display: 'block', marginBottom: '6px' }}>Order Type</label>
                             <div style={{ display: 'flex', gap: '10px' }}>
-                                <button onClick={() => setSignalData({...signalData, type: 'buy'})} style={{ flex: 1, padding: '10px', borderRadius: '8px', border: signalData.type === 'buy' ? '2px solid #10b981' : '1px solid #334155', background: signalData.type === 'buy' ? 'rgba(16, 185, 129, 0.2)' : 'transparent', color: signalData.type === 'buy' ? '#10b981' : 'white', cursor: 'pointer', fontWeight: 700 }}>BUY</button>
-                                <button onClick={() => setSignalData({...signalData, type: 'sell'})} style={{ flex: 1, padding: '10px', borderRadius: '8px', border: signalData.type === 'sell' ? '2px solid #ef4444' : '1px solid #334155', background: signalData.type === 'sell' ? 'rgba(239, 68, 68, 0.2)' : 'transparent', color: signalData.type === 'sell' ? '#ef4444' : 'white', cursor: 'pointer', fontWeight: 700 }}>SELL</button>
+                                <button onClick={() => setSignalData({...signalData, type: 'buy'})} style={{ flex: 1, padding: '10px', borderRadius: '8px', border: signalData.type === 'buy' ? '2px solid #10b981' : '1px solid var(--t-input-border)', background: signalData.type === 'buy' ? 'rgba(16, 185, 129, 0.2)' : 'transparent', color: signalData.type === 'buy' ? '#10b981' : 'var(--t-text)', cursor: 'pointer', fontWeight: 700 }}>BUY</button>
+                                <button onClick={() => setSignalData({...signalData, type: 'sell'})} style={{ flex: 1, padding: '10px', borderRadius: '8px', border: signalData.type === 'sell' ? '2px solid #ef4444' : '1px solid var(--t-input-border)', background: signalData.type === 'sell' ? 'rgba(239, 68, 68, 0.2)' : 'transparent', color: signalData.type === 'sell' ? '#ef4444' : 'var(--t-text)', cursor: 'pointer', fontWeight: 700 }}>SELL</button>
                             </div>
                         </div>
 
                         <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr', gap: '10px' }}>
                             <div>
-                                <label style={{ fontSize: '0.75rem', color: '#94a3b8', marginBottom: '4px', display: 'block' }}>Entry</label>
-                                <input placeholder="1.234" style={{ width: '100%', background: '#1e293b', border: '1px solid #334155', color: 'white', padding: '10px', borderRadius: '8px' }} value={signalData.entry_price} onChange={(e) => setSignalData({...signalData, entry_price: e.target.value})} />
+                                <label style={{ fontSize: '0.75rem', color: 'var(--t-text-muted)', marginBottom: '4px', display: 'block' }}>Entry</label>
+                                <input placeholder="1.234" style={{ width: '100%', background: 'var(--t-surface-2)', border: '1px solid var(--t-input-border)', color: 'var(--t-text)', padding: '10px', borderRadius: '8px' }} value={signalData.entry_price} onChange={(e) => setSignalData({...signalData, entry_price: e.target.value})} />
                             </div>
                             <div>
-                                <label style={{ fontSize: '0.75rem', color: '#94a3b8', marginBottom: '4px', display: 'block' }}>TP</label>
-                                <input placeholder="1.250" style={{ width: '100%', background: '#1e293b', border: '1px solid #334155', color: 'white', padding: '10px', borderRadius: '8px' }} value={signalData.target_price} onChange={(e) => setSignalData({...signalData, target_price: e.target.value})} />
+                                <label style={{ fontSize: '0.75rem', color: 'var(--t-text-muted)', marginBottom: '4px', display: 'block' }}>TP</label>
+                                <input placeholder="1.250" style={{ width: '100%', background: 'var(--t-surface-2)', border: '1px solid var(--t-input-border)', color: 'var(--t-text)', padding: '10px', borderRadius: '8px' }} value={signalData.target_price} onChange={(e) => setSignalData({...signalData, target_price: e.target.value})} />
                             </div>
                             <div>
-                                <label style={{ fontSize: '0.75rem', color: '#94a3b8', marginBottom: '4px', display: 'block' }}>SL</label>
-                                <input placeholder="1.220" style={{ width: '100%', background: '#1e293b', border: '1px solid #334155', color: 'white', padding: '10px', borderRadius: '8px' }} value={signalData.stop_loss} onChange={(e) => setSignalData({...signalData, stop_loss: e.target.value})} />
+                                <label style={{ fontSize: '0.75rem', color: 'var(--t-text-muted)', marginBottom: '4px', display: 'block' }}>SL</label>
+                                <input placeholder="1.220" style={{ width: '100%', background: 'var(--t-surface-2)', border: '1px solid var(--t-input-border)', color: 'var(--t-text)', padding: '10px', borderRadius: '8px' }} value={signalData.stop_loss} onChange={(e) => setSignalData({...signalData, stop_loss: e.target.value})} />
                             </div>
                         </div>
 
@@ -485,7 +489,7 @@ export default function Transaction() {
                             <button onClick={handleSendSignal} disabled={loading} style={{ flex: 2, background: '#d4af37', border: 'none', padding: '14px', borderRadius: '10px', cursor: 'pointer', fontWeight: 700, color: 'black', fontSize: '1rem', transition: '0.3s' }}>
                                 {loading ? <><span className="btn-spinner dark"></span>Sending...</> : 'Broadcast Signal'}
                             </button>
-                            <button onClick={() => setIsSignalModalOpen(false)} style={{ flex: 1, background: 'transparent', border: '1px solid #334155', color: 'white', padding: '14px', borderRadius: '10px', cursor: 'pointer' }}>Cancel</button>
+                            <button onClick={() => setIsSignalModalOpen(false)} style={{ flex: 1, background: 'transparent', border: '1px solid var(--t-input-border)', color: 'var(--t-text)', padding: '14px', borderRadius: '10px', cursor: 'pointer' }}>Cancel</button>
                         </div>
                     </div>
                 </div>
@@ -495,20 +499,20 @@ export default function Transaction() {
         {/* CUSTOM CONFIRM/PROMPT MODAL */}
         {confirmModal.isOpen && (
             <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(10px)' }}>
-                <div className="modal-content" style={{ background: '#0f172a', padding: '2.5rem', borderRadius: '24px', color: 'white', width: '400px', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}>
+                <div className="modal-content" style={{ background: 'var(--t-surface)', padding: '2.5rem', borderRadius: '24px', color: 'var(--t-text)', width: '400px', border: '1px solid var(--tw-10)', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}>
                     <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
                         <div style={{ background: confirmModal.type === 'approve' ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)', width: '64px', height: '64px', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}>
                             <span style={{ fontSize: '24px' }}>{confirmModal.type === 'approve' ? '✅' : '❌'}</span>
                         </div>
                         <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '0.5rem' }}>{confirmModal.title}</h2>
-                        <p style={{ color: '#94a3b8', fontSize: '0.95rem', lineHeight: '1.5' }}>{confirmModal.message}</p>
+                        <p style={{ color: 'var(--t-text-muted)', fontSize: '0.95rem', lineHeight: '1.5' }}>{confirmModal.message}</p>
                     </div>
 
                     {confirmModal.type === 'approve' && (
                         <div style={{ marginBottom: '1.5rem' }}>
-                            <label style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 800, textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Amount (USD)</label>
+                            <label style={{ fontSize: '0.75rem', color: 'var(--t-text-dim)', fontWeight: 800, textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Amount (USD)</label>
                             <input 
-                                style={{ width: '100%', background: '#1e293b', border: '1px solid #334155', color: 'white', padding: '14px', borderRadius: '12px', fontSize: '1.1rem', fontWeight: 600, outline: 'none', textAlign: 'center' }} 
+                                style={{ width: '100%', background: 'var(--t-surface-2)', border: '1px solid var(--t-input-border)', color: 'var(--t-text)', padding: '14px', borderRadius: '12px', fontSize: '1.1rem', fontWeight: 600, outline: 'none', textAlign: 'center' }} 
                                 value={confirmModal.inputValue} 
                                 onChange={(e) => setConfirmModal({...confirmModal, inputValue: e.target.value})}
                                 autoFocus
@@ -520,13 +524,13 @@ export default function Transaction() {
                         <button 
                             onClick={executeConfirmAction} 
                             disabled={isActionLoading}
-                            style={{ flex: 2, background: confirmModal.type === 'approve' ? '#22c55e' : '#ef4444', border: 'none', padding: '14px', borderRadius: '12px', cursor: 'pointer', fontWeight: 700, color: 'white', fontSize: '1rem' }}
+                            style={{ flex: 2, background: confirmModal.type === 'approve' ? '#22c55e' : '#ef4444', border: 'none', padding: '14px', borderRadius: '12px', cursor: 'pointer', fontWeight: 700, color: 'var(--t-text)', fontSize: '1rem' }}
                         >
                             {isActionLoading ? <><span className="btn-spinner"></span>Processing...</> : (confirmModal.type === 'approve' ? 'Confirm Approval' : confirmModal.type === 'delete' ? 'Yes, Delete' : 'Yes, Reject')}
                         </button>
                         <button 
                             onClick={closeConfirmModal} 
-                            style={{ flex: 1, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', padding: '14px', borderRadius: '12px', cursor: 'pointer', fontWeight: 600 }}
+                            style={{ flex: 1, background: 'var(--tw-05)', border: '1px solid var(--tw-10)', color: 'var(--t-text)', padding: '14px', borderRadius: '12px', cursor: 'pointer', fontWeight: 600 }}
                         >
                             Cancel
                         </button>

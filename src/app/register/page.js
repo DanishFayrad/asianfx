@@ -71,7 +71,7 @@ export default function Register() {
   return (
     <div className="register-page-wrapper">
       <div className="register-card">
-        <Link href="/" className="back-link" style={{ position: 'absolute', top: '24px', left: '24px', color: '#94a3b8', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px', textDecoration: 'none' }}>
+        <Link href="/" className="back-link" style={{ position: 'absolute', top: '24px', left: '24px', color: 'var(--t-text-muted)', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px', textDecoration: 'none' }}>
            ← Back to Home
         </Link>
 

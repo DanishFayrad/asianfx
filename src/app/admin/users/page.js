@@ -6,6 +6,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { setUser, logout } from '../../../redux/slices/authSlice';
 import authService from '../../../services/authService';
 import transactionService from '../../../services/transactionService';
+import ThemeToggle from '@/components/ThemeToggle';
 import AdminSidebar from '../../../components/AdminSidebar';
 import AdminUsersTable from '../../../components/AdminUsersTable';
 import '../../../styles/adminSignals.css';
@@ -77,7 +78,7 @@ export default function AdminUsersPage() {
 
     if (!mounted || !user || !user.is_admin) {
         return (
-            <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0a0b10', color: 'white' }}>
+            <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--t-bg)', color: 'var(--t-text)' }}>
                 <div className="loader">Loading Admin Panel...</div>
             </div>
         );
@@ -105,6 +106,7 @@ export default function AdminUsersPage() {
                             <p className="admin-subtitle">All registered members & their deposits</p>
                         </div>
                     </div>
+                    <ThemeToggle />
                 </header>
 
                 <div style={{ padding: '2rem' }}>

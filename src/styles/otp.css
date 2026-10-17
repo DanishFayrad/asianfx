@@ -1,10 +1,10 @@
 :root {
   --primary-gold: #d4af37;
-  --dark-bg: #0f172a;
-  --card-bg: #1e293b;
-  --text-main: #f8fafc;
-  --text-dim: #94a3b8;
-  --glass: rgba(30, 41, 59, 0.7);
+  --dark-bg: var(--t-bg);
+  --card-bg: var(--t-surface);
+  --text-main: var(--t-text);
+  --text-dim: var(--t-text-muted);
+  --glass: var(--t-field-2);
   --glass-border: rgba(212, 175, 55, 0.2);
 }
 
@@ -13,7 +13,7 @@
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background: radial-gradient(circle at top right, #1e293b, #0f172a);
+  background: radial-gradient(circle at top right, var(--t-surface-2), var(--t-surface));
   padding: 20px;
 }
 
@@ -83,20 +83,20 @@ h2 {
 .otp-inputs input {
   width: 45px;
   height: 55px;
-  background: rgba(15, 23, 42, 0.5);
+  background: var(--t-field);
   border: 1px solid rgba(148, 163, 184, 0.1);
   border-radius: 12px;
   text-align: center;
   font-size: 1.25rem;
   font-weight: 700;
-  color: var(--primary-gold);
+  color: var(--t-gold);
   outline: none;
   transition: all 0.3s ease;
 }
 
 .otp-inputs input:focus {
   border-color: var(--primary-gold);
-  background: rgba(15, 23, 42, 0.8);
+  background: var(--t-field);
   box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.1);
 }
 
@@ -142,7 +142,7 @@ h2 {
 }
 
 .action-link:hover {
-  color: var(--primary-gold);
+  color: var(--t-gold);
 }
 
 .action-link img {
@@ -181,7 +181,7 @@ h2 {
   gap: 12px;
   align-items: flex-start;
   text-align: left;
-  background: rgba(15, 23, 42, 0.3);
+  background: var(--t-field);
 }
 
 .secure-box img {
@@ -190,7 +190,7 @@ h2 {
 }
 
 .secure-box strong {
-  color: var(--primary-gold);
+  color: var(--t-gold);
   font-size: 0.85rem;
   display: block;
   margin-bottom: 4px;

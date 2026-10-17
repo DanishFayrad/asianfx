@@ -1,13 +1,115 @@
+/* =====================================================================
+   THEME TOKENS — every page reads its neutral colors from these.
+   Dark ("Midnight") is the default; <html data-theme="light"> = "Ivory".
+   Brand accents (gold / green / red) stay the same in both themes.
+   --tw-NN = "white at NN% alpha" in dark  → "ink at a similar alpha" in light.
+   ===================================================================== */
+
+/* ---------- Dark: "Midnight" — navy-black, champagne gold ---------- */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: dark;
+  --t-bg: #060912;
+  --t-surface: #0d1322;
+  --t-surface-2: #151d31;
+  --t-text: #eef2fb;
+  --t-text-muted: #8f9bb3;
+  --t-text-dim: #5f6b85;
+  --t-input-border: #26324d;
+  --t-field: rgba(13, 19, 34, 0.75);
+  --t-field-2: rgba(21, 29, 49, 0.75);
+  --t-gold: #d4af37;
+  --t-glow-1: rgba(212, 175, 55, 0.09);
+  --t-glow-2: rgba(56, 189, 248, 0.06);
+  --t-grid: rgba(255, 255, 255, 0.022);
+
+  --tw-02: rgba(255, 255, 255, 0.02);
+  --tw-03: rgba(255, 255, 255, 0.03);
+  --tw-05: rgba(255, 255, 255, 0.05);
+  --tw-08: rgba(255, 255, 255, 0.08);
+  --tw-10: rgba(255, 255, 255, 0.1);
+  --tw-15: rgba(255, 255, 255, 0.15);
+  --tw-20: rgba(255, 255, 255, 0.2);
+  --tw-30: rgba(255, 255, 255, 0.3);
+  --tw-50: rgba(255, 255, 255, 0.5);
+  --tw-60: rgba(255, 255, 255, 0.6);
+  --tw-70: rgba(255, 255, 255, 0.7);
+
+  --background: var(--t-bg);
+  --foreground: var(--t-text);
+
+  /* Legacy names still used by older stylesheets */
+  --primary-gold: #d4af37;
+  --primary-gold-light: #f1c40f;
+  --dark-bg: var(--t-bg);
+  --card-bg: var(--t-surface);
+  --text-main: var(--t-text);
+  --text-dim: var(--t-text-muted);
+  --glass: var(--t-field-2);
+  --glass-border: rgba(212, 175, 55, 0.2);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ---------- Light: "Ivory" — warm paper, ink text, deep gold ---------- */
+:root[data-theme="light"] {
+  color-scheme: light;
+  --t-bg: #f7f3ea;
+  --t-surface: #fffcf5;
+  --t-surface-2: #f1ebdd;
+  --t-text: #1d1a14;
+  --t-text-muted: #5f5848;
+  --t-text-dim: #8a816d;
+  --t-input-border: #ddd3bc;
+  --t-field: #fffdf8;
+  --t-field-2: #faf6ec;
+  --t-gold: #8f6b07;
+  --t-glow-1: rgba(212, 175, 55, 0.16);
+  --t-glow-2: rgba(16, 185, 129, 0.07);
+  --t-grid: rgba(70, 52, 15, 0.045);
+
+  --tw-02: rgba(70, 52, 15, 0.025);
+  --tw-03: rgba(70, 52, 15, 0.035);
+  --tw-05: rgba(70, 52, 15, 0.06);
+  --tw-08: rgba(70, 52, 15, 0.09);
+  --tw-10: rgba(70, 52, 15, 0.12);
+  --tw-15: rgba(70, 52, 15, 0.16);
+  --tw-20: rgba(70, 52, 15, 0.2);
+  --tw-30: rgba(70, 52, 15, 0.3);
+  --tw-50: rgba(70, 52, 15, 0.5);
+  --tw-60: rgba(29, 26, 20, 0.62);
+  --tw-70: rgba(29, 26, 20, 0.72);
+}
+
+/* Theme toggle — inline in navbars; floating corner version on pages without one */
+.theme-toggle {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: inline-grid;
+  place-items: center;
+  cursor: pointer;
+  background: var(--tw-05);
+  color: var(--t-gold);
+  border: 1px solid var(--tw-15);
+  transition: transform 0.15s ease, border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.theme-toggle:hover { transform: translateY(-1px); border-color: var(--t-gold); }
+
+.theme-toggle--floating {
+  position: fixed;
+  left: 16px; /* top-right is where toasts appear */
+  top: 16px;
+  z-index: 9000;
+  width: 44px;
+  height: 44px;
+  background: var(--t-surface);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+}
+
+/* Smooth color change when switching (added briefly by the toggle) */
+html.theme-switching,
+html.theme-switching * {
+  transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease !important;
 }
 
 html {
@@ -24,8 +126,16 @@ body {
   display: flex;
   flex-direction: column;
   color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--background);
+  /* Signature backdrop: soft gold/cyan glow over a faint trading grid */
+  background-image:
+    radial-gradient(1100px 600px at 8% -10%, var(--t-glow-1), transparent 60%),
+    radial-gradient(900px 520px at 105% 0%, var(--t-glow-2), transparent 60%),
+    linear-gradient(var(--t-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--t-grid) 1px, transparent 1px);
+  background-size: auto, auto, 46px 46px, 46px 46px;
+  background-attachment: fixed;
+  font-family: var(--font-geist-sans), system-ui, -apple-system, "Segoe UI", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -36,16 +146,16 @@ body {
   margin: 0;
 }
 
-:root {
-  --primary-gold: #d4af37;
-  --primary-gold-light: #f1c40f;
-  --dark-bg: #0f172a;
-  --card-bg: #1e293b;
-  --text-main: #f8fafc;
-  --text-dim: #94a3b8;
-  --glass: rgba(30, 41, 59, 0.7);
-  --glass-border: rgba(212, 175, 55, 0.2);
+h1, h2, h3, h4 {
+  font-family: var(--font-display), var(--font-geist-sans), system-ui, sans-serif;
+  letter-spacing: -0.015em;
 }
+
+::selection { background: rgba(212, 175, 55, 0.35); }
+
+/* color-scheme: dark would make unstyled button text white — keep the old dark default
+   (most such buttons sit on gold). Buttons that set their own color are unaffected. */
+button { color: #111; font-family: inherit; }
 
 a {
   color: inherit;
@@ -89,7 +199,6 @@ a {
 
 .loader-text {
   color: var(--primary-gold);
-  font-family: 'Inter', sans-serif;
   font-weight: 500;
   letter-spacing: 1px;
   text-transform: uppercase;
@@ -100,12 +209,6 @@ a {
 @keyframes pulse {
   0%, 100% { opacity: 0.6; }
   50% { opacity: 1; }
-}
-
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
-  }
 }
 
 /* Button Spinner */

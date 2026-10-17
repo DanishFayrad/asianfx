@@ -1,10 +1,10 @@
 :root {
   --primary: #d4af37;
-  --bg-dark: #001220;
-  --bg-card: #0a1f33;
-  --bg-hover: #0d2842;
-  --text-main: #ffffff;
-  --text-dim: #94a3b8;
+  --bg-dark: var(--t-bg);
+  --bg-card: var(--t-surface);
+  --bg-hover: var(--t-surface-2);
+  --text-main: var(--t-text);
+  --text-dim: var(--t-text-muted);
   --border: rgba(212, 175, 55, 0.2);
   --success: #10b981;
   --danger: #ef4444;
@@ -25,7 +25,6 @@ html, body {
 }
 
 body {
-  font-family: 'Inter', sans-serif;
   background-color: var(--bg-dark);
   color: var(--text-main);
   overflow-x: hidden;
@@ -59,7 +58,7 @@ body {
   padding: 0 24px 32px;
   font-size: 20px;
   font-weight: 700;
-  color: var(--primary);
+  color: var(--t-gold);
 }
 
 .logo-icon {
@@ -96,7 +95,7 @@ body {
 
 .menu.active {
   background: rgba(212, 175, 55, 0.1);
-  color: var(--primary);
+  color: var(--t-gold);
   border-left-color: var(--primary);
 }
 
@@ -284,7 +283,7 @@ table {
 
 th {
   padding: 16px 24px;
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--tw-02);
   color: var(--text-dim);
   font-size: 13px;
   text-transform: uppercase;
@@ -315,7 +314,7 @@ td {
 .pending { color: var(--warning); font-weight: 500; }
 
 .view {
-  color: var(--primary);
+  color: var(--t-gold);
   cursor: pointer;
   text-decoration: underline;
 }

@@ -15,20 +15,14 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const { user, token, isLoading, isError, isSuccess, message } = useSelector(
+  const { isLoading, isError, isSuccess, message } = useSelector(
     (state) => state.auth
   );
 
+  // Redirect after login is handled centrally by AuthGuard (honours ?next=).
   useEffect(() => {
-    if (isSuccess || token) {
-      if (user?.is_admin) {
-        router.push('/admin/signals');
-      } else {
-        router.push('/dashboard');
-      }
-      dispatch(reset());
-    }
-  }, [token, user, isError, isSuccess, message, router, dispatch]);
+    if (isSuccess) dispatch(reset());
+  }, [isSuccess, dispatch]);
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
@@ -62,8 +56,8 @@ export default function Login() {
           <div className="input-wrapper">
             <img src="/images/envelope icon.png" className="input-icon" alt="Email Icon" />
             <input 
-              type="email" 
-              placeholder="Enter your email" 
+              type="text" 
+              placeholder="Enter your email" autoComplete="username" 
               className="input-box icon-padding" 
               value={email}
               onChange={(e) => setEmail(e.target.value)}

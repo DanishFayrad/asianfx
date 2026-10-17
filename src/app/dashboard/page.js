@@ -13,6 +13,8 @@ import { setUser } from '../../redux/slices/authSlice';
 import { connectRealtime } from '../../services/realtimeService';
 import toast from 'react-hot-toast';
 import { serverTimeOffset, updateServerTimeOffset } from '../../services/serverTime';
+import ThemeToggle from '@/components/ThemeToggle';
+import UserNavbar from '@/components/UserNavbar';
 import AdminSidebar from '../../components/AdminSidebar';
 import AdminDashboardStats from '../../components/AdminDashboardStats';
 import AdminUsersTable from '../../components/AdminUsersTable';
@@ -69,7 +71,6 @@ export default function Dashboard() {
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
   const [depositAmount, setDepositAmount] = useState('');
@@ -273,6 +274,14 @@ export default function Dashboard() {
 
   const confirmDelete = async () => {
     if (!signalIdToDelete) return;
+    // Members only hide a signal from their own list; deleting is admin-only.
+    if (!user?.is_admin) {
+        setRejectedSignalIds(prev => [...prev, signalIdToDelete]);
+        toast.success("Signal hidden");
+        setIsDeleteModalOpen(false);
+        setSignalIdToDelete(null);
+        return;
+    }
     try {
         await signalService.deleteSignal(signalIdToDelete);
         toast.success("Signal removed");
@@ -450,15 +459,7 @@ export default function Dashboard() {
     }
   };
 
-  const toggleProfile = () => {
-    setIsProfileOpen(!isProfileOpen);
-    if (isMenuOpen) setIsMenuOpen(false);
-  };
-
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
-    if (isProfileOpen) setIsProfileOpen(false);
-  };
+  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
   // Admins get the unified admin shell (sidebar) instead of the user top-navbar.
   if (mounted && user?.is_admin) {
@@ -485,12 +486,15 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <button
-              onClick={() => router.push('/admin/signals')}
-              style={{ background: 'var(--admin-primary)', color: '#0a0b10', border: 'none', padding: '10px 18px', borderRadius: '8px', cursor: 'pointer', fontWeight: 700 }}
-            >
-              + New Signal
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <ThemeToggle />
+              <button
+                onClick={() => router.push('/admin/signals')}
+                style={{ background: 'var(--admin-primary)', color: '#0a0b10', border: 'none', padding: '10px 18px', borderRadius: '8px', cursor: 'pointer', fontWeight: 700 }}
+              >
+                + New Signal
+              </button>
+            </div>
           </header>
 
           {adminNotification && (
@@ -512,106 +516,7 @@ export default function Dashboard() {
 
   return (
     <div className="db-main-layout">
-      <header className="db-navbar">
-        <div className="db-nav-left">
-          <div className="db-logo">
-            <div className="logo-box">
-                <img src="/images/logo-mark.svg" alt="AsianFX Signals" />
-            </div>
-            <span>AsianFX</span>
-          </div>
-
-          <nav>
-            <Link className="active" href="/dashboard">Signals</Link>
-            <Link href="/wallet">Wallet</Link>
-            {mounted && user?.is_admin && (
-              <Link href="/transaction" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                Transactions
-                {adminStats?.pending_deposits > 0 && (
-                  <span className="nav-badge">{adminStats.pending_deposits}</span>
-                )}
-              </Link>
-            )}
-            {mounted && user?.is_admin && <Link href="/admin/signals">Admin</Link>}
-          </nav>
-        </div>
-
-        {/*  HAMBURGER  */}
-        <div className="hamburger" id="hamburger" onClick={toggleMenu}>
-          {isMenuOpen ? '✕' : '☰'}
-        </div>
-
-        {/*  RIGHT SIDE MENU (Mobile + Desktop)  */}
-        <div className={`db-nav-right ${isMenuOpen ? 'show' : ''}`} id="mobileMenu">
-          <nav className="mobile-only-nav">
-             <Link className="active" href="/dashboard" onClick={() => setIsMenuOpen(false)}>Signals</Link>
-             <Link href="/wallet" onClick={() => setIsMenuOpen(false)}>Wallet</Link>
-             {mounted && user?.is_admin && (
-               <Link href="/transaction" onClick={() => setIsMenuOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                 Transactions
-                 {adminStats?.pending_deposits > 0 && (
-                   <span className="nav-badge">{adminStats.pending_deposits}</span>
-                 )}
-               </Link>
-             )}
-             {mounted && user?.is_admin && <Link href="/admin/signals" onClick={() => setIsMenuOpen(false)}>Admin</Link>}
-          </nav>
-          <div className="db-nav-actions">
-            {/* Wallet Balance Removed as requested */}
-            <div className="db-nav-icons">
-              <div className="db-nav-icons">
-                {user?.profile_image ? (
-                  <img 
-                    src={user.profile_image} 
-                    alt="User" 
-                    onClick={toggleProfile} 
-                    style={{ cursor: 'pointer', borderRadius: '50%', border: isProfileOpen ? '2px solid var(--primary)' : '2px solid transparent', width: '40px', height: '40px', objectFit: 'cover' }} 
-                  />
-                ) : (
-                  <div 
-                    onClick={toggleProfile}
-                    style={{ 
-                      width: '40px', 
-                      height: '40px', 
-                      borderRadius: '50%', 
-                      background: 'rgba(212, 175, 55, 0.1)', 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      justifyContent: 'center', 
-                      cursor: 'pointer',
-                      border: isProfileOpen ? '2px solid var(--primary)' : '1px solid rgba(255,255,255,0.1)' 
-                    }}
-                  >
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                      <circle cx="12" cy="7" r="4"></circle>
-                    </svg>
-                  </div>
-                )}
-              </div>
-              
-              {/* Profile Dropdown */}
-              <div className={`profile-dropdown ${isProfileOpen ? 'show' : ''}`}>
-                <div className="dropdown-user-info">
-                  <span className="user-name">{mounted ? (user?.name || 'Trader') : 'Trader'}</span>
-                  <span className="user-email">{mounted ? user?.email : ''}</span>
-                  <span className="user-id">ID: #{mounted ? (user?.user_id || user?.id || '---') : '---'}</span>
-                </div>
-                
-                <div className="dropdown-balance">
-                  <span>Wallet Balance</span>
-                  <strong>${mounted ? (user?.wallet_balance || '0.00') : '0.00'}</strong>
-                </div>
-                
-                <button className="logout-btn" onClick={handleLogout}>
-                   <img src="/images/arrow (1).png" style={{ height: '14px', filter: 'invert(1)' }} alt="Logout" />
-                   Log Out
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
+      <UserNavbar active="signals" user={mounted ? user : null} onLogout={handleLogout} />
 
       {/* NOTIFICATION BARS */}
       {mounted && user?.is_admin && adminNotification && (
@@ -630,7 +535,7 @@ export default function Dashboard() {
       )}
 
       {mounted && !user?.is_admin && signalBanner && (
-        <div style={{ background: 'rgba(212, 175, 55, 0.15)', borderBottom: '2px solid #d4af37', padding: '12px 1rem', color: '#d4af37', fontSize: '0.9rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '15px', zIndex: 1100, position: 'relative' }}>
+        <div style={{ background: 'rgba(212, 175, 55, 0.15)', borderBottom: '2px solid #d4af37', padding: '12px 1rem', color: 'var(--t-gold)', fontSize: '0.9rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '15px', zIndex: 1100, position: 'relative' }}>
             <span style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span style={{ fontSize: '1.2rem' }}>📈</span> 
                 {signalBanner.title}: {signalBanner.message}
@@ -660,17 +565,17 @@ export default function Dashboard() {
             >
                 View Details
             </button>
-            <button onClick={() => setSignalBanner(null)} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#d4af37', cursor: 'pointer', fontSize: '1.2rem' }}>✕</button>
+            <button onClick={() => setSignalBanner(null)} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'var(--t-gold)', cursor: 'pointer', fontSize: '1.2rem' }}>✕</button>
         </div>
       )}
 
       {/*  MAIN  */}
       <div className="db-container">
         <div className="db-top-bar">
-          <h1 className="db-page-title" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-            <img src="/images/logo-mark.svg" alt="AsianFX Signals" style={{ width: '40px', height: 'auto' }} />
-            Trading Signals
-          </h1>
+          <div>
+            <h1 className="db-page-title">Trading Signals</h1>
+            <p className="db-subtitle">Real-time signals for Gold, Silver, Forex and Crypto markets</p>
+          </div>
 
           <div className="right-actions">
             {mounted && !user?.is_admin && (
@@ -722,10 +627,10 @@ export default function Dashboard() {
               <p className="modal-desc">Transfer USDT and upload payment proof below.</p>
 
               {/* Binance Address Instruction */}
-              <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '1.25rem', marginBottom: '1.5rem' }}>
+              <div style={{ background: 'var(--tw-03)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '1.25rem', marginBottom: '1.5rem' }}>
                 <div style={{ textAlign: 'center' }}>
                     <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginBottom: '0.75rem' }}>Send USDT to this <strong>Binance</strong> address:</p>
-                    <div style={{ background: 'black', padding: '12px', borderRadius: '8px', wordBreak: 'break-all', fontSize: '0.85rem', color: 'var(--primary)', border: '1px dashed var(--primary)', marginBottom: '0.75rem' }}>
+                    <div style={{ background: 'var(--t-bg)', padding: '12px', borderRadius: '8px', wordBreak: 'break-all', fontSize: '0.85rem', color: 'var(--primary)', border: '1px dashed var(--primary)', marginBottom: '0.75rem' }}>
                        {/* / {transactionCount % 4 === 3 ? "TNK1ngQW59zsu5iHntaGKiuUJ9PmSYJYtS" : "TA199GDmT2ybpMKdHwZkjMgo2awuk1N1fV"} */}
                        TA199GDmT2ybpMKdHwZkjMgo2awuk1N1fV
                     </div>
@@ -794,12 +699,6 @@ export default function Dashboard() {
         )}
 
         {mounted && user?.is_admin ? (
-            <p className="db-subtitle">Global Platform Overview & Business Analytics</p>
-        ) : (
-            <p className="db-subtitle">Real-time signals for Gold, Silver, and Forex markets</p>
-        )}
-
-        {mounted && user?.is_admin ? (
             <AdminDashboardStats adminStats={adminStats} onNav={(p) => router.push(p)} />
         ) : (
             <div className="db-content-flex-wrapper">
@@ -828,9 +727,9 @@ export default function Dashboard() {
 
                         <div className="db-card">
                             <img src="/images/div (12).png" style={{ marginBottom: "10px" }} alt="Stat Icon" />
-                            <span className="db-card-label">Total</span>
-                            <h3>{stats.total_signals}</h3>
-                            <p>Total Signals</p>
+                            <span className="db-card-label">Wallet</span>
+                            <h3>${Number(user?.wallet_balance || 0).toFixed(2)}</h3>
+                            <p>{user?.free_signals > 0 ? `Balance · ${user.free_signals} free signal${user.free_signals > 1 ? 's' : ''}` : 'Wallet Balance'}</p>
                         </div>
                     </div>
 
@@ -852,7 +751,7 @@ export default function Dashboard() {
                         <div className="affiliate-info">
                             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '1rem' }}>
                                 <div style={{ background: '#d4af37', color: 'black', width: '40px', height: '40px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>💰</div>
-                                <h3 style={{ color: 'white', margin: 0, fontSize: '1.4rem' }}>Refer & Earn</h3>
+                                <h3 style={{ color: 'var(--t-text)', margin: 0, fontSize: '1.4rem' }}>Refer & Earn</h3>
                             </div>
                             <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', lineHeight: '1.6', marginBottom: '1.5rem' }}>
                                 Invite your community and earn <strong>$0.30</strong> for every <strong>$1</strong> they deposit.
@@ -863,7 +762,7 @@ export default function Dashboard() {
                                     <input 
                                         readOnly 
                                         value={mounted ? `${window.location.origin.includes('localhost') ? 'https://www.asianfxsignals.com' : window.location.origin}/register?ref=${user?.referral_code || ''}` : ''} 
-                                        style={{ flex: 1, background: 'transparent', border: 'none', color: 'white', fontSize: '0.8rem', outline: 'none' }}
+                                        style={{ flex: 1, background: 'transparent', border: 'none', color: 'var(--t-text)', fontSize: '0.8rem', outline: 'none' }}
                                     />
                                     <button 
                                         onClick={() => {
@@ -880,16 +779,16 @@ export default function Dashboard() {
 
                         <div className="affiliate-stats-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                             <div style={{ background: 'rgba(212, 175, 55, 0.1)', border: '1px solid rgba(212, 175, 55, 0.2)', borderRadius: '12px', padding: '1rem', textAlign: 'center' }}>
-                                <span style={{ fontSize: '0.6rem', color: '#d4af37', fontWeight: 600, textTransform: 'uppercase' }}>Referrals</span>
-                                <h3 style={{ fontSize: '1.25rem', margin: '5px 0', color: 'white' }}>{mounted ? (user?.referral_count || '0') : '0'}</h3>
+                                <span style={{ fontSize: '0.6rem', color: 'var(--t-gold)', fontWeight: 600, textTransform: 'uppercase' }}>Referrals</span>
+                                <h3 style={{ fontSize: '1.25rem', margin: '5px 0', color: 'var(--t-text)' }}>{mounted ? (user?.referral_count || '0') : '0'}</h3>
                             </div>
                             <div style={{ background: 'rgba(212, 175, 55, 0.1)', border: '1px solid rgba(212, 175, 55, 0.2)', borderRadius: '12px', padding: '1rem', textAlign: 'center' }}>
-                                <span style={{ fontSize: '0.6rem', color: '#d4af37', fontWeight: 600, textTransform: 'uppercase' }}>Deposits</span>
-                                <h3 style={{ fontSize: '1.25rem', margin: '5px 0', color: 'white' }}>${mounted ? (user?.total_referral_deposits?.toFixed(2) || '0.00') : '0.00'}</h3>
+                                <span style={{ fontSize: '0.6rem', color: 'var(--t-gold)', fontWeight: 600, textTransform: 'uppercase' }}>Deposits</span>
+                                <h3 style={{ fontSize: '1.25rem', margin: '5px 0', color: 'var(--t-text)' }}>${mounted ? (user?.total_referral_deposits?.toFixed(2) || '0.00') : '0.00'}</h3>
                             </div>
                             <div style={{ background: 'rgba(212, 175, 55, 0.2)', border: '1px solid rgba(212, 175, 55, 0.4)', borderRadius: '12px', padding: '1rem', textAlign: 'center', gridColumn: 'span 2' }}>
-                                <span style={{ fontSize: '0.65rem', color: '#d4af37', fontWeight: 700, textTransform: 'uppercase' }}>Commission</span>
-                                <h2 style={{ fontSize: '1.75rem', margin: '5px 0', color: 'white' }}>${mounted ? (user?.affiliate_balance?.toFixed(2) || '0.00') : '0.00'}</h2>
+                                <span style={{ fontSize: '0.65rem', color: 'var(--t-gold)', fontWeight: 700, textTransform: 'uppercase' }}>Commission</span>
+                                <h2 style={{ fontSize: '1.75rem', margin: '5px 0', color: 'var(--t-text)' }}>${mounted ? (user?.affiliate_balance?.toFixed(2) || '0.00') : '0.00'}</h2>
                                 <button 
                                     style={{ marginTop: '0.5rem', background: '#d4af37', border: 'none', color: 'black', padding: '6px 15px', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 800, cursor: 'pointer', width: '100%' }}
                                     onClick={() => toast.error('Minimum withdrawal is $10')}
@@ -928,7 +827,7 @@ export default function Dashboard() {
                                                             <img src={getSymbolIcon(signal.symbol)} style={{ width: "42px", height: "42px" }} alt={signal.symbol} />
                                                             <div>
                                                                 <div style={{ fontWeight: "600" }}>{signal.symbol}</div>
-                                                                <div style={{ fontSize: "12px", color: "#9ca3af", marginTop: "2px" }}>{getSymbolName(signal.symbol)}</div>
+                                                                <div style={{ fontSize: "12px", color: "var(--t-text-muted)", marginTop: "2px" }}>{getSymbolName(signal.symbol)}</div>
                                                             </div>
                                                         </div>
                                                     </td>
@@ -938,9 +837,17 @@ export default function Dashboard() {
                                                             {signal.type}
                                                         </span>
                                                     </td>
-                                                    <td>{signal.entry_price}</td>
-                                                    <td className="green">{signal.target_price}</td>
-                                                    <td className="red">{signal.stop_loss}</td>
+                                                    {signal.entry_price == null ? (
+                                                        <td colSpan={3} style={{ color: 'var(--t-text-muted)', fontSize: '0.85rem' }}>
+                                                            🔒 Take this signal to unlock Entry, TP &amp; SL
+                                                        </td>
+                                                    ) : (
+                                                        <>
+                                                            <td>{signal.entry_price}</td>
+                                                            <td className="green">{signal.target_price}</td>
+                                                            <td className="red">{signal.stop_loss}</td>
+                                                        </>
+                                                    )}
                                                     <td>
                                                         <span className={`db-badge status ${signal.status.toLowerCase().includes('hit') ? 'hit' : signal.status.toLowerCase().includes('stop') ? 'loss' : signal.status.toLowerCase().includes('closed') ? 'close' : 'active'}`}>
                                                             {signal.status}
@@ -998,8 +905,8 @@ export default function Dashboard() {
                                                                         }}
                                                                     />
                                                                     {signal.release_at && new Date(signal.release_at).getTime() > currentTime.getTime() && (
-                                                                        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'rgba(15, 23, 42, 0.95)', border: '1px solid #d4af37', borderRadius: '6px', padding: '2px 6px', pointerEvents: 'none', whiteSpace: 'nowrap', zIndex: 10, boxShadow: '0 4px 12px rgba(0,0,0,0.5)' }}>
-                                                                            <div style={{ fontSize: '10px', color: '#d4af37', fontWeight: 900, fontFamily: 'monospace', letterSpacing: '0.5px' }}>
+                                                                        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'var(--t-field)', border: '1px solid #d4af37', borderRadius: '6px', padding: '2px 6px', pointerEvents: 'none', whiteSpace: 'nowrap', zIndex: 10, boxShadow: '0 4px 12px rgba(0,0,0,0.5)' }}>
+                                                                            <div style={{ fontSize: '10px', color: 'var(--t-gold)', fontWeight: 900, fontFamily: 'monospace', letterSpacing: '0.5px' }}>
                                                                                 {formatCountdown(signal.release_at)}
                                                                             </div>
                                                                         </div>
@@ -1011,7 +918,7 @@ export default function Dashboard() {
                                                                 <button 
                                                                     onClick={() => handleDeleteSignal(signal.id)}
                                                                     style={{ background: 'rgba(239, 68, 68, 0.05)', border: '1px solid rgba(239, 68, 68, 0.15)', color: '#f87171', width: '32px', height: '32px', borderRadius: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem', padding: 0, transition: 'all 0.25s ease' }}
-                                                                    onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.15)'; e.currentTarget.style.borderColor = '#ef4444'; e.currentTarget.style.color = 'white'; }}
+                                                                    onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.15)'; e.currentTarget.style.borderColor = '#ef4444'; e.currentTarget.style.color = '#ef4444'; }}
                                                                     onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.05)'; e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.15)'; e.currentTarget.style.color = '#f87171'; }}
                                                                 >×</button>
                                                             )}
@@ -1042,7 +949,7 @@ export default function Dashboard() {
                     {/* MY PURCHASED SIGNALS SECTION */}
                     {!user?.is_admin && signalHistory.length > 0 && (
                         <div className="table-box" style={{ marginTop: '2.5rem' }}>
-                            <h3 style={{ padding: '1.5rem', margin: 0, color: 'white', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>My Purchased Signals</h3>
+                            <h3 style={{ padding: '1.5rem', margin: 0, color: 'var(--t-text)', borderBottom: '1px solid var(--tw-05)' }}>My Purchased Signals</h3>
                             <div className="table-wrapper">
                                 <table>
                                     <thead>
@@ -1091,7 +998,7 @@ export default function Dashboard() {
                     <aside className="db-sidebar-column">
                         <div style={{ position: 'relative', zIndex: 100 }}>
                             <div style={{ 
-                                background: 'linear-gradient(180deg, #1a1a1a 0%, #2c240a 100%)', 
+                                background: 'linear-gradient(180deg, var(--t-surface) 0%, #2c240a 100%)', 
                                 border: '1px solid #d4af37', 
                                 borderRadius: '20px', 
                                 padding: '1.25rem', 
@@ -1099,12 +1006,12 @@ export default function Dashboard() {
                                 boxShadow: '0 10px 25px rgba(0, 0, 0, 0.4), 0 0 15px rgba(212, 175, 55, 0.05)'
                             }}>
                                 <div style={{ background: 'rgba(212, 175, 55, 0.1)', width: '40px', height: '40px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.75rem', fontSize: '1.2rem' }}>⌛</div>
-                                <h2 style={{ color: 'white', fontSize: '1rem', fontWeight: 800, marginBottom: '0.25rem', textTransform: 'uppercase', letterSpacing: '1px' }}>
-                                    Next <span style={{ color: '#d4af37' }}>Gold</span> Signal
+                                <h2 style={{ color: 'var(--t-text)', fontSize: '1rem', fontWeight: 800, marginBottom: '0.25rem', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                                    Next <span style={{ color: 'var(--t-gold)' }}>Gold</span> Signal
                                 </h2>
                                 
                                 <div style={{ margin: '1rem 0' }}>
-                                    <div style={{ fontSize: '2rem', fontWeight: 900, color: '#d4af37', fontFamily: 'monospace', textShadow: '0 0 8px rgba(212, 175, 55, 0.3)' }}>
+                                    <div style={{ fontSize: '2rem', fontWeight: 900, color: 'var(--t-gold)', fontFamily: 'monospace', textShadow: '0 0 8px rgba(212, 175, 55, 0.3)' }}>
                                         {formatCountdown(globalTimer)}
                                     </div>
                                     <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', fontWeight: 700, letterSpacing: '2px', marginTop: '2px' }}>COUNTDOWN</div>
@@ -1120,7 +1027,7 @@ export default function Dashboard() {
                                             {isSubmitting ? <><span className="btn-spinner dark"></span>Sending...</> : 'REQUEST ACCESS'}
                                         </button>
                                     ) : requestStatus === 'pending' ? (
-                                        <div style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', padding: '10px', borderRadius: '10px', color: '#d4af37', fontWeight: 700, fontSize: '0.75rem' }}>
+                                        <div style={{ background: 'var(--tw-05)', border: '1px solid var(--tw-10)', padding: '10px', borderRadius: '10px', color: 'var(--t-gold)', fontWeight: 700, fontSize: '0.75rem' }}>
                                             ⏳ PENDING
                                         </div>
                                     ) : (
@@ -1139,25 +1046,29 @@ export default function Dashboard() {
         {/* TAKE SIGNAL CONFIRMATION MODAL */}
         {isTakeSignalModalOpen && signalToTake && (
             <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(10px)' }}>
-                <div className="modal-content" style={{ background: '#0f172a', padding: '2.5rem', borderRadius: '24px', color: 'white', width: '400px', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}>
+                <div className="modal-content" style={{ background: 'var(--t-surface)', padding: '2.5rem', borderRadius: '24px', color: 'var(--t-text)', width: '400px', border: '1px solid var(--tw-10)', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}>
                     <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
                         <div style={{ background: 'rgba(212, 175, 55, 0.1)', width: '64px', height: '64px', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}>
                             <img src={getSymbolIcon(signalToTake.symbol)} style={{ width: '32px' }} alt="Symbol" />
                         </div>
                         <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '0.5rem' }}>Confirm Signal</h2>
-                        <p style={{ color: '#94a3b8', fontSize: '0.95rem', lineHeight: '1.5' }}>
+                        <p style={{ color: 'var(--t-text-muted)', fontSize: '0.95rem', lineHeight: '1.5' }}>
                             Are you sure you want to take <strong>{signalToTake.symbol}</strong> signal?
                         </p>
                     </div>
 
-                    <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1.5rem', borderRadius: '16px', marginBottom: '1.5rem', border: '1px solid rgba(255,255,255,0.05)' }}>
+                    <div style={{ background: 'var(--tw-03)', padding: '1.5rem', borderRadius: '16px', marginBottom: '1.5rem', border: '1px solid var(--tw-05)' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                            <span style={{ color: '#64748b' }}>Entry Price</span>
-                            <span style={{ fontWeight: 700 }}>{signalToTake.entry_price}</span>
+                            <span style={{ color: 'var(--t-text-dim)' }}>Entry / TP / SL</span>
+                            <span style={{ fontWeight: 700 }}>
+                                {signalToTake.entry_price == null
+                                    ? '🔒 Unlocked after you take it'
+                                    : signalToTake.entry_price + ' / ' + signalToTake.target_price + ' / ' + signalToTake.stop_loss}
+                            </span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <span style={{ color: '#64748b' }}>Signal Fee</span>
-                            <span style={{ fontWeight: 700, color: '#d4af37' }}>
+                            <span style={{ color: 'var(--t-text-dim)' }}>Signal Fee</span>
+                            <span style={{ fontWeight: 700, color: 'var(--t-gold)' }}>
                                 {user?.free_signals > 0 ? `FREE (${user.free_signals} credit${user.free_signals > 1 ? 's' : ''})` : '$1.00'}
                             </span>
                         </div>
@@ -1173,7 +1084,7 @@ export default function Dashboard() {
                         </button>
                         <button 
                             onClick={() => setIsTakeSignalModalOpen(false)} 
-                            style={{ flex: 1, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', padding: '14px', borderRadius: '12px', cursor: 'pointer', fontWeight: 600 }}
+                            style={{ flex: 1, background: 'var(--tw-05)', border: '1px solid var(--tw-10)', color: 'var(--t-text)', padding: '14px', borderRadius: '12px', cursor: 'pointer', fontWeight: 600 }}
                         >
                             Cancel
                         </button>
@@ -1185,19 +1096,19 @@ export default function Dashboard() {
         {/* DELETE CONFIRMATION MODAL */}
         {isDeleteModalOpen && (
             <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', zIndex: 5000, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(10px)' }}>
-                <div className="modal-content" style={{ background: '#0f172a', padding: '2.5rem', borderRadius: '24px', color: 'white', width: '400px', border: '1px solid rgba(239, 68, 68, 0.3)', boxShadow: '0 25px 50px -12px rgba(239, 68, 68, 0.1)' }}>
+                <div className="modal-content" style={{ background: 'var(--t-surface)', padding: '2.5rem', borderRadius: '24px', color: 'var(--t-text)', width: '400px', border: '1px solid rgba(239, 68, 68, 0.3)', boxShadow: '0 25px 50px -12px rgba(239, 68, 68, 0.1)' }}>
                     <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
                         <div style={{ background: 'rgba(239, 68, 68, 0.1)', width: '70px', height: '70px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}>
                             <span style={{ fontSize: '2.5rem', color: '#ef4444' }}>⚠️</span>
                         </div>
-                        <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '0.75rem' }}>Delete Signal?</h2>
-                        <p style={{ color: '#94a3b8', fontSize: '1rem', lineHeight: '1.6' }}>Are you sure you want to remove this signal? This action cannot be undone.</p>
+                        <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '0.75rem' }}>{user?.is_admin ? 'Delete Signal?' : 'Hide Signal?'}</h2>
+                        <p style={{ color: 'var(--t-text-muted)', fontSize: '1rem', lineHeight: '1.6' }}>{user?.is_admin ? 'Are you sure you want to remove this signal? This action cannot be undone.' : 'This removes the signal from your list only.'}</p>
                     </div>
 
                     <div style={{ display: 'flex', gap: '15px' }}>
                         <button 
                             onClick={() => { setIsDeleteModalOpen(false); setSignalIdToDelete(null); }}
-                            style={{ flex: 1, background: 'rgba(255,255,255,0.05)', color: 'white', border: '1px solid rgba(255,255,255,0.1)', padding: '14px', borderRadius: '14px', cursor: 'pointer', fontWeight: 600, fontSize: '1rem' }}
+                            style={{ flex: 1, background: 'var(--tw-05)', color: 'var(--t-text)', border: '1px solid var(--tw-10)', padding: '14px', borderRadius: '14px', cursor: 'pointer', fontWeight: 600, fontSize: '1rem' }}
                         >Cancel</button>
                         <button 
                             onClick={confirmDelete}
@@ -1212,10 +1123,10 @@ export default function Dashboard() {
         {isSignalAlertOpen && incomingSignal && (
             <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.9)', zIndex: 4000, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(12px)' }}>
                 <div className="signal-alert-card" style={{ 
-                    background: 'linear-gradient(180deg, #1e293b 0%, #0f172a 100%)', 
+                    background: 'linear-gradient(180deg, var(--t-surface-2) 0%, var(--t-surface) 100%)', 
                     padding: '2.5rem', 
                     borderRadius: '32px', 
-                    color: 'white', 
+                    color: 'var(--t-text)', 
                     width: '450px', 
                     border: '1px solid rgba(212, 175, 55, 0.3)', 
                     boxShadow: '0 0 50px rgba(212, 175, 55, 0.15)',
@@ -1242,7 +1153,7 @@ export default function Dashboard() {
                             <img src={getSymbolIcon(incomingSignal.symbol)} style={{ width: '40px' }} alt="Symbol" />
                         </div>
                         <h2 style={{ fontSize: '1.8rem', fontWeight: 900, marginBottom: '0.5rem', letterSpacing: '-0.5px' }}>New Signal Alert!</h2>
-                        <p style={{ color: '#94a3b8', fontSize: '1rem', lineHeight: '1.5' }}>
+                        <p style={{ color: 'var(--t-text-muted)', fontSize: '1rem', lineHeight: '1.5' }}>
                             An exclusive trading opportunity for <strong>{incomingSignal.symbol}</strong> is now live.
                         </p>
                     </div>
@@ -1252,18 +1163,18 @@ export default function Dashboard() {
                         padding: '1.5rem', 
                         borderRadius: '20px', 
                         marginBottom: '2rem', 
-                        border: '1px solid rgba(255,255,255,0.05)',
+                        border: '1px solid var(--tw-05)',
                         display: 'grid',
                         gridTemplateColumns: '1fr 1fr',
                         gap: '15px'
                     }}>
-                        <div style={{ textAlign: 'center', borderRight: '1px solid rgba(255,255,255,0.1)' }}>
-                            <span style={{ display: 'block', fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700, marginBottom: '5px' }}>Action</span>
+                        <div style={{ textAlign: 'center', borderRight: '1px solid var(--tw-10)' }}>
+                            <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--t-text-dim)', textTransform: 'uppercase', fontWeight: 700, marginBottom: '5px' }}>Action</span>
                             <span style={{ fontSize: '1.2rem', fontWeight: 800, color: incomingSignal.type.toLowerCase() === 'buy' ? '#22c55e' : '#ef4444' }}>{incomingSignal.type.toUpperCase()}</span>
                         </div>
                         <div style={{ textAlign: 'center' }}>
-                            <span style={{ display: 'block', fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700, marginBottom: '5px' }}>Entry</span>
-                            <span style={{ fontSize: '1.2rem', fontWeight: 800 }}>{incomingSignal.entry_price}</span>
+                            <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--t-text-dim)', textTransform: 'uppercase', fontWeight: 700, marginBottom: '5px' }}>Entry</span>
+                            <span style={{ fontSize: '1.2rem', fontWeight: 800 }}>{incomingSignal.entry_price ?? '🔒 Locked'}</span>
                         </div>
                     </div>
 
@@ -1302,8 +1213,8 @@ export default function Dashboard() {
                             style={{ 
                                 width: '100%', 
                                 background: 'transparent', 
-                                border: '1px solid rgba(255,255,255,0.1)', 
-                                color: '#94a3b8', 
+                                border: '1px solid var(--tw-10)', 
+                                color: 'var(--t-text-muted)', 
                                 padding: '14px', 
                                 borderRadius: '16px', 
                                 cursor: 'pointer', 
@@ -1315,7 +1226,7 @@ export default function Dashboard() {
                         </button>
                     </div>
 
-                    <p style={{ textAlign: 'center', fontSize: '0.75rem', color: 'rgba(255,255,255,0.3)', marginTop: '1.5rem' }}>
+                    <p style={{ textAlign: 'center', fontSize: '0.75rem', color: 'var(--tw-30)', marginTop: '1.5rem' }}>
                         You can still access this signal from your dashboard anytime.
                     </p>
                 </div>

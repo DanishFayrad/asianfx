@@ -10,7 +10,7 @@
  */
 export default function AdminDashboardStats({ adminStats, onNav = () => {} }) {
     const card = {
-        background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)',
+        background: 'var(--tw-03)', border: '1px solid var(--tw-05)',
         borderRadius: '20px', padding: '1.5rem', display: 'flex', gap: '20px',
         alignItems: 'center', cursor: 'pointer', transition: '0.3s'
     };
@@ -66,7 +66,7 @@ export default function AdminDashboardStats({ adminStats, onNav = () => {} }) {
                         <h4 style={{ margin: 0, fontSize: '1.1rem' }}>Transaction Desk</h4>
                         <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-dim)' }}>Approve deposits & send signals</p>
                     </div>
-                    <div style={{ marginLeft: 'auto', background: 'rgba(255,255,255,0.1)', padding: '4px 10px', borderRadius: '20px', fontSize: '0.75rem' }}>{adminStats?.pending_deposits || 0} Alert</div>
+                    <div style={{ marginLeft: 'auto', background: 'var(--tw-10)', padding: '4px 10px', borderRadius: '20px', fontSize: '0.75rem' }}>{adminStats?.pending_deposits || 0} Alert</div>
                 </div>
 
                 <div style={card} onClick={() => onNav('/admin/signals')}>

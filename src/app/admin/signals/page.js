@@ -11,6 +11,7 @@ import { serverTimeOffset, updateServerTimeOffset } from '../../../services/serv
 import { logout } from '../../../redux/slices/authSlice';
 import { connectRealtime } from '../../../services/realtimeService';
 import toast from 'react-hot-toast';
+import ThemeToggle from '@/components/ThemeToggle';
 import AdminSidebar from '../../../components/AdminSidebar';
 import '../../../styles/adminSignals.css';
 
@@ -193,7 +194,9 @@ export default function AdminSignals() {
         description: `Signal for ${selectedAsset.name}`,
       };
 
-      await signalService.createSignal(payload);
+      const created = await signalService.createSignal(payload);
+      if (created.email?.error) toast.error(`Signal sent, but email failed: ${created.email.error}`);
+      else if (created.email?.sent) toast.success(`Email sent to ${created.email.sent} member(s)`);
       setMessage(formData.timer_minutes ? `Signal scheduled for release in ${formData.timer_minutes}m` : 'Signal broadcasted successfully!');
       
       // Reset form
@@ -277,8 +280,8 @@ export default function AdminSignals() {
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-             
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <ThemeToggle />
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(34, 197, 94, 0.1)', padding: '6px 12px', borderRadius: '20px', border: '1px solid var(--admin-success)' }}>
                <div style={{ width: '8px', height: '8px', background: 'var(--admin-success)', borderRadius: '50%', boxShadow: '0 0 8px var(--admin-success)' }}></div>
                <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--admin-success)' }}>{liveClientsCount} active on web</span>
@@ -449,8 +452,8 @@ export default function AdminSignals() {
                 
                 {activeGlobalTimer ? (
                     <div style={{ background: 'rgba(212, 175, 55, 0.1)', border: '1px solid #d4af37', borderRadius: '12px', padding: '1.5rem', textAlign: 'center', marginBottom: '1.5rem' }}>
-                        <div style={{ fontSize: '0.75rem', color: '#d4af37', fontWeight: 800, textTransform: 'uppercase', marginBottom: '5px' }}>Active Timer</div>
-                        <div style={{ fontSize: '2.5rem', fontWeight: 900, color: '#d4af37', fontFamily: 'monospace' }}>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--t-gold)', fontWeight: 800, textTransform: 'uppercase', marginBottom: '5px' }}>Active Timer</div>
+                        <div style={{ fontSize: '2.5rem', fontWeight: 900, color: 'var(--t-gold)', fontFamily: 'monospace' }}>
                             {(() => {
                                 const totalSeconds = Math.max(0, Math.floor((new Date(activeGlobalTimer) - currentTime) / 1000));
                                 const mins = Math.floor(totalSeconds / 60);
@@ -498,7 +501,7 @@ export default function AdminSignals() {
                         <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: '2rem 0' }}>No pending requests</p>
                     ) : (
                         signalRequests.map(req => (
-                            <div key={req.id} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--admin-border-color)', borderRadius: '12px', padding: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div key={req.id} style={{ background: 'var(--tw-03)', border: '1px solid var(--admin-border-color)', borderRadius: '12px', padding: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <div>
                                     <div style={{ fontWeight: 600 }}>{req.User?.name}</div>
                                     <div style={{ fontSize: '0.7rem', color: 'var(--admin-text-muted)' }}>Wallet: ${req.User?.wallet_balance}</div>
@@ -522,9 +525,9 @@ export default function AdminSignals() {
 
         {/* RECENT BROADCASTS SECTION */}
         <section className="admin-recent-section">
-           <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1.5rem' }}>Recent Broadcasts</h3>
+           <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1.5rem' }}>Open &amp; Recent Signals <span style={{ fontSize: '0.8rem', fontWeight: 500, color: 'var(--admin-text-muted)' }}>— close every open signal with its result</span></h3>
            <div className="admin-recent-grid">
-              {recentSignals.slice(0, 3).map((sig, idx) => (
+              {[...recentSignals.filter(s => s.status === 'Active'), ...recentSignals.filter(s => s.status !== 'Active').slice(0, 3)].map((sig, idx) => (
                 <div key={sig.id || idx} className="admin-recent-card">
                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                       <div style={{ background: sig.symbol.includes('ETH') ? '#627EEA' : sig.symbol.includes('BTC') ? '#F7931A' : '#FFD700', width: '40px', height: '40px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -532,7 +535,7 @@ export default function AdminSignals() {
                       </div>
                       <div>
                          <h4 style={{ fontSize: '1rem', marginBottom: '2px' }}>{sig.symbol}</h4>
-                         <p style={{ fontSize: '0.8rem', color: 'var(--admin-text-muted)' }}>{new Date(sig.created_at).toLocaleTimeString()} ago</p>
+                         <p style={{ fontSize: '0.8rem', color: 'var(--admin-text-muted)' }}>{new Date(sig.created_at).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}</p>
                       </div>
                    </div>
                    <div style={{ textAlign: 'right' }}>
@@ -593,7 +596,7 @@ export default function AdminSignals() {
                                        toast.success("Timer extended by 2 minutes");
                                    } catch (e) { toast.error("Failed to extend timer"); }
                                }}
-                               style={{ background: 'rgba(212, 175, 55, 0.1)', border: '1px solid #d4af37', color: '#d4af37', fontSize: '10px', padding: '2px 8px', borderRadius: '4px', cursor: 'pointer' }}
+                               style={{ background: 'rgba(212, 175, 55, 0.1)', border: '1px solid #d4af37', color: 'var(--t-gold)', fontSize: '10px', padding: '2px 8px', borderRadius: '4px', cursor: 'pointer' }}
                            >
                                + 2 Min
                            </button>
@@ -609,26 +612,26 @@ export default function AdminSignals() {
         {/* CUSTOM CONFIRM MODAL */}
         {confirmModal.isOpen && (
             <div className="admin-modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(10px)' }}>
-                <div className="admin-modal-content" style={{ background: '#0f172a', padding: '2.5rem', borderRadius: '24px', color: 'white', width: '400px', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}>
+                <div className="admin-modal-content" style={{ background: 'var(--t-surface)', padding: '2.5rem', borderRadius: '24px', color: 'var(--t-text)', width: '400px', border: '1px solid var(--tw-10)', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}>
                     <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
                         <div style={{ background: confirmModal.type === 'approve_request' ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)', width: '64px', height: '64px', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}>
                             <span style={{ fontSize: '24px' }}>{confirmModal.type === 'approve_request' ? '✅' : '⚠️'}</span>
                         </div>
                         <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '0.5rem' }}>{confirmModal.title}</h2>
-                        <p style={{ color: '#94a3b8', fontSize: '0.95rem', lineHeight: '1.5' }}>{confirmModal.message}</p>
+                        <p style={{ color: 'var(--t-text-muted)', fontSize: '0.95rem', lineHeight: '1.5' }}>{confirmModal.message}</p>
                     </div>
 
                     <div style={{ display: 'flex', gap: '12px' }}>
                         <button 
                             onClick={executeConfirmAction} 
                             disabled={loading}
-                            style={{ flex: 2, background: confirmModal.type === 'approve_request' ? 'var(--admin-success)' : 'var(--admin-danger)', border: 'none', padding: '14px', borderRadius: '12px', cursor: 'pointer', fontWeight: 700, color: 'white', fontSize: '1rem' }}
+                            style={{ flex: 2, background: confirmModal.type === 'approve_request' ? 'var(--admin-success)' : 'var(--admin-danger)', border: 'none', padding: '14px', borderRadius: '12px', cursor: 'pointer', fontWeight: 700, color: 'var(--t-text)', fontSize: '1rem' }}
                         >
                             {loading ? <><span className="btn-spinner"></span>Processing...</> : (confirmModal.type === 'approve_request' ? 'Confirm Approval' : 'Yes, Stop Timer')}
                         </button>
                         <button 
                             onClick={closeConfirmModal} 
-                            style={{ flex: 1, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', padding: '14px', borderRadius: '12px', cursor: 'pointer', fontWeight: 600 }}
+                            style={{ flex: 1, background: 'var(--tw-05)', border: '1px solid var(--tw-10)', color: 'var(--t-text)', padding: '14px', borderRadius: '12px', cursor: 'pointer', fontWeight: 600 }}
                         >
                             Cancel
                         </button>
