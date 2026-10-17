@@ -35,7 +35,7 @@ import ThemeToggle from "@/components/ThemeToggle";
 const themeInitScript = `(function(){try{var q=new URLSearchParams(location.search).get('theme');if(q==='light'||q==='dark'){localStorage.setItem('theme',q);}var t=localStorage.getItem('theme');if(t!=='light'&&t!=='dark'){t='dark';}document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();`;
 
 export default function RootLayout({ children }) {
-  const isBlocked = false; // Set to true to block the site
+  const isBlocked = true; // Set to false to bring the site back
 
   return (
     <html lang="en" data-theme="dark" className={`${geistSans.variable} ${geistMono.variable} ${spaceGrotesk.variable}`} suppressHydrationWarning>
