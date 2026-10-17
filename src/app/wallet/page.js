@@ -10,6 +10,9 @@ import DepositModal from '@/components/DepositModal';
 import ThemeToggle from '@/components/ThemeToggle';
 import UserNavbar from '@/components/UserNavbar';
 import AdminSidebar from '@/components/AdminSidebar';
+import AdminHeader from '@/components/admin/AdminHeader';
+import { IconWallet, IconArrowDown, IconArrowUp, IconTrend, IconClock, IconUsers } from '@/components/admin/AdminIcons';
+import '../../styles/adminTransactions.css';
 import '../../styles/wallet.css';
 
 const money = (n) => Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -147,17 +150,56 @@ export default function Wallet() {
         {isSidebarOpen && <div className="admin-backdrop" onClick={() => setIsSidebarOpen(false)}></div>}
 
         <main className="admin-main-content">
-          <header className="admin-top-navbar">
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              <button className="admin-btn-hamburger" onClick={() => setIsSidebarOpen(true)}>☰</button>
-              <div>
-                <h2 className="admin-page-title">Platform Wallet</h2>
-                <p className="admin-subtitle">Balances, deposits and revenue across all members</p>
+          <AdminHeader
+            title="Platform Wallet"
+            subtitle="Balances, deposits and revenue across all members"
+            onMenu={() => setIsSidebarOpen(true)}
+          />
+
+          <div className="atx">
+            {/* HERO: money currently held in member wallets */}
+            <section className="awl-hero">
+              <div className="awl-hero-main">
+                <span className="awl-hero-label"><IconWallet size={16} /> Total platform balance</span>
+                <strong className="awl-hero-value">${money(stats?.platform_balance)}</strong>
+                <span className="awl-hero-note">Held in member wallets right now</span>
               </div>
-            </div>
-            <ThemeToggle />
-          </header>
-          <div className="wallet-page" style={{ padding: '2rem' }}>{content}</div>
+              <div className="awl-hero-side">
+                <div>
+                  <span><IconUsers size={14} /> Members</span>
+                  <strong>{stats?.total_users ?? 0}</strong>
+                </div>
+                <div>
+                  <span>Avg. balance</span>
+                  <strong>${money(stats?.total_users ? Number(stats.platform_balance || 0) / stats.total_users : 0)}</strong>
+                </div>
+              </div>
+            </section>
+
+            {/* KPI ROW */}
+            <section className="atx-kpis" aria-label="Platform totals">
+              <div className="atx-kpi">
+                <span className="atx-kpi-label awl-in"><IconArrowDown size={15} /> Deposits received</span>
+                <strong>${money(stats?.total_deposit)}</strong>
+                <small>{stats?.deposit_count || 0} approved</small>
+              </div>
+              <div className="atx-kpi">
+                <span className="atx-kpi-label awl-out"><IconArrowUp size={15} /> Withdrawals paid</span>
+                <strong>${money(stats?.total_withdrawal)}</strong>
+                <small>{stats?.withdrawal_count || 0} processed</small>
+              </div>
+              <div className="atx-kpi atx-kpi--ok">
+                <span className="atx-kpi-label"><IconTrend size={15} /> Signal fee revenue</span>
+                <strong>${money(stats?.total_profit)}</strong>
+                <small>Earned from signal purchases</small>
+              </div>
+              <button type="button" className={`atx-kpi awl-link ${stats?.pending_deposits > 0 ? 'atx-kpi--warn' : ''}`} onClick={() => router.push('/transaction')}>
+                <span className="atx-kpi-label"><IconClock size={15} /> Awaiting review</span>
+                <strong>{stats?.pending_deposits || 0}</strong>
+                <small>{stats?.pending_deposits > 0 ? 'Review deposits →' : 'All caught up'}</small>
+              </button>
+            </section>
+          </div>
         </main>
       </div>
     );

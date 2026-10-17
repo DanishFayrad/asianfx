@@ -74,7 +74,8 @@ export default function Dashboard() {
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
   const [depositAmount, setDepositAmount] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState('crypto');
+  // Same label as DepositModal — deposits are USDT on the TRC20 network.
+  const paymentMethod = 'USDT_TRC20';
   const [depositStep, setDepositStep] = useState(1); // 1: Info, 2: Payment Details
   const [screenshot, setScreenshot] = useState(null);
   const [screenshotPreview, setScreenshotPreview] = useState(null);

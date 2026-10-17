@@ -300,3 +300,91 @@
   .atx-tabs { overflow-x: auto; }
   .atx-search { min-width: 0; }
 }
+
+/* ---------- Admin → Platform Wallet (.awl-*) ---------- */
+.awl-hero {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 24px 26px;
+  border-radius: 18px;
+  background:
+    radial-gradient(520px 220px at 0% 0%, rgba(var(--t-accent-rgb), 0.16), transparent 70%),
+    var(--t-surface);
+  border: 1px solid rgba(var(--t-accent-rgb), 0.35);
+}
+
+.awl-hero-main { display: flex; flex-direction: column; gap: 6px; }
+
+.awl-hero-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--t-gold);
+}
+
+.awl-hero-value {
+  font-size: 2.6rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  color: var(--t-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.awl-hero-note { font-size: 0.82rem; color: var(--t-text-dim); }
+
+.awl-hero-side {
+  display: flex;
+  gap: 12px;
+  align-self: center;
+}
+
+.awl-hero-side > div {
+  min-width: 130px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: var(--tw-03);
+  border: 1px solid var(--tw-08);
+}
+
+.awl-hero-side span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--t-text-muted);
+}
+
+.awl-hero-side strong {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--t-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.awl-in { color: #2563eb; }
+.awl-out { color: #9333ea; }
+
+.awl-link {
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.awl-link:hover { transform: translateY(-1px); border-color: rgba(var(--t-accent-rgb), 0.5); }
+
+@media (max-width: 760px) {
+  .awl-hero { flex-direction: column; }
+  .awl-hero-side { align-self: stretch; }
+  .awl-hero-side > div { flex: 1; min-width: 0; }
+  .awl-hero-value { font-size: 2.1rem; }
+}
