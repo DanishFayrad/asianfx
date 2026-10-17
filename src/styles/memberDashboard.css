@@ -190,3 +190,61 @@
 .mwl-kpis { margin-bottom: 0; }
 .mdb-kpi small.mwl-muted { color: var(--t-text-dim); font-weight: 500; }
 .mwl-icon-purple { color: #9333ea; background: rgba(147, 51, 234, 0.12); }
+
+/* ---------- Phones: each signal row becomes a card (no sideways scrolling) ---------- */
+@media (max-width: 640px) {
+  .table-box:has(.sig-row) .table-wrapper { overflow-x: visible; }
+  .table-box:has(.sig-row) table,
+  .table-box:has(.sig-row) tbody { display: block; width: 100%; min-width: 0 !important; }
+  .table-box:has(.sig-row) thead { display: none; }
+
+  tr.sig-row {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px 8px;
+    padding: 14px;
+    border-bottom: 1px solid var(--tw-08);
+  }
+
+  tr.sig-row > td {
+    display: block;
+    padding: 0 !important;
+    border: none !important;
+    text-align: left;
+    min-width: 0;
+  }
+
+  .sig-cell-symbol { grid-column: span 2; }
+  .sig-cell-type { justify-self: end; align-self: center; }
+
+  .sig-cell-locked {
+    grid-column: 1 / -1;
+    padding: 10px 12px !important;
+    border-radius: 10px;
+    background: var(--tw-03);
+  }
+
+  .sig-cell-level {
+    padding: 8px 10px !important;
+    border-radius: 10px;
+    background: var(--tw-03);
+    font-weight: 700;
+  }
+
+  .sig-cell-level::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 2px;
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: var(--t-text-dim);
+  }
+
+  .sig-cell-status { align-self: center; }
+  .sig-cell-time { grid-column: span 2; justify-self: end; align-self: center; text-align: right !important; }
+
+  tr.sig-row > td.Action { grid-column: 1 / -1; }
+  tr.sig-row .sig-actions { justify-content: stretch; }
+  tr.sig-row .sig-btn,
+  tr.sig-row .sig-owned { flex: 1; justify-content: center; height: 42px; }
+}

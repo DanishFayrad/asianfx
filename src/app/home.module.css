@@ -59,6 +59,11 @@
 }
 
 
+/* deeper gold text on light */
+:global(:root[data-theme="light"]) .gold {
+  background-image: linear-gradient(120deg, #b8862b 0%, #8f6b07 100%);
+}
+
 .muted { color: var(--muted); }
 .win { color: var(--green); }
 .loss { color: var(--red); }
@@ -149,6 +154,52 @@
 .navActions { display: flex; gap: 10px; margin-left: 8px; }
 
 .navLinks { margin-left: auto; }
+
+/* Signed-in chip in the navbar */
+.navUser {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px 4px 4px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.navAvatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--t-on-accent);
+  background: var(--t-gradient);
+}
+
+.navUserText { display: flex; flex-direction: column; line-height: 1.15; }
+.navUserText small { font-size: 0.65rem; color: var(--muted); }
+.navUserText strong { font-size: 0.85rem; color: var(--text); max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Notice: members place trades themselves */
+.ownTrade {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  max-width: 560px;
+  margin-top: 22px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--muted);
+  background: rgba(var(--t-accent-rgb), 0.08);
+  border: 1px solid rgba(var(--t-accent-rgb), 0.3);
+}
+
+.ownTrade svg { flex-shrink: 0; margin-top: 2px; color: var(--gold); }
+.ownTrade strong { color: var(--text); }
 .navTools { display: flex; align-items: center; gap: 10px; margin-left: 16px; }
 
 .menuBtn {
@@ -187,7 +238,7 @@
   border: 1px solid var(--border-gold);
   border-radius: 999px;
   background: rgba(var(--t-accent-rgb), 0.08);
-  color: var(--gold-2);
+  color: var(--gold);
   font-size: 0.8rem;
   font-weight: 600;
   letter-spacing: 0.04em;

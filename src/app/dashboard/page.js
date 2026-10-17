@@ -788,7 +788,7 @@ export default function Dashboard() {
 
                     <div className="mdb-section-head">
                         <h2>Live signals</h2>
-                        <span>Take a signal to unlock its Entry, Take Profit &amp; Stop Loss</span>
+                        <span>Take a signal to unlock its Entry, Take Profit &amp; Stop Loss — then place the trade yourself in your own broker account.</span>
                     </div>
 
                     {/*  TABLE - only for normal users */}
@@ -815,8 +815,8 @@ export default function Dashboard() {
                                             <tr><td colSpan="8" style={{ textAlign: 'center', padding: '40px' }}>No active signals found.</td></tr>
                                         ) : (
                                             currentSignals.map((signal, index) => (
-                                                <tr key={signal.id || index}>
-                                                    <td>
+                                                <tr key={signal.id || index} className="sig-row">
+                                                    <td className="sig-cell-symbol">
                                                         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                                                             <img src={getSymbolIcon(signal.symbol)} style={{ width: "42px", height: "42px" }} alt={signal.symbol} />
                                                             <div>
@@ -825,29 +825,29 @@ export default function Dashboard() {
                                                             </div>
                                                         </div>
                                                     </td>
-                                                    <td>
+                                                    <td className="sig-cell-type">
                                                         <span className={signal.type.toLowerCase()}>
                                                             <img src={getTypeIcon(signal.type)} alt={signal.type} />
                                                             {signal.type}
                                                         </span>
                                                     </td>
                                                     {signal.entry_price == null ? (
-                                                        <td colSpan={3} style={{ color: 'var(--t-text-muted)', fontSize: '0.85rem' }}>
+                                                        <td colSpan={3} className="sig-cell-locked" style={{ color: 'var(--t-text-muted)', fontSize: '0.85rem' }}>
                                                             🔒 Take this signal to unlock Entry, TP &amp; SL
                                                         </td>
                                                     ) : (
                                                         <>
-                                                            <td>{signal.entry_price}</td>
-                                                            <td className="green">{signal.target_price}</td>
-                                                            <td className="red">{signal.stop_loss}</td>
+                                                            <td className="sig-cell-level" data-label="Entry">{signal.entry_price}</td>
+                                                            <td className="green sig-cell-level" data-label="Target">{signal.target_price}</td>
+                                                            <td className="red sig-cell-level" data-label="Stop loss">{signal.stop_loss}</td>
                                                         </>
                                                     )}
-                                                    <td>
+                                                    <td className="sig-cell-status">
                                                         <span className={`db-badge status ${signal.status.toLowerCase().includes('hit') ? 'hit' : signal.status.toLowerCase().includes('stop') ? 'loss' : signal.status.toLowerCase().includes('closed') ? 'close' : 'active'}`}>
                                                             {signal.status}
                                                         </span>
                                                     </td>
-                                                    <td className="time">
+                                                    <td className="time sig-cell-time">
                                                         {signal.release_at && new Date(signal.release_at).getTime() > currentTime.getTime() 
                                                             ? (
                                                                 <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -1045,6 +1045,11 @@ export default function Dashboard() {
                             </span>
                         </div>
                     </div>
+
+                    <p style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', fontSize: '0.82rem', lineHeight: 1.5, color: 'var(--t-text-muted)', background: 'rgba(var(--t-accent-rgb), 0.08)', border: '1px solid rgba(var(--t-accent-rgb), 0.3)', borderRadius: '12px', padding: '10px 12px', marginBottom: '1.25rem', textAlign: 'left' }}>
+                        <span aria-hidden="true">ℹ️</span>
+                        <span><strong style={{ color: 'var(--t-text)' }}>You trade on your own behalf.</strong> Taking a signal unlocks its levels — you then open and manage the trade yourself in your own broker account.</span>
+                    </p>
 
                     <div style={{ display: 'flex', gap: '12px' }}>
                         <button 

@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useSelector } from 'react-redux';
 import ThemeToggle from '@/components/ThemeToggle';
 import styles from '@/app/home.module.css';
 
@@ -13,9 +14,19 @@ const LINKS = [
     ['#faq', 'FAQ'],
 ];
 
+const initials = (name = '') =>
+    name.trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase()).join('') || 'U';
+
 export default function HomeNav() {
     const [open, setOpen] = useState(false);
+    const [mounted, setMounted] = useState(false);
+    const { user } = useSelector((state) => state.auth);
     const close = () => setOpen(false);
+
+    // The cached user only exists in the browser — wait for mount to avoid a hydration mismatch.
+    useEffect(() => setMounted(true), []);
+    const signedIn = mounted && !!user;
+    const firstName = (user?.name || '').trim().split(/\s+/)[0] || 'Trader';
 
     return (
         <header className={styles.nav}>
@@ -30,8 +41,25 @@ export default function HomeNav() {
                         <a key={href} href={href} onClick={close}>{label}</a>
                     ))}
                     <div className={styles.navActions}>
-                        <Link href="/login" className={styles.btnGhost} onClick={close}>Log in</Link>
-                        <Link href="/register" className={styles.btnGold} onClick={close}>Get Signals</Link>
+                        {signedIn ? (
+                            <>
+                                <span className={styles.navUser} title={user.email || ''}>
+                                    <span className={styles.navAvatar} aria-hidden="true">{initials(user.name)}</span>
+                                    <span className={styles.navUserText}>
+                                        <small>Signed in as</small>
+                                        <strong>{firstName}</strong>
+                                    </span>
+                                </span>
+                                <Link href="/dashboard" className={styles.btnGold} onClick={close}>
+                                    {user.is_admin ? 'Admin panel' : 'Go to dashboard'}
+                                </Link>
+                            </>
+                        ) : (
+                            <>
+                                <Link href="/login" className={styles.btnGhost} onClick={close}>Log in</Link>
+                                <Link href="/register" className={styles.btnGold} onClick={close}>Get Signals</Link>
+                            </>
+                        )}
                     </div>
                 </nav>
 

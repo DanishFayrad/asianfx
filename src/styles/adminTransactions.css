@@ -388,3 +388,30 @@
   .awl-hero-side > div { flex: 1; min-width: 0; }
   .awl-hero-value { font-size: 2.1rem; }
 }
+
+/* ---------- Phones: each deposit row becomes a card ---------- */
+@media (max-width: 640px) {
+  .atx-table-wrap { overflow-x: visible; }
+  .atx-table, .atx-table tbody { display: block; min-width: 0; width: 100%; }
+  .atx-table thead { display: none; }
+
+  .atx-table tr {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px 12px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--tw-05);
+  }
+
+  .atx-table td { display: block; padding: 0; border: none; }
+  .atx-table td:nth-child(1) { grid-column: 1 / -1; }                 /* member */
+  .atx-table td:nth-child(2) { order: 1; }                            /* date */
+  .atx-table td:nth-child(4) { order: 2; text-align: right; font-size: 1.05rem; } /* amount */
+  .atx-table td:nth-child(3) { order: 3; }                            /* method */
+  .atx-table td:nth-child(5) { order: 4; justify-self: end; }         /* status */
+  .atx-table td:nth-child(6) { order: 5; grid-column: 1 / -1; }       /* actions */
+
+  .atx-actions { display: flex; justify-content: stretch; flex-wrap: wrap; }
+  .atx-btn--approve, .atx-btn--reject { flex: 1; justify-content: center; height: 38px; }
+  .atx-row--pending { box-shadow: inset 3px 0 0 #f59e0b; }
+}

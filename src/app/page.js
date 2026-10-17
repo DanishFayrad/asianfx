@@ -59,7 +59,7 @@ const FAQ = [
     ['How much does a signal cost?', `Each signal costs $${PRICING.signalFee}, deducted from your AsianFX wallet when you choose to take it. You only pay for the signals you take.`],
     ['What happens if a signal hits Stop Loss?', 'Every member who took that signal automatically receives a free signal credit — your next signal costs nothing.'],
     ['How do I deposit?', `Send USDT on the TRC20 network to the address shown in the deposit window (minimum $${PRICING.minDeposit}), then upload a screenshot of the transfer. An admin verifies it and credits your wallet.`],
-    ['Do you trade with my money?', 'No. We provide signals only. You place trades in your own brokerage account and stay in full control of your funds.'],
+    ['Do you trade on my behalf?', 'No. We provide signals only. You take every trade yourself, on your own behalf, in your own brokerage account — we never trade for you, and you stay in full control of your funds.'],
     ['Is profit guaranteed?', 'No. Trading carries real risk and no signal provider can guarantee profits. Only trade with money you can afford to lose.'],
 ];
 
@@ -95,6 +95,13 @@ export default function Home() {
                             <li><Icon d={ICONS.check} size={16} /> Pay only for signals you take</li>
                             <li><Icon d={ICONS.check} size={16} /> USDT (TRC20) wallet</li>
                         </ul>
+                        <p className={styles.ownTrade}>
+                            <Icon d={ICONS.shield} size={18} />
+                            <span>
+                                <strong>You trade on your own behalf.</strong> AsianFX only sends signals — you place every
+                                trade yourself in your own broker account. We never trade for you or hold your trading funds.
+                            </span>
+                        </p>
                     </div>
 
                     {/* Illustrative signal card — clearly labelled as an example */}
@@ -284,6 +291,7 @@ export default function Home() {
                     <div className={styles.risk}>
                         <strong>Risk warning:</strong> Trading Forex, metals and crypto involves substantial risk and may not be
                         suitable for every investor. Signals are for informational purposes only and are not financial advice.
+                        You place and manage every trade yourself, on your own behalf, in your own broker account — AsianFX does not trade for you.
                         Past performance does not guarantee future results. Never trade with money you cannot afford to lose.
                     </div>
                     <div className={styles.footerRow}>
