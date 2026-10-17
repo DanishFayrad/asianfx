@@ -1,0 +1,186 @@
+/* =====================================================================
+   Member dashboard (.mdb-*) — overview cards, Refer & Earn, section heads.
+   Theme-aware via the tokens in globals.css.
+   ===================================================================== */
+
+/* ---------- KPI row ---------- */
+.mdb-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.mdb-kpi {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: var(--t-surface);
+  border: 1px solid var(--tw-08);
+  text-align: left;
+  font: inherit;
+  color: inherit;
+}
+
+.mdb-kpi > div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+
+.mdb-kpi-label { font-size: 0.78rem; font-weight: 600; color: var(--t-text-muted); }
+
+.mdb-kpi strong {
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  color: var(--t-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.mdb-kpi small { font-size: 0.75rem; font-weight: 600; color: var(--t-gold); }
+
+.mdb-kpi--wallet { cursor: pointer; transition: border-color 0.15s ease, transform 0.15s ease; }
+.mdb-kpi--wallet:hover { transform: translateY(-1px); border-color: rgba(var(--t-accent-rgb), 0.5); }
+
+.mdb-kpi-icon {
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  color: #3b82f6;
+  background: rgba(59, 130, 246, 0.12);
+}
+
+.mdb-kpi-icon--green { color: #16a34a; background: rgba(34, 197, 94, 0.12); }
+.mdb-kpi-icon--live { color: #d97706; background: rgba(245, 158, 11, 0.12); }
+.mdb-kpi-icon--gold { color: var(--t-gold); background: rgba(var(--t-accent-rgb), 0.14); }
+
+/* ---------- Refer & Earn ---------- */
+.mdb-refer {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 20px;
+  padding: 20px;
+  margin-bottom: 28px;
+  border-radius: 16px;
+  background:
+    radial-gradient(480px 200px at 0% 0%, rgba(var(--t-accent-rgb), 0.1), transparent 70%),
+    var(--t-surface);
+  border: 1px solid rgba(var(--t-accent-rgb), 0.28);
+}
+
+.mdb-refer-main { display: flex; flex-direction: column; justify-content: center; gap: 16px; min-width: 0; }
+
+.mdb-refer-head { display: flex; align-items: flex-start; gap: 12px; }
+.mdb-refer-head h3 { font-size: 1.1rem; font-weight: 700; color: var(--t-text); margin: 0 0 2px; }
+.mdb-refer-head p { font-size: 0.85rem; color: var(--t-text-muted); margin: 0; }
+.mdb-refer-head strong { color: var(--t-text); }
+
+.mdb-refer-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 6px 6px 14px;
+  border-radius: 12px;
+  background: var(--t-field);
+  border: 1px solid var(--tw-10);
+}
+
+.mdb-refer-link input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--t-text);
+  font: inherit;
+  font-size: 0.85rem;
+  text-overflow: ellipsis;
+}
+
+.mdb-refer-link button,
+.mdb-refer-commission button {
+  flex-shrink: 0;
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 9px;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--t-on-accent);
+  background: var(--t-gradient);
+}
+
+.mdb-refer-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.mdb-refer-stats > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--tw-03);
+  border: 1px solid var(--tw-08);
+}
+
+.mdb-refer-stats span { font-size: 0.75rem; font-weight: 600; color: var(--t-text-muted); }
+
+.mdb-refer-stats strong {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--t-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.mdb-refer-commission {
+  grid-column: span 2;
+  flex-direction: row !important;
+  align-items: center;
+  flex-wrap: wrap;
+  column-gap: 12px !important;
+  background: rgba(var(--t-accent-rgb), 0.08) !important;
+  border-color: rgba(var(--t-accent-rgb), 0.3) !important;
+}
+
+.mdb-refer-commission span { width: 100%; }
+.mdb-refer-commission strong { font-size: 1.4rem; margin-right: auto; }
+.mdb-refer-commission button {
+  color: var(--t-gold);
+  background: transparent;
+  border: 1px solid rgba(var(--t-accent-rgb), 0.5);
+}
+
+/* ---------- Section heading above the signals table ---------- */
+.mdb-section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 0 0 12px;
+}
+
+.mdb-section-head h2 { font-size: 1.15rem; font-weight: 700; color: var(--t-text); margin: 0; }
+.mdb-section-head span { font-size: 0.82rem; color: var(--t-text-muted); }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1100px) {
+  .mdb-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 860px) {
+  .mdb-refer { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 520px) {
+  .mdb-kpis { grid-template-columns: 1fr; }
+  .mdb-kpi strong { font-size: 1.25rem; }
+}

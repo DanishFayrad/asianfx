@@ -636,7 +636,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: rgba(0, 0, 0, 0.1);
+  background: var(--tw-02);
   border-top: 1px solid var(--border-color);
 }
 
@@ -1666,3 +1666,77 @@
     50% { transform: scale(1.05); opacity: 0.8; }
     100% { transform: scale(1); opacity: 1; }
 }
+
+/* ---------- Signals table: action cell ---------- */
+.Action { vertical-align: middle; white-space: nowrap; }
+
+.sig-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  min-height: 40px;
+}
+
+.sig-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 36px;
+  min-width: 96px;
+  padding: 0 14px;
+  border-radius: 10px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
+
+.sig-btn--take {
+  border: none;
+  color: var(--t-on-accent);
+  background: var(--t-gradient);
+  box-shadow: 0 4px 14px rgba(var(--t-accent-rgb), 0.25);
+}
+
+.sig-btn--take:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(var(--t-accent-rgb), 0.35); }
+
+.sig-btn--locked {
+  color: var(--t-text-muted);
+  background: var(--tw-05);
+  border: 1px dashed var(--tw-20);
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  cursor: not-allowed;
+}
+
+.sig-owned {
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #16a34a;
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.25);
+}
+
+.sig-hide {
+  width: 32px;
+  height: 32px;
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+  border-radius: 9px;
+  cursor: pointer;
+  color: var(--t-text-dim);
+  background: transparent;
+  border: 1px solid var(--tw-10);
+  transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.sig-hide:hover { color: #ef4444; border-color: rgba(239, 68, 68, 0.5); background: rgba(239, 68, 68, 0.08); }
