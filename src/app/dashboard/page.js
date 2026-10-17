@@ -346,8 +346,11 @@ export default function Dashboard() {
     fetchAllData();
     document.body.classList.add('dashboard-body');
 
-    // Auto-refresh every 30 seconds to keep data fresh
-    const interval = setInterval(fetchAllData, 30000);
+    // Realtime handles instant updates; this is just a safety-net refresh,
+    // skipped while the tab is in the background.
+    const interval = setInterval(() => {
+      if (!document.hidden) fetchAllData();
+    }, 60000);
 
     return () => {
         document.body.classList.remove('dashboard-body');
@@ -390,6 +393,7 @@ export default function Dashboard() {
       toast.success(response.message || "Signal taken successfully!");
       setIsTakeSignalModalOpen(false);
       fetchSignals();
+      refreshUserProfile(); // wallet balance / free credits changed
     } catch (error) {
       toast.error(error.response?.data?.message || "Error taking signal");
     } finally {
@@ -1153,7 +1157,9 @@ export default function Dashboard() {
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                             <span style={{ color: '#64748b' }}>Signal Fee</span>
-                            <span style={{ fontWeight: 700, color: '#d4af37' }}>$1.00</span>
+                            <span style={{ fontWeight: 700, color: '#d4af37' }}>
+                                {user?.free_signals > 0 ? `FREE (${user.free_signals} credit${user.free_signals > 1 ? 's' : ''})` : '$1.00'}
+                            </span>
                         </div>
                     </div>
 

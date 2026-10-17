@@ -101,6 +101,9 @@ create table if not exists public.contact_messages (
     created_at timestamptz not null default now()
 );
 
+-- Free signal credits: one is granted for every taken signal that closes at Stop Loss.
+alter table public.profiles add column if not exists free_signals integer not null default 0;
+
 create index if not exists idx_transactions_user   on public.transactions(user_id);
 create index if not exists idx_transactions_status on public.transactions(type, status);
 create index if not exists idx_notifications_user  on public.notifications(user_id, created_at desc);
@@ -311,6 +314,15 @@ begin
     if exists (select 1 from public.user_signals where user_id = v_p.id and signal_id = p_signal_id) then
         raise exception 'You have already taken this signal';
     end if;
+    -- A free credit (earned from a Stop Loss) covers the fee.
+    if v_p.free_signals > 0 then
+        update public.profiles set free_signals = free_signals - 1 where id = v_p.id;
+        insert into public.user_signals (user_id, signal_id, taken_price, invested_amount)
+            values (v_p.id, p_signal_id, v_s.entry_price, 0);
+        update public.signals set total_taken = total_taken + 1 where id = p_signal_id;
+        return json_build_object('message', 'Signal taken using your FREE signal credit!');
+    end if;
+
     if v_p.wallet_balance < v_fee then
         raise exception 'Insufficient wallet balance. The signal fee is $1.00';
     end if;
@@ -520,6 +532,64 @@ begin
         ) u
     );
 end $$;
+
+-- Public track record for the landing page (anyone, even logged out).
+-- Only broadcast signals; active signals are counted but never exposed.
+create or replace function public.get_public_stats()
+returns json language sql stable security definer set search_path = public as $$
+    select json_build_object(
+        'total_signals',  (select count(*) from public.signals where target_user_id is null),
+        'active_signals', (select count(*) from public.signals where target_user_id is null and status = 'Active'
+                              and (release_at is null or release_at <= now())),
+        'closed_signals', (select count(*) from public.signals where target_user_id is null and status <> 'Active'),
+        'wins',           (select count(*) from public.signals where target_user_id is null and status ilike '%hit%'),
+        'recent', coalesce((
+            select json_agg(r) from (
+                select symbol, type, status, entry_price, target_price, stop_loss, created_at
+                from public.signals
+                where target_user_id is null and status <> 'Active'
+                order by created_at desc
+                limit 6
+            ) r
+        ), '[]'::json)
+    );
+$$;
+
+grant execute on function public.get_public_stats() to anon, authenticated;
+
+-- When admin closes a signal, settle everyone who took it.
+create or replace function public.settle_signal_results()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+    if new.status is distinct from old.status then
+        -- Loss → every holder gets one free signal credit.
+        if new.status ilike '%stop%' then
+            update public.profiles p
+                set free_signals = free_signals + 1
+                from public.user_signals us
+                where us.signal_id = new.id and us.result = 'pending' and us.user_id = p.id;
+
+            insert into public.notifications (user_id, type, title, message)
+                select us.user_id, 'info', 'Free Signal Credited',
+                       format('%s hit Stop Loss — your next signal is FREE.', new.symbol)
+                from public.user_signals us
+                where us.signal_id = new.id and us.result = 'pending';
+        end if;
+
+        update public.user_signals
+            set result = case
+                when new.status ilike '%hit%'  then 'win'
+                when new.status ilike '%stop%' then 'loss'
+                else result end
+            where signal_id = new.id and result = 'pending';
+    end if;
+    return new;
+end $$;
+
+drop trigger if exists on_signal_status_change on public.signals;
+create trigger on_signal_status_change
+    after update of status on public.signals
+    for each row execute function public.settle_signal_results();
 
 create or replace function public.get_global_transaction_count()
 returns integer language sql stable security definer set search_path = public as $$

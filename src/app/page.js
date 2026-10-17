@@ -1,1111 +1,307 @@
-'use client';
-
-import React, { useState } from 'react';
 import Link from 'next/link';
-import toast from 'react-hot-toast';
-import { supabase, unwrap } from '../lib/supabaseClient';
-import DepositModal from '../components/DepositModal';
-import '../styles/style.css';
+import HomeNav from '@/components/home/HomeNav';
+import LivePerformance from '@/components/home/LivePerformance';
+import ContactForm from '@/components/home/ContactForm';
+import ReferralCapture from '@/components/home/ReferralCapture';
+import { SITE, PRICING } from '@/config/site';
+import styles from './home.module.css';
+
+export const metadata = {
+    title: 'AsianFX Signals | Gold, Silver, Forex & Crypto Trading Signals',
+    description: `Real-time trading signals for Gold (XAU/USD), Silver, Forex and Crypto with clear Entry, Take Profit and Stop Loss. $${PRICING.signalFee} per signal — free replacement after a Stop Loss.`,
+    keywords: 'trading signals, gold signals, xauusd signals, forex signals, silver signals, crypto signals, asianfx',
+};
+
+// Small inline icons (no image requests).
+const Icon = ({ d, size = 22 }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d={d} />
+    </svg>
+);
+
+const ICONS = {
+    target: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12zM12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4z',
+    bell: 'M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0',
+    clock: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM12 6v6l4 2',
+    lock: 'M5 11h14v10H5zM8 11V7a4 4 0 0 1 8 0v4',
+    chart: 'M3 3v18h18M7 15l4-4 3 3 5-6',
+    shield: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z',
+    gift: 'M20 12v10H4V12M2 7h20v5H2zM12 22V7M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z',
+    users: 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75',
+    check: 'M20 6 9 17l-5-5',
+};
+
+const MARKETS = [
+    { code: 'XAU', name: 'Gold', pair: 'XAU/USD', note: 'Our flagship market — the most actively signalled pair.', color: '#d4af37' },
+    { code: 'XAG', name: 'Silver', pair: 'XAG/USD', note: 'Precious-metal setups with tight, defined risk.', color: '#c0c7d1' },
+    { code: 'FX', name: 'Forex', pair: 'Major pairs', note: 'EUR/USD, GBP/USD, USD/JPY and other majors.', color: '#60a5fa' },
+    { code: '₿', name: 'Crypto', pair: 'BTC/USDT', note: 'Bitcoin signals for 24/7 market opportunities.', color: '#f7931a' },
+];
+
+const FEATURES = [
+    ['target', 'Exact Entry, TP & SL', 'Every signal comes with a precise entry price, take-profit target and stop-loss — no guesswork.'],
+    ['bell', 'Instant live alerts', 'New signals pop up on your dashboard the second they are published. No refreshing needed.'],
+    ['clock', 'Timed releases', 'Upcoming signals show a live countdown so you are ready at the right moment.'],
+    ['lock', 'Private signals', 'Selected members can receive signals sent only to them by our analysts.'],
+    ['chart', 'Full signal history', 'Every signal you take is saved with its result, so you always know where you stand.'],
+    ['shield', 'Risk defined upfront', 'A stop-loss on every trade means you know your maximum risk before you enter.'],
+];
+
+const STEPS = [
+    ['Create your account', 'Sign up with your email and verify it with a 6-digit code. Takes under a minute.'],
+    ['Fund your wallet', `Deposit USDT (TRC20) — minimum $${PRICING.minDeposit}. Upload your payment proof and we credit your wallet after verification.`],
+    ['Get live signals', 'Signals appear on your dashboard in real time with Entry, Target and Stop Loss.'],
+    ['Take the trade', `Unlock a signal for $${PRICING.signalFee} and place it with your own broker. Your account, your control.`],
+];
+
+const FAQ = [
+    ['What markets do you cover?', 'Mainly Gold (XAU/USD), plus Silver (XAG/USD), major Forex pairs and Bitcoin.'],
+    ['How much does a signal cost?', `Each signal costs $${PRICING.signalFee}, deducted from your AsianFX wallet when you choose to take it. You only pay for the signals you take.`],
+    ['What happens if a signal hits Stop Loss?', 'Every member who took that signal automatically receives a free signal credit — your next signal costs nothing.'],
+    ['How do I deposit?', `Send USDT on the TRC20 network to the address shown in the deposit window (minimum $${PRICING.minDeposit}), then upload a screenshot of the transfer. An admin verifies it and credits your wallet.`],
+    ['Do you trade with my money?', 'No. We provide signals only. You place trades in your own brokerage account and stay in full control of your funds.'],
+    ['Is profit guaranteed?', 'No. Trading carries real risk and no signal provider can guarantee profits. Only trade with money you can afford to lose.'],
+];
 
 export default function Home() {
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
-    const [isDepositOpen, setIsDepositOpen] = useState(false);
-    const [submitting, setSubmitting] = useState(false);
-
-    const handleConsultSubmit = async (e) => {
-        e.preventDefault();
-        const form = e.target;
-        const fullName = form.fullName.value.trim();
-        const email = form.email.value.trim();
-        const message = form.message.value.trim();
-
-        if (!fullName || !email) {
-            toast.error('Please enter your name and email.');
-            return;
-        }
-
-        try {
-            setSubmitting(true);
-            unwrap(await supabase.from('contact_messages').insert({ full_name: fullName, email, message }));
-            toast.success('Thank you! We will get back to you shortly.');
-            form.reset();
-        } catch (err) {
-            toast.error(err?.response?.data?.message || 'Could not send your message. Please try again.');
-        } finally {
-            setSubmitting(false);
-        }
-    };
-
-    React.useEffect(() => {
-        const urlParams = new URLSearchParams(window.location.search);
-        const ref = urlParams.get('ref');
-        if (ref) {
-            localStorage.setItem('referral_code', ref);
-            console.log('Referral code saved:', ref);
-        }
-    }, []);
+    const whatsappUrl = SITE.whatsapp ? `https://wa.me/${SITE.whatsapp}` : null;
 
     return (
-        <>
-<header className="navbar">
-  <div className="nav-container">
-    <div className="logo">
-      <img src="/images/logo-mark.svg" alt="AsianFX Signals" />
-      AsianFX
-    </div>
+        <div className={styles.page}>
+            <ReferralCapture />
+            <HomeNav />
 
-    <div className="hamburger" id="hamburger" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-      {isMenuOpen ? '✕' : '☰'}
-    </div>
+            {/* HERO */}
+            <section className={styles.hero}>
+                <div className={`${styles.container} ${styles.heroGrid}`}>
+                    <div>
+                        <span className={styles.eyebrow}>
+                            <i className={styles.liveDot} aria-hidden="true" /> Live trading signals
+                        </span>
+                        <h1 className={styles.heroTitle}>
+                            Gold, Forex &amp; Crypto signals — <span className={styles.gold}>delivered live.</span>
+                        </h1>
+                        <p className={styles.heroText}>
+                            Clear Entry, Take Profit and Stop Loss on every signal, pushed to your dashboard the moment
+                            our analysts publish it. Just <strong>${PRICING.signalFee} per signal</strong> — and if a signal
+                            hits Stop Loss, your next one is <strong>free</strong>.
+                        </p>
+                        <div className={styles.heroCtas}>
+                            <Link href="/register" className={`${styles.btnGold} ${styles.btnLg}`}>Start receiving signals</Link>
+                            <a href="#how" className={`${styles.btnGhost} ${styles.btnLg}`}>How it works</a>
+                        </div>
+                        <ul className={styles.heroPoints}>
+                            <li><Icon d={ICONS.check} size={16} /> ${PRICING.minDeposit} minimum deposit</li>
+                            <li><Icon d={ICONS.check} size={16} /> Pay only for signals you take</li>
+                            <li><Icon d={ICONS.check} size={16} /> USDT (TRC20) wallet</li>
+                        </ul>
+                    </div>
 
-    <nav className={isMenuOpen ? 'active' : ''} id="navLinks">
-      <a href="#home" onClick={() => setIsMenuOpen(false)}>Home</a>
-      <a href="#about" onClick={() => setIsMenuOpen(false)}>About</a>
-      <a href="#trade" onClick={() => setIsMenuOpen(false)}>Trading</a>
-      <a href="#why" onClick={() => setIsMenuOpen(false)}>Why Us</a>
-      <Link href="/dashboard" onClick={() => setIsMenuOpen(false)}>Dashboard</Link>
-      <Link href="/admin/signals" onClick={() => setIsMenuOpen(false)}>Admin</Link>
-      <div className="nav-btns">
-        <Link href="/login"><button className="btn-yellow">Log in</button></Link>
-        <Link href="/register"><button className="btn-outline-small">Join Now</button></Link>
-      </div>
-    </nav>
-  </div>
-</header>
-{/*  HERO  */}
-<section id="home" className="hero">
-  <div className="hero-inner">
+                    {/* Illustrative signal card — clearly labelled as an example */}
+                    <div className={styles.signalMock} aria-label="Example of a signal">
+                        <div className={styles.mockTop}>
+                            <span className={styles.mockTag}>Example signal</span>
+                            <span className={styles.mockLive}><i className={styles.liveDot} aria-hidden="true" /> Live</span>
+                        </div>
+                        <div className={styles.mockPair}>
+                            <span className={styles.mockBadge}>XAU</span>
+                            <div>
+                                <strong>XAU/USD</strong>
+                                <small>Gold</small>
+                            </div>
+                            <span className={styles.mockSide}>BUY</span>
+                        </div>
+                        <div className={styles.mockLevels}>
+                            <div><small>Entry</small><b>2350.50</b></div>
+                            <div><small>Take Profit</small><b className={styles.win}>2360.00</b></div>
+                            <div><small>Stop Loss</small><b className={styles.loss}>2344.00</b></div>
+                        </div>
+                        <svg className={styles.mockChart} viewBox="0 0 300 80" preserveAspectRatio="none" aria-hidden="true">
+                            <defs>
+                                <linearGradient id="mockFill" x1="0" x2="0" y1="0" y2="1">
+                                    <stop offset="0%" stopColor="#d4af37" stopOpacity="0.35" />
+                                    <stop offset="100%" stopColor="#d4af37" stopOpacity="0" />
+                                </linearGradient>
+                            </defs>
+                            <path d="M0 60 L30 55 L60 62 L90 48 L120 52 L150 38 L180 42 L210 28 L240 32 L270 18 L300 12 L300 80 L0 80 Z" fill="url(#mockFill)" />
+                            <path d="M0 60 L30 55 L60 62 L90 48 L120 52 L150 38 L180 42 L210 28 L240 32 L270 18 L300 12" fill="none" stroke="#d4af37" strokeWidth="2" />
+                        </svg>
+                        <div className={styles.mockFoot}>
+                            <span>Signal fee</span>
+                            <b>${PRICING.signalFee}.00</b>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
-    <p className="badge">Professional Trading Management</p>
+            {/* MARKETS */}
+            <section id="markets" className={styles.section}>
+                <div className={styles.container}>
+                    <div className={styles.sectionHead}>
+                        <span className={styles.kicker}>Markets</span>
+                        <h2>Signals for the markets that move</h2>
+                        <p>Focused coverage where volatility creates opportunity.</p>
+                    </div>
+                    <div className={styles.marketGrid}>
+                        {MARKETS.map((m) => (
+                            <div key={m.name} className={styles.marketCard}>
+                                <span className={styles.marketBadge} style={{ color: m.color, borderColor: m.color }}>{m.code}</span>
+                                <h3>{m.name}</h3>
+                                <span className={styles.marketPair}>{m.pair}</span>
+                                <p>{m.note}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
 
-    <h1>
-      <span>AsianFX</span><br />
-      
-      Your Wealth, Our Strategy
+            {/* FEATURES */}
+            <section className={`${styles.section} ${styles.sectionAlt}`}>
+                <div className={styles.container}>
+                    <div className={styles.sectionHead}>
+                        <span className={styles.kicker}>What you get</span>
+                        <h2>Everything you need in every signal</h2>
+                    </div>
+                    <div className={styles.featureGrid}>
+                        {FEATURES.map(([icon, title, text]) => (
+                            <div key={title} className={styles.featureCard}>
+                                <span className={styles.featureIcon}><Icon d={ICONS[icon]} /></span>
+                                <h3>{title}</h3>
+                                <p>{text}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
 
-    </h1>
+            {/* HOW IT WORKS */}
+            <section id="how" className={styles.section}>
+                <div className={styles.container}>
+                    <div className={styles.sectionHead}>
+                        <span className={styles.kicker}>How it works</span>
+                        <h2>From sign-up to your first signal in minutes</h2>
+                    </div>
+                    <ol className={styles.steps}>
+                        {STEPS.map(([title, text], i) => (
+                            <li key={title} className={styles.step}>
+                                <span className={styles.stepNum}>{String(i + 1).padStart(2, '0')}</span>
+                                <h3>{title}</h3>
+                                <p>{text}</p>
+                            </li>
+                        ))}
+                    </ol>
+                </div>
+            </section>
 
-    <p className="hero-text">
-     Trade with confidence using our professional stock market trading signals. For just $5 per signal, you will receive carefully<br />analyzed signals designed to help you make smarter <br />trading decisions. If a signal results in a loss, you don’t need to worry — we will provide you with a replacement signal completely free.This process continues until your trade reaches profit. Once your trade becomes profitable, you can simply purchase a new signal to continue trading with our guidance. Our goal is to provide a fair, reliable, and stress-free trading experience for every trader.
-    </p>
- 
-    <div className="hero-buttons">
-      <button 
-        type="button"
-        className="btn-yellow curser-pointer" 
-        style={{ width: "200px" }}
-        onClick={() => setIsDepositOpen(true)}
-      >
-        Deposit
-      </button>
-      <button 
-        type="button" 
-        className="btn-outline" 
-        onClick={() => {
-          const el = document.getElementById('trade') || document.getElementById('why');
-          if (el) el.scrollIntoView({ behavior: 'smooth' });
-        }}
-      >
-        See How It Works
-      </button>
-    </div>
+            {/* LIVE TRACK RECORD */}
+            <section id="performance" className={`${styles.section} ${styles.sectionAlt}`}>
+                <div className={styles.container}>
+                    <div className={styles.sectionHead}>
+                        <span className={styles.kicker}>Track record</span>
+                        <h2>Real results, straight from our signal desk</h2>
+                        <p>These numbers are pulled live from our database — wins and losses included.</p>
+                    </div>
+                    <LivePerformance />
+                </div>
+            </section>
 
-    <DepositModal isOpen={isDepositOpen} onClose={() => setIsDepositOpen(false)} />
-        <div className="stats">
-    <div className="stat-card">
-  <img src="/images/SVG (2).png" className="stat-icon" />
-  <h3>60-70%</h3>
-  <p>Your Profit Share</p>
-</div>
+            {/* PRICING + REFERRAL */}
+            <section id="pricing" className={styles.section}>
+                <div className={styles.container}>
+                    <div className={styles.sectionHead}>
+                        <span className={styles.kicker}>Pricing</span>
+                        <h2>Simple, pay-per-signal pricing</h2>
+                        <p>No subscriptions. No lock-in. Pay only for the signals you decide to take.</p>
+                    </div>
+                    <div className={styles.pricingGrid}>
+                        <div className={`${styles.priceCard} ${styles.priceMain}`}>
+                            <span className={styles.priceLabel}>Per signal</span>
+                            <div className={styles.price}>${PRICING.signalFee}<small>/signal</small></div>
+                            <ul className={styles.checkList}>
+                                <li><Icon d={ICONS.check} size={16} /> Entry, Take Profit &amp; Stop Loss</li>
+                                <li><Icon d={ICONS.check} size={16} /> Real-time dashboard alerts</li>
+                                <li><Icon d={ICONS.check} size={16} /> Free replacement after a Stop Loss</li>
+                                <li><Icon d={ICONS.check} size={16} /> Personal signal history</li>
+                                <li><Icon d={ICONS.check} size={16} /> Minimum deposit just ${PRICING.minDeposit}</li>
+                            </ul>
+                            <Link href="/register" className={`${styles.btnGold} ${styles.btnBlock}`}>Create free account</Link>
+                        </div>
 
-<div className="stat-card">
-  <img src="/images/SVG (1).png" className="stat-icon" />
-  <h3>100%</h3>
-  <p>Account Ownership</p>
-</div>
+                        <div className={styles.priceSide}>
+                            <div className={styles.priceCard}>
+                                <span className={styles.featureIcon}><Icon d={ICONS.gift} /></span>
+                                <h3>Loss? Next signal is free.</h3>
+                                <p>If a signal you took closes at Stop Loss, a free signal credit is added to your account automatically.</p>
+                            </div>
+                            <div className={styles.priceCard}>
+                                <span className={styles.featureIcon}><Icon d={ICONS.users} /></span>
+                                <h3>Refer &amp; earn {PRICING.referralPercent}%</h3>
+                                <p>Share your referral link and earn {PRICING.referralPercent}% commission on every approved deposit your referrals make.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
-<div className="stat-card">
-  <img src="/images/SVG (9).png" className="stat-icon" />
-  <h3>0%</h3>
-  <p> Fee Without Profit</p>
-</div>
-</div>
-   <div className="hero-logo">
-      <img src="/images/Container (1).png" alt="Hero Logo" />
-    </div>
-  </div>
-</section>
+            {/* FAQ */}
+            <section id="faq" className={`${styles.section} ${styles.sectionAlt}`}>
+                <div className={`${styles.container} ${styles.narrow}`}>
+                    <div className={styles.sectionHead}>
+                        <span className={styles.kicker}>FAQ</span>
+                        <h2>Questions, answered</h2>
+                    </div>
+                    <div className={styles.faq}>
+                        {FAQ.map(([q, a]) => (
+                            <details key={q} className={styles.faqItem}>
+                                <summary>{q}</summary>
+                                <p>{a}</p>
+                            </details>
+                        ))}
+                    </div>
+                </div>
+            </section>
 
+            {/* CONTACT */}
+            <section id="contact" className={styles.section}>
+                <div className={`${styles.container} ${styles.contactGrid}`}>
+                    <div>
+                        <span className={styles.kicker}>Contact</span>
+                        <h2 className={styles.contactTitle}>Have a question before you start?</h2>
+                        <p className={styles.muted}>Send us a message and our team will get back to you.</p>
+                        <div className={styles.contactLinks}>
+                            {whatsappUrl && <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className={styles.btnGhost}>WhatsApp us</a>}
+                            {SITE.telegram && <a href={SITE.telegram} target="_blank" rel="noopener noreferrer" className={styles.btnGhost}>Telegram channel</a>}
+                            {SITE.email && <a href={`mailto:${SITE.email}`} className={styles.btnGhost}>{SITE.email}</a>}
+                        </div>
+                    </div>
+                    <ContactForm />
+                </div>
+            </section>
 
-{/*  ABOUT  */}
-<section id="about" className="about">
-  <div className="container">
-
-    <h2>About <span>AsianFX</span></h2>
-
-    <p className="about-desc">
-    We're not just another trading service. We're your strategic partner in building wealth through<br />
-safe, professional Stock Market & Share Market trading management with complete<br />
-transparency.
-    </p>
-
-    <div className="about-row">
-
-      <div className="about-image">
-        <img src="/images/About_img.jpg" />
-      </div>
-
-      <div className="about-text">
-
-        <h3>Your Success is Our Mission</h3>
-
-        <p>
-          At AsianFX, we understand that both Stock Market and Share
-Market trading can be complex and risky. That's why we've created a system<br />
-where you don't have to be a trading expert to benefit from the financial
-markets.<br />
-        </p>
-
-        <p>
-          Our experienced traders handle all the complexities of both markets while<br />
-you maintain full control of your account. We only succeed when you do -<br />
-earning our share exclusively from the profits we generate for you.
-        </p>
-          
-        <ul className="custom-list">
-          <li>Transparent profit-sharing model with no hidden fees</li>
-          <li>Real-time monitoring and detailed performance reports</li>
-          <li>Low-risk trading approach focused on sustainable growth</li>
-        </ul>
-
-      </div>
-
-    </div>
-
-
-    {/*  FEATURES  */}
-    <div className="features">
-
-      <div className="feature-card">
-        <img src="/images/Expert_trading_stratagies.png" />
-        <h4>Expert Trading Strategies</h4>
-        <p>
-          Our team of professional
-traders uses proven strategies
-backed by years of market
-experience and data analysis.
-        </p>
-      </div>
-
-      <div className="feature-card">
-        <img src="/images/data_driven_decisions.png" />
-        <h4>Data Driven Decisions</h4>
-        <p>
-         Every trade is based on
-comprehensive market
-research, technical analysis,
-and real-time data to maximize
-returns.
-        </p>
-      </div>
-
-      <div className="feature-card">
-        <img src="/images/client_account_ownership.png" />
-        <h4>Client Account Ownership</h4>
-        <p>
-          You maintain 100% ownership
-of your trading account. We
-only manage trades - your
-money stays under your
-control.
-        </p>
-      </div>
-
-      <div className="feature-card">
-        <img src="/images/risk_management.png" />
-        <h4>Risk Management First</h4>
-        <p>
-          We prioritize capital
-preservation with strict risk
-management protocols,
-ensuring your investments are
-protected.
-        </p>
-      </div>
-
-    </div>
-
-  </div>
-</section>
-<section id="trade" className="trade-section">
-  <div className="container">
-
-    <h2>
-      We Trade in <span>Both Markets</span>
-    </h2>
-
-    <p className="subtitle">
-      Whether you're interested in Stock Market or Share Market investments, our expert team<br />
-      manages both with equal expertise and precision.
-    </p>
-
-    <div className="cards">
-
-      {/*  Card 1  */}
-      <div className="card card1" >
-        <div className="card-header">
-          <div className="icon-box">
-            <img src="/images/Background (1).png" alt="icon" />
-          </div>
-          <h3>Stock Market Trading</h3>
+            {/* RISK + FOOTER */}
+            <footer className={styles.footer}>
+                <div className={styles.container}>
+                    <div className={styles.risk}>
+                        <strong>Risk warning:</strong> Trading Forex, metals and crypto involves substantial risk and may not be
+                        suitable for every investor. Signals are for informational purposes only and are not financial advice.
+                        Past performance does not guarantee future results. Never trade with money you cannot afford to lose.
+                    </div>
+                    <div className={styles.footerRow}>
+                        <div className={styles.brand}>
+                            <img src="/images/logo-mark.svg" alt="" width={28} height={28} />
+                            <span>Asian<b>FX</b></span>
+                        </div>
+                        <nav className={styles.footerLinks}>
+                            <a href="#markets">Markets</a>
+                            <a href="#how">How it works</a>
+                            <a href="#performance">Track record</a>
+                            <a href="#pricing">Pricing</a>
+                            <Link href="/login">Log in</Link>
+                        </nav>
+                        <span className={styles.muted}>&copy; {new Date().getFullYear()} AsianFX. All rights reserved.</span>
+                    </div>
+                </div>
+            </footer>
         </div>
-
-        <p>
-          Professional management of individual stocks, equity trading,<br />
-          and stock portfolio optimization. We identify high-potential stocks<br />
-          and execute strategic trades to maximize your returns.
-        </p>
-
-        <ul className="custom-list">
-          <li>Blue-chip stocks & growth stocks</li>
-          <li>Intraday & swing trading strategies</li>
-          <li>Technical & fundamental analysis</li>
-          <li>Real-time market monitoring</li>
-        </ul>
-
-        <div className="trade-stats">
-          <span><strong>85%</strong><br /> Success Rate</span>
-          <span><strong>500+</strong><br /> Stock Trades/Month</span>
-        </div>
-      </div>
-
-      {/*  Card 2  */}
-      <div className="card card2" >
-        <div className="card-header">
-          <div className="icon-box">
-            <img src="/images/Background.png" alt="icon" />
-          </div>
-          <h3>Share Market Trading</h3>
-        </div>
-
-        {/*  ✅ FIX: paragraph close  */}
-        <p>
-          Expert share trading across multiple exchanges, including equity
-          shares, preference shares, and diversified portfolio management
-          for optimal wealth creation.
-        </p>
-
-        <ul className="custom-list">
-          <li>Equity & preference shares</li>
-          <li>Multi-exchange trading</li>
-          <li>Diversified portfolio strategy</li>
-          <li>Risk-adjusted selection</li>
-        </ul>
-
-        <div className="trade-stats">
-          <span><strong>90%</strong><br /> Client Satisfaction</span>
-          <span><strong>350+</strong><br /> Share Trades/Month</span>
-        </div>
-      </div>
-
-    </div>
-
-    {/*  Bottom Box  */}
-    <div className="bottom-box">
-      <h3>Dual Market Expertise</h3>
-
-      {/*  ✅ FIX: paragraph properly closed  */}
-      <p>
-        Our team of certified traders specializes in both Stock Market and Share Market trading, giving
-        you access to comprehensive market opportunities. We analyze market trends across both
-        segments to maximize your returns while minimizing risk exposure.
-      </p>
-
-      <div className="tags">
-        <span>NSE Trading</span>
-        <span>BSE Trading</span>
-        <span>Equity Shares</span>
-        <span>Derivatives</span>
-        <span>Mutual Funds</span>
-      </div>
-    </div>
-
-  </div>
-</section>
-<section id="system" className="system">
-  <div className="container">
-
-    <h2>How Our <span>System Works</span></h2>
-    <p className="desc">
-      A simple, transparent process designed to maximize your returns while minimizing your <br />involvement and risk.
-    </p>
-
-    <div className="steps">
-      {/*  Box 1  */}
-      <div className="box">
-        <div className="num">01</div>
-        <img className="icon" src="/images/Overlay+Border.png" alt="Icon 1" />
-        <h3>Open Your Trading Account</h3>
-        <p>
-          Create your own brokerage account with our recommended partners. You maintain 100% ownership and control of your funds at all times.
-        </p>
-      </div>
-
-      <div className="line"></div>
-
-      {/*  Box 2  */}
-      <div className="box">
-        <div className="num">02</div>
-        <img className="icon" src="/images/Overlay+Border (1).png" alt="Icon 2" />
-        <h3>We Manage Trades Professionally</h3>
-        <p>
-          Our expert traders execute strategic trades on your behalf using proven methodologies and advanced risk management techniques.
-        </p>
-      </div>
-
-      <div className="line"></div>
-
-      {/*  Box 3  */}
-      <div className="box">
-        <div className="num">03</div>
-        <img className="icon" src="/images/Overlay+Border (2).png" alt="Icon 3" />
-        <h3>Weekly/Monthly Profit Sharing</h3>
-        <p>
-          Profits are distributed transparently - you keep 60–70% of net profits, we earn 30–40% equity share. No profit means no fees for us.
-        </p>
-      </div>
-
-      <div className="line"></div>
-
-      {/*  Box 4  */}
-      <div className="box">
-        <div className="num">04</div>
-        <img className="icon" src="/images/Overlay+Border (3).png" alt="Icon 4" />
-        <h3>Live Dashboard & Reports</h3>
-        <p>
-          Monitor your account performance in real-time through our dashboard. Receive detailed weekly reports on all trading activity and results.
-        </p>
-      </div>
-    </div>
-
-    {/*  CTA  */}
-    <div className="cta">
-      <h3>Ready to Get Started?</h3>
-      <p>
-        Join hundreds of satisfied clients who trust us to manage their trading portfolios.<br /> Start your journey to financial growth today.
-      </p>
-      <Link href="/register"><button>Book Free Consultation</button></Link>
-    </div>
-
-  </div>
-</section>
-<section id="why" className="ems-why-section">
-
-<div className="ems-container">
-
-<h2 className="ems-heading">
-Why Choose <span>AsianFX</span>?
-</h2>
-
-<p className="ems-subtitle">
-We're different from traditional trading services. Here's what makes us the trusted choice for smart investors.
-</p>
-
-{/*  FEATURES  */}
-<div className="ems-cards">
-
-<div className="ems-card">
-<div className="ems-icon-box">
-<img src="/images/SVG (10).png" className="ems-icon-img" />   
-</div>
-<div className="ems-card-content">
-<h3>Safe & Stress-Free Trading</h3>
-<p className="ems-p1">No need to monitor markets 24/7.
-We handle all trading decisions
-while you focus on your life.</p>
-</div>
-</div>
-
-<div className="ems-card">
-<div className="ems-icon-box">
-<img src="/images/SVG (3).png" className="ems-icon-img" />  
-</div>
-<div className="ems-card-content">
-<h3>Full Account Ownership</h3>
-<p className="ems-p2">Your money stays in your<br />
-account. You can withdraw
-anytime and maintain complete
-control of your funds.</p>
-</div>
-</div>
-
-<div className="ems-card">
-<div className="ems-icon-box">
-<img src="/images/SVG (4).png" className="ems-icon-img" /> 
-</div>
-<div className="ems-card-content">
-<h3>AI + Human Expertise</h3>
-<p className="ems-p3">We combine cutting-edge AI
-analytics with experienced
-human traders for optimal
-decision-making.</p>
-</div>
-</div>
-
-<div className="ems-card">
-<div className="ems-icon-box">
-<img src="/images/SVG (5).png" className="ems-icon-img" /> 
-</div>
-<div className="ems-card-content">
-<h3>No Hidden Fees</h3>
-<p className="ems-p4">Zero upfront costs. We only earn
-when you profit. Complete
-transparency in all transactions
-and fees.</p>
-</div>
-</div>
-
-<div className="ems-card">
-<div className="ems-icon-box">
-<img src="/images/SVG (6).png" className="ems-icon-img" /> 
-</div>
-<div className="ems-card-content">
-<h3>Consistent Growth Focus</h3>
-<p className="ems-p5">Our strategies prioritize
-sustainable, long-term growth
-over risky short-term gains.</p>
-</div>
-</div>
-
-<div className="ems-card">
-<div className="ems-icon-box">
-<img src="/images/SVG (7).png" className="ems-icon-img" /> 
-</div>
-<div className="ems-card-content">
-<h3>No False Promises</h3>
-<p className="ems-p6">
-We provide realistic expectations based on market conditions. Honesty and transparency are<br /> our foundation.
-</p>
-</div>
-</div>
-
-</div>
-
-{/*  STATS  */}
-<div className="ems-stats">
-
-<div className="ems-stat-box">
-<h4><span className="ems-counter" data-target="500">500</span>+</h4>
-<p>Active Clients</p>
-</div>
-
-<div className="ems-stat-box">
-<h4>$<span className="ems-counter" data-target="2">2</span>M+</h4>
-<p>Funds Managed</p>
-</div>
-
-<div className="ems-stat-box">
-<h4><span className="ems-counter" data-target="98">98</span>%</h4>
-<p>Client Satisfaction</p>
-</div>
-
-<div className="ems-stat-box">
-<h4><span className="ems-counter" data-target="5">5</span>+ Years</h4>
-<p>Market Experience</p>
-</div>
-
-</div>
-
-</div>
-</section>
-
-     {/*  PROFIT CALCULATOR SECTION  */}
-
-<section className="pc-section" id="pc-section">
-  <div className="pc-container">
-
-    <h2 className="pc-heading">Profit Calculator</h2>
-    <p className="pc-subtext">
-      See your potential returns from Stock Market & Share Market trading.
-      Adjust the parameters below to estimate your earnings with our professional trading service.
-    </p>
-
-    <div className="pc-main">
-
-      {/*  LEFT  */}
-      <div className="pc-left">
-
-        <h3 className="pc-title">Calculate Your Returns</h3>
-
-        <div>
-          <div className="pc-field">
-            <div className="pc-top">
-              <label>Investment Amount</label>
-              <span>$10,000</span>
-            </div>
-            <div className="pc-line"></div>
-            <small>
-              <span>$1,000</span>
-              <span>$100,000</span>
-            </small>
-          </div>
-
-          <div className="pc-field">
-            <div className="pc-top">
-              <label>Expected Monthly Return</label>
-              <span>8%</span>
-            </div>
-            <div className="pc-line"></div>
-            <small>
-              <span>3%</span>
-              <span>15%</span>
-            </small>
-          </div>
-
-          <div className="pc-field">
-            <div className="pc-top">
-              <label>Duration (Months)</label>
-              <span>6 months</span>
-            </div>
-            <div className="pc-line"></div>
-            <small>
-              <span>1 month</span>
-              <span>24 months</span>
-            </small>
-          </div>
-        </div>
-
-        <p className="pc-note">
-          * These are projected estimates based on historical performance.
-          Actual returns may vary based on market conditions.
-        </p>
-
-      </div>
-
-      {/*  RIGHT  */}
-      <div className="pc-right">
-
-        <div className="pc-box gold">
-           <span style={{display: "inline-flex", alignItems: "center", gap: "6px"}}>
-            <img src="/images/dollar (1).png" style={{width: "18px", height: "18px"}} />
-            Total Portfolio Value</span>
-          <h3>$15,868.74</h3>
-        </div>
-
-        <div className="pc-box">
-          <span style={{display: "inline-flex", alignItems: "center", gap: "6px"}}>
-            <img src="/images/arrow.png" style={{width: "18px", height: "18px"}} />Total Profit Generated</span>
-          <h3>$5,868.74</h3>
-        </div>
-
-        <div className="pc-box green">
-          <span style={{display: "inline-flex", alignItems: "center", gap: "6px"}}>
-            <img src="/images/percentage_green.png" style={{width: "18px", height: "18px"}} />Your Share (65%)</span>
-          <h3>$3,814.68</h3>
-        </div>
-
-        <div className="pc-box dim">
-          <span style={{display: "inline-flex", alignItems: "center", gap: "6px"}}>
-            <img src="/images/percentage_grey.png" style={{width: "18px", height: "18px"}} />Our Share (35%)</span>
-          <h3>$2,054.06</h3>
-        </div>
-
-        <Link href="/register"><button className="pc-btn">Start Earning Today</button></Link>
-
-      </div>
-
-    </div>
-  </div>
-</section>
-
-{/*  CLIENT SUCCESS STORIES  */}
-<section className="cs-section" id="cs-section">
-  <div className="cs-container">
-
-    <h2 className="cs-heading">
-      <span>Client</span> Success Stories
-    </h2>
-
-    <p className="cs-subtitle">
-      Don't just take our word for it. Here's what our clients have to say about their experience with<br /> AsianFX.
-    </p>
-
-    <div className="cs-grid">
-
-      {/*  CARD 1  */}
-      <div className="cs-card">
-        <div className="cs-top">
-          <span className="cs-quote">
-           <img src="/images/SVG (8).png" className="quote" /> 
-          </span>
-          <span className="cs-stars">
-          <img src="/images/Container.png" className="stars" /></span>
-        </div>
-        <p className="cs-text">
-          "I've been with AsianFX for 8
-           months and my portfolio has grown by
-           47%. The transparency and
-           professionalism are unmatched. I finally
-           found a trading service I can trust."
-        </p>
-        <div className="cs-user">
-          <div className="cs-avatar">
-             <img src="/images/👨_💼 (2).png" className="avatar" />   
-          </div>
-          <div>
-            <h4>Michael Rodriguez</h4>
-            <span>Business Owner</span>
-          </div>
-        </div>
-      </div>
-
-      {/*  CARD 2  */}
-      <div className="cs-card">
-        <div className="cs-top">
-          <span className="cs-quote">
-             <img src="/images/SVG (8).png" className="quote" /> 
-          </span>
-          <span className="cs-stars">
-            <img src="/images/Container.png" className="stars" /></span></div>
-        <p className="cs-text">
-          "As someone with no trading experience,<br />
-           this service has been a game-changer.
-           They handle everything while I keep full
-           control of my account. I've earned over
-           $12,000 in profit so far.""
-        </p>
-        <div className="cs-user">
-          <div className="cs-avatar">
-         <img src="/images/2.png" className="avatar" /> 
-          </div>
-          <div>
-            <h4>Sarah Chen</h4>
-            <span>Software Engineer</span>
-          </div>
-        </div>
-      </div>
-
-      {/*  CARD 3  */}
-      <div className="cs-card">
-        <div className="cs-top">
-          <span className="cs-quote"> 
-          <img src="/images/SVG (8).png" className="quote" /> </span>
-          <span className="cs-stars">
-            <img src="/images/Container.png" className="stars" />
-          </span>
-        </div>
-        <p className="cs-text">
-         "The risk management approach gives me<br />
-          peace of mind. Unlike other services that<br />
-          promise unrealistic returns, EMS provides<br />
-          honest, data-driven results. My $25k
-          investment has grown consistently."
-        </p>
-        <div className="cs-user">
-          <div className="cs-avatar">
-             <img src="/images/👨_💼 (2).png" className="avatar" /> 
-          </div>
-          <div>
-            <h4>David Thompson</h4>
-            <span>Investor</span>
-          </div>
-        </div>
-      </div>
-
-      {/*  CARD 4  */}
-      <div className="cs-card">
-        <div className="cs-top">
-          <span className="cs-quote"><img src="/images/SVG (8).png" className="quote" /></span>
-          <span className="cs-stars">
-            <img src="/images/Container.png" className="stars" />
-          </span>
-        </div>
-        <p className="cs-text">
-          "I love the weekly reports and live
-           dashboard. I can monitor everything in
-           real-time without spending hours
-           analyzing charts. The profit-sharing model<br />
-           is fair and transparent."
-        </p>
-        <div className="cs-user">
-          <div className="cs-avatar">
-                 <img src="/images/👩_⚕️.png" className="avatar" />
-          </div>
-          <div>
-            <h4>Priya Patel</h4>
-            <span>Healthcare Professional</span>
-          </div>
-        </div>
-      </div>
-
-      {/*  CARD 5  */}
-      <div className="cs-card">
-        <div className="cs-top">
-          <span className="cs-quote"><img src="/images/SVG (8).png" className="quote" /></span>
-          <span className="cs-stars">
-            <img src="/images/Container.png" className="stars" />
-          </span>
-        </div>
-        <p className="cs-text">
-          "Started with $10,000 as a test. Six
-           months later, I've increased my
-           investment to $50,000. The team's
-           expertise and the AI-driven strategies
-           have exceeded my expectations."
-        </p>
-        <div className="cs-user">
-          <div className="cs-avatar">
-        <img src="/images/👨_💼 (2).png" className="avatar" /> 
-          </div>
-          <div>
-            <h4>James Wilson</h4>
-            <span>Entrepreneur</span>
-          </div>
-        </div>
-      </div>
-
-      {/*  CARD 6  */}
-      <div className="cs-card">
-        <div className="cs-top">
-          <span className="cs-quote"><img src="/images/SVG (8).png" className="quote" /></span>
-          <span className="cs-stars">
-            <img src="/images/Container.png" className="stars" />
-          </span>
-        </div>
-        <p className="cs-text">
-          "Finally, a trading service that doesn't
-           require upfront fees! The fact that they
-           only earn when I profit shows they're
-           genuinely invested in my success. Highly<br />
-           recommend!"
-        </p>
-        <div className="cs-user">
-          <div className="cs-avatar">
-              <img src="/images/3.png" className="avatar" /> 
-          </div>
-          <div>
-            <h4>Emma Martinez</h4>
-            <span>Marketing Director</span>
-          </div>
-        </div>
-      </div>
-
-    </div>
-
-    {/*  STATS BOX  */}
-    <div className="cs-stats">
-      <div>
-        <h3>4.9/5</h3>
-        <p>Average Rating</p>
-      </div>
-      <div>
-        <h3>500+</h3>
-        <p>Happy Clients</p>
-      </div>
-      <div>
-        <h3>$3.2M+</h3>
-        <p>Profits Generated</p>
-      </div>
-    </div>
-
-  </div>
-</section>
-<section className="k-section" id="risk">
-    <div className="k-container">
-      <div className="k-header">
-        <div className="k-icon">
-          <img src="/images/image1kk.png" alt="" />
-        </div>
-        <h2 className="k-title">Legal &amp; <span>Risk Disclaimer</span></h2>
-      </div>
-      <div className="k-card">
-        <div className="k-notice-box">
-          <div className="k-notice-header">
-            <svg viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M9 2L16 15H2L9 2Z" stroke="#F0B100" strokeWidth="1.5" strokeLinejoin="round" />
-              <line x1="9" y1="8" x2="9" y2="11" stroke="#F0B100" strokeWidth="1.5" strokeLinecap="round" />
-              <circle cx="9" cy="13" r="0.75" fill="#F0B100" />
-            </svg>
-            <span className="k-notice-title">Important Notice</span>
-          </div>
-          <p className="k-notice-text">Trading in financial markets involves substantial risk and may not be suitable for
-            all investors. Past performance is not indicative of future results.</p>
-        </div>
-
-        <div className="k-disclosure-block">
-          <div className="k-block-header">
-            <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect x="2" y="2" width="12" height="12" rx="2" stroke="#D4AF37" strokeWidth="1.3" />
-              <line x1="5" y1="6" x2="11" y2="6" stroke="#D4AF37" strokeWidth="1.2" strokeLinecap="round" />
-              <line x1="5" y1="9" x2="9" y2="9" stroke="#D4AF37" strokeWidth="1.2" strokeLinecap="round" />
-            </svg>
-            <span className="k-block-title">Risk Disclosure</span>
-          </div>
-          <ul className="k-block-list">
-            <li>All trading involves market risk. The value of investments can go down as well as up.</li>
-            <li>There are no guaranteed returns. Profit projections are estimates based on historical data and market
-              conditions.</li>
-            <li>You could lose some or all of your initial investment. Never invest more than you can afford to lose.
-            </li>
-            <li>Past performance of our trading strategies does not guarantee future results.</li>
-          </ul>
-        </div>
-
-        <div className="k-disclosure-block">
-          <div className="k-block-header">
-            <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect x="2" y="2" width="12" height="12" rx="2" stroke="#D4AF37" strokeWidth="1.3" />
-              <line x1="5" y1="6" x2="11" y2="6" stroke="#D4AF37" strokeWidth="1.2" strokeLinecap="round" />
-              <line x1="5" y1="9" x2="9" y2="9" stroke="#D4AF37" strokeWidth="1.2" strokeLinecap="round" />
-            </svg>
-            <span className="k-block-title">Profit Sharing Agreement</span>
-          </div>
-          <ul className="k-block-list">
-            <li>Our compensation is earned exclusively from profits generated on your account.</li>
-            <li>Profit sharing ranges from 30-40% equity for AsianFX, with 60-70% retained by the client.</li>
-            <li>If no profit is generated in a given period, no fees are charged to the client.</li>
-            <li>All profit calculations are based on net profit after accounting for any trading losses.</li>
-          </ul>
-        </div>
-
-        <div className="k-block-header">
-          <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect x="2" y="2" width="12" height="12" rx="2" stroke="#D4AF37" strokeWidth="1.3" />
-            <line x1="5" y1="6" x2="11" y2="6" stroke="#D4AF37" strokeWidth="1.2" strokeLinecap="round" />
-            <line x1="5" y1="9" x2="9" y2="9" stroke="#D4AF37" strokeWidth="1.2" strokeLinecap="round" />
-          </svg>
-          <span className="k-block-title">Client Responsibilities</span>
-        </div>
-        <ul className="k-block-list">
-          <li>You maintain full ownership and control of your brokerage account at all times.</li>
-          <li>You are responsible for understanding the risks associated with trading and your account activity.</li>
-          <li>AsianFX is not intended for collecting personally identifiable information (PII)
-            or securing highly sensitive data.</li>
-          <li>You should only invest funds that you can afford to lose without affecting your financial stability.</li>
-        </ul>
-        <div className="k-bottom-box">
-
-          <p className="k-footer-note">
-            AsianFX operates as a trading consultancy service. We recommend consulting with a financial
-            advisor
-            before making investment decisions. This website and its content do not constitute financial advice and
-            should
-            not be relied upon as such.
-          </p>
-        </div>
-
-      </div>
-    </div>
-  </section>
-
-  <section className="k-consultation-section" id="consultation">
-    <div className="k-consult-container">
-      <div className="k-consult-heading">
-        <h2 className="k-consult-title">Book Your <span>Free Consultation</span></h2>
-        <p className="k-consult-subtitle">Ready to start your journey in Stock Market & Share Market trading? Get in touch
-          with us today for a free consultation. No obligations, just honest advice.</p>
-      </div>
-      <div className="fee-box">
-  <h3>Registration Fee</h3>
-  <p>Your registration fee is <strong>$5</strong> (one-time).</p>
-  <p>Each signal costs <strong>$1</strong>.</p>
-  <p>If a signal results in <strong>LOSS</strong>, the next signal is <strong>FREE</strong>.</p>
-</div>
-      <div className="k-consult-columns">
-        <div className="k-consult-left">
-
-          <div className="k-contact-card k-whatsapp-card">
-            <div className="k-contact-icon k-whatsapp-icon">
-              <img src="/images/whatsappkk.png" alt="" />
-            </div>
-            <div className="k-contact-info">
-              <h3 className="k-contact-title">WhatsApp Chat</h3>
-              <p className="k-contact-detail">Get instant responses to your questions</p>
-            </div>
-          </div>
-
-          <div className="k-contact-card k-email-card">
-            <div className="k-contact-icon k-email-icon">
-              <img src="/images/emailak.png" alt="" />
-            </div>
-            <div className="k-contact-info">
-              <h3 className="k-contact-title">Email Us</h3>
-              <p className="k-contact-detail">contact@earnmoneysafely.com</p>
-            </div>
-          </div>
-
-          <div className="k-contact-card k-call-card">
-            <div className="k-contact-icon k-call-icon">
-              <img src="/images/contactk.png" alt="" />
-            </div>
-            <div className="k-contact-info">
-              <h3 className="k-contact-title">Call Us</h3>
-              <p className="k-contact-detail">+1 (555) 123-4567</p>
-            </div>
-          </div>
-
-          <div className="k-expect-card">
-            <h3 className="k-expect-title">What to Expect</h3>
-            <ul className="k-expect-list">
-              <li>
-                <svg className="k-check-icon" viewBox="0 0 20 20" fill="none">
-                  <circle cx="10" cy="10" r="9" stroke="#D4AF37" strokeWidth="1.3" />
-                  <path d="M6 10l3 3 5-5" stroke="#D4AF37" strokeWidth="1.5" strokeLinecap="round"
-                    strokeLinejoin="round" />
-                </svg>
-                Free 30-minute consultation with our trading experts
-              </li>
-              <li>
-                <svg className="k-check-icon" viewBox="0 0 20 20" fill="none">
-                  <circle cx="10" cy="10" r="9" stroke="#D4AF37" strokeWidth="1.3" />
-                  <path d="M6 10l3 3 5-5" stroke="#D4AF37" strokeWidth="1.5" strokeLinecap="round"
-                    strokeLinejoin="round" />
-                </svg>
-                Personalized trading strategy assessment
-              </li>
-              <li>
-                <svg className="k-check-icon" viewBox="0 0 20 20" fill="none">
-                  <circle cx="10" cy="10" r="9" stroke="#D4AF37" strokeWidth="1.3" />
-                  <path d="M6 10l3 3 5-5" stroke="#D4AF37" strokeWidth="1.5" strokeLinecap="round"
-                    strokeLinejoin="round" />
-                </svg>
-                No high-pressure sales, just honest guidance
-              </li>
-              <li>
-                <svg className="k-check-icon" viewBox="0 0 20 20" fill="none">
-                  <circle cx="10" cy="10" r="9" stroke="#D4AF37" strokeWidth="1.3" />
-                  <path d="M6 10l3 3 5-5" stroke="#D4AF37" strokeWidth="1.5" strokeLinecap="round"
-                    strokeLinejoin="round" />
-                </svg>
-                Clear explanation of our profit-sharing model
-              </li>
-            </ul>
-          </div>
-
-        </div>
-
-        <form className="k-consult-right" id="consultForm" onSubmit={handleConsultSubmit}>
-          <div className="k-form-group">
-            <label className="k-form-label" htmlFor="fullName">Full Name <span className="k-required">*</span></label>
-            <input type="text" className="k-form-input" placeholder="John Doe" id="fullName" name="fullName" autoComplete="name" />
-          </div>
-          <div className="k-form-group">
-            <label className="k-form-label" htmlFor="emailAddress">Email Address <span className="k-required">*</span></label>
-            <input type="email" className="k-form-input" placeholder="john@example.com" id="emailAddress" name="email" autoComplete="email" />
-          </div>
-          <div className="k-form-group">
-            <label className="k-form-label" htmlFor="message">Message</label>
-            <textarea className="k-form-input k-form-textarea" placeholder="Tell us about your trading goals..."
-              id="message" name="message" rows="4"></textarea>
-          </div>
-         <button type="submit" className="k-submit-btn" id="submitBtn" disabled={submitting}>
-            <svg viewBox="0 0 20 20" fill="none" width="18" height="18">
-              <rect x="2" y="4" width="16" height="12" rx="2" stroke="currentColor" strokeWidth="1.5" />
-              <path d="M2 7l8 5 8-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
-            {submitting ? 'Sending...' : 'Book Free Consultation'}
-          </button>
-          <p className="k-form-disclaimer">By submitting this form, you agree to be contacted by AsianFX
-            regarding our services.</p>
-        </form>
-      </div>
-    </div>
-  </section>
-
-  <footer className="k-footer">
-    <div className="k-footer-container">
-      <div className="k-footer-top">
-
-        <div className="k-footer-brand">
-          <div className="k-footer-logo">
-            <img src="/images/logo-mark.svg" alt="AsianFX Signals" style={{ width: '40px', height: 'auto', marginRight: '10px' }} />
-            <span className="k-footer-logo-text">AsianFX</span>
-          </div>
-          <p className="k-footer-brand-desc">Professional trading management services with transparent profit-sharing. Your
-            wealth, our strategy.</p>
-          {/*  <div className="k-footer-socials">
-            <a href="#" className="k-social-btn" aria-label="Facebook">
-              <img src="/images/Link.png" alt="Facebook" width="40" height="40" />
-            </a>
-            <a href="#" className="k-social-btn" aria-label="Twitter">
-              <img src="/images/Link (1).png" alt="Twitter" width="40" height="40" />
-            </a>
-            <a href="#" className="k-social-btn" aria-label="LinkedIn">
-              <img src="/images/Link (2).png" alt="LinkedIn" width="40" height="40" />
-            </a>
-            <a href="#" className="k-social-btn" aria-label="Instagram">
-              <img src="/images/Link (3).png" alt="Instagram" width="40" height="40" />
-            </a>
-          </div>  */}
-        </div>
-
-        <div className="k-footer-col">
-          <h4 className="k-footer-heading">Quick Links</h4>
-          <ul className="k-footer-links">
-            <li><a href="#about">About Us</a></li>
-            <li><a href="#system">How It Works</a></li>
-            <li><a href="#pc-section">Profit Calculator</a></li>
-            <li><a href="#cs-section">Testimonials</a></li>
-            <li><a href="#consultation">Contact Us</a></li>
-          </ul>
-        </div>
-
-        <div className="k-footer-col">
-          <h4 className="k-footer-heading">Our Services</h4>
-          <ul className="k-footer-links">
-            <li><a href="#trade">Stock Market Trading</a></li>
-            <li><a href="#trade">Share Market Trading</a></li>
-            <li><a href="#risk">Risk Assessment</a></li>
-            <li><a href="#">Portfolio Monitoring</a></li>
-            <li><a href="#trade">Market Analysis</a></li>
-            <li><a href="#pc-section">Profit Optimization</a></li>
-          </ul>
-        </div>
-
-        <div className="k-footer-col">
-          <h4 className="k-footer-heading">Contact Info</h4>
-          <ul className="k-footer-contact">
-            <li>
-              <svg viewBox="0 0 16 16" fill="none" width="16" height="16">
-                <rect x="1" y="3" width="14" height="10" rx="2" stroke="#D4AF37" strokeWidth="1.2" />
-                <path d="M1 6l7 4 7-4" stroke="#D4AF37" strokeWidth="1.2" strokeLinecap="round" />
-              </svg>
-              <span>contact@earnmoneysafely.com</span>
-            </li>
-            <li>
-              <svg viewBox="0 0 16 16" fill="none" width="16" height="16">
-                <path
-                  d="M4.4 7.2c.93 1.87 2.53 3.4 4.4 4.4l1.47-1.47c.2-.2.47-.27.67-.13.73.27 1.53.4 2.4.4.4 0 .67.27.67.67v2.33c0 .4-.27.67-.67.67C5.73 14 2 10.27 2 5.67c0-.4.27-.67.67-.67H5c.4 0 .67.27.67.67 0 .87.13 1.67.4 2.4.13.2.07.47-.13.67L4.4 7.2z"
-                  stroke="#D4AF37" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              <span>+1 (555) 123-4567</span>
-            </li>
-            <li>
-              <svg viewBox="0 0 16 16" fill="none" width="16" height="16">
-                <path
-                  d="M8 1.5C5.52 1.5 3.5 3.52 3.5 6c0 3.75 4.5 8.5 4.5 8.5s4.5-4.75 4.5-8.5c0-2.48-2.02-4.5-4.5-4.5z"
-                  stroke="#D4AF37" strokeWidth="1.2" />
-                <circle cx="8" cy="6" r="1.5" stroke="#D4AF37" strokeWidth="1.2" />
-              </svg>
-              <span>123 Financial District<br />New York, NY 10004</span>
-            </li>
-          </ul>
-        </div>
-
-      </div>
-
-      <div className="k-footer-divider"></div>
-
-      <div className="k-footer-bottom">
-        <p className="k-footer-copyright">&copy; 2026 AsianFX. All rights reserved.</p>
-        <div className="k-footer-legal">
-          <a href="#">Privacy Policy</a>
-          <a href="#">Terms of Service</a>
-          <a href="#">Risk Disclosure</a>
-        </div>
-      </div>
-    </div>
-  </footer>
-        </>
     );
 }

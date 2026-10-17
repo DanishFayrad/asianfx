@@ -12,9 +12,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "AsianFX | Professional Trading & Wealth Management",
-  description: "Get carefully analyzed Stock & Share Market signals. Join our professional trading management service with AI-driven strategies and a fair profit-sharing model.",
-  keywords: "trading signals, stock market, share market, wealth management, forex signals, technical analysis",
+  title: "AsianFX Signals | Gold, Forex & Crypto Trading Signals",
+  description: "Real-time Gold (XAU/USD), Silver, Forex and Crypto trading signals with clear Entry, Take Profit and Stop Loss.",
+  keywords: "trading signals, gold signals, xauusd, forex signals, silver signals, crypto signals",
   // Favicon is provided by the app/icon.svg file convention (the AsianFX logo).
 };
 

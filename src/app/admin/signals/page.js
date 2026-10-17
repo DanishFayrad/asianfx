@@ -547,7 +547,34 @@ export default function AdminSignals() {
                         <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--primary)' }}>{sig.total_taken || 0}</div>
                         <div style={{ fontSize: '0.65rem', color: 'var(--admin-text-muted)', textTransform: 'uppercase' }}>Purchased</div>
                    </div>
-                   
+
+                   {/* Close the signal with its result — feeds the public track record & settles user results. */}
+                   <div style={{ width: '100%', marginTop: '10px', paddingTop: '10px', borderTop: '1px dashed var(--admin-border-color)', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                       {sig.status === 'Active' ? (
+                           <>
+                               <span style={{ fontSize: '0.7rem', color: 'var(--admin-text-muted)', marginRight: 'auto' }}>Result:</span>
+                               {[['TP Hit', 'var(--admin-success)'], ['Stop Loss', 'var(--admin-danger)'], ['Closed', 'var(--admin-text-muted)']].map(([label, color]) => (
+                                   <button
+                                       key={label}
+                                       type="button"
+                                       onClick={async () => {
+                                           try {
+                                               await signalService.updateSignalStatus(sig.id, label);
+                                               toast.success(`${sig.symbol} marked as ${label}`);
+                                               fetchAllAdminData();
+                                           } catch (e) { toast.error("Failed to update signal"); }
+                                       }}
+                                       style={{ background: 'transparent', border: `1px solid ${color}`, color, fontSize: '0.7rem', fontWeight: 600, padding: '3px 10px', borderRadius: '6px', cursor: 'pointer' }}
+                                   >{label}</button>
+                               ))}
+                           </>
+                       ) : (
+                           <span style={{ fontSize: '0.75rem', fontWeight: 700, color: sig.status.includes('Hit') ? 'var(--admin-success)' : sig.status.includes('Stop') ? 'var(--admin-danger)' : 'var(--admin-text-muted)' }}>
+                               {sig.status}
+                           </span>
+                       )}
+                   </div>
+
                    {sig.release_at && new Date(sig.release_at) > new Date() && (
                        <div style={{ width: '100%', marginTop: '10px', paddingTop: '10px', borderTop: '1px dashed var(--admin-border-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
                            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#f59e0b' }}>

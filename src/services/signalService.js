@@ -77,6 +77,17 @@ const extendSignalTimer = async (id, minutes) => {
     return unwrap(await supabase.rpc('extend_signal_timer', { p_signal_id: id, p_minutes: minutes }));
 };
 
+// Admin: close a signal as 'TP Hit' / 'Stop Loss' / 'Closed' (settles user results via trigger).
+const updateSignalStatus = async (id, status) => {
+    unwrap(await supabase.from('signals').update({ status }).eq('id', id));
+    return { message: 'Signal updated' };
+};
+
+// Public track record for the landing page (works logged out).
+const getPublicStats = async () => {
+    return unwrap(await supabase.rpc('get_public_stats'));
+};
+
 const signalService = {
     getSignalsDashboard,
     createSignal,
@@ -89,7 +100,9 @@ const signalService = {
     requestSignalAccess,
     getSignalRequests,
     approveSignalRequest,
-    extendSignalTimer
+    extendSignalTimer,
+    updateSignalStatus,
+    getPublicStats
 };
 
 export default signalService;
