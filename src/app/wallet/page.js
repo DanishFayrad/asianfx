@@ -11,8 +11,9 @@ import ThemeToggle from '@/components/ThemeToggle';
 import UserNavbar from '@/components/UserNavbar';
 import AdminSidebar from '@/components/AdminSidebar';
 import AdminHeader from '@/components/admin/AdminHeader';
-import { IconWallet, IconArrowDown, IconArrowUp, IconTrend, IconClock, IconUsers } from '@/components/admin/AdminIcons';
+import { IconWallet, IconArrowDown, IconArrowUp, IconTrend, IconClock, IconUsers, IconBroadcast } from '@/components/admin/AdminIcons';
 import '../../styles/adminTransactions.css';
+import '../../styles/memberDashboard.css';
 import '../../styles/wallet.css';
 
 const money = (n) => Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -70,70 +71,6 @@ export default function Wallet() {
   };
 
   const profit = Number(stats?.total_profit || 0);
-
-  const content = (
-    <>
-      <div className="cards">
-        <div className="card total">
-          <div className="card-top">
-            <img src="/images/div (4).png" alt="" />
-            <div className="badge">
-              <span className="dot"></span> {isAdmin ? 'PLATFORM' : 'PERSONAL'}
-            </div>
-          </div>
-          <p className="wallet-label">{isAdmin ? 'Total Platform Balance' : 'Current Wallet Balance'}</p>
-          <h3 className="wallet-amount wallet-amount--big">
-            ${money(isAdmin ? stats?.platform_balance : (stats?.balance ?? user?.wallet_balance))}
-          </h3>
-          {!isAdmin && user?.free_signals > 0 && (
-            <small style={{ color: 'var(--t-gold)', fontWeight: 600 }}>
-              🎁 {user.free_signals} free signal credit{user.free_signals > 1 ? 's' : ''}
-            </small>
-          )}
-        </div>
-
-        <div className="card">
-          <div className="card-top">
-            <img src="/images/div (5).png" alt="" />
-          </div>
-          <p className="wallet-label">{isAdmin ? 'Platform Deposits' : 'Total Deposited'}</p>
-          <h3 className="wallet-amount">${money(stats?.total_deposit)}</h3>
-          <small style={{ color: 'var(--t-gold)', fontWeight: 600 }}>{stats?.deposit_count || 0} approved</small>
-        </div>
-
-        <div className="card">
-          <div className="card-top">
-            <img src="/images/div (6).png" alt="" />
-          </div>
-          <p className="wallet-label">{isAdmin ? 'Platform Withdrawals' : 'Total Withdrawn'}</p>
-          <h3 className="wallet-amount">${money(stats?.total_withdrawal)}</h3>
-          <small style={{ color: 'var(--t-text-muted)' }}>{stats?.withdrawal_count || 0} processed</small>
-        </div>
-
-        <div className="card profit">
-          <div className="card-top">
-            <img src="/images/div (7).png" alt="" />
-          </div>
-          <p className="wallet-label">{isAdmin ? 'Signal Fee Revenue' : 'My Total Signal Profit'}</p>
-          <h3 className="wallet-amount" style={{ color: profit >= 0 ? 'var(--success)' : '#ef4444' }}>
-            {profit < 0 ? '-' : ''}${money(Math.abs(profit))}
-          </h3>
-          <small style={{ color: 'var(--t-text-muted)' }}>Updated live</small>
-        </div>
-
-        {!isAdmin && (
-          <div className="card">
-            <div className="card-top">
-              <div className="wallet-fee-icon">💰</div>
-            </div>
-            <p className="wallet-label">Amount Spent on Signals</p>
-            <h3 className="wallet-amount" style={{ color: 'var(--t-gold)' }}>${money(stats?.total_signal_fees)}</h3>
-            <small style={{ color: 'var(--t-text-muted)' }}>$1 per signal · free after a Stop Loss</small>
-          </div>
-        )}
-      </div>
-    </>
-  );
 
   // Admins: same admin shell as every other admin page.
   if (isAdmin) {
@@ -221,7 +158,64 @@ export default function Wallet() {
           </div>
         </div>
 
-        {content}
+        {/* HERO: what the member can spend right now */}
+        <section className="awl-hero mwl-hero">
+          <div className="awl-hero-main">
+            <span className="awl-hero-label"><IconWallet size={16} /> Current wallet balance</span>
+            <strong className="awl-hero-value">${money(stats?.balance ?? user?.wallet_balance)}</strong>
+            <span className="awl-hero-note">
+              {Number(stats?.balance ?? user?.wallet_balance ?? 0) >= 1
+                ? `Enough for ${Math.floor(Number(stats?.balance ?? user?.wallet_balance ?? 0))} signal${Math.floor(Number(stats?.balance ?? user?.wallet_balance ?? 0)) === 1 ? '' : 's'} at $1 each`
+                : 'Add funds to start taking signals'}
+            </span>
+          </div>
+          <div className="awl-hero-side">
+            <div>
+              <span>🎁 Free signals</span>
+              <strong>{user?.free_signals || 0}</strong>
+            </div>
+            <div>
+              <span><IconClock size={14} /> Signal fee</span>
+              <strong>$1.00</strong>
+            </div>
+          </div>
+        </section>
+
+        {/* KPI ROW */}
+        <section className="mdb-kpis mwl-kpis" aria-label="Wallet totals">
+          <div className="mdb-kpi">
+            <span className="mdb-kpi-icon"><IconArrowDown size={18} /></span>
+            <div>
+              <span className="mdb-kpi-label">Total deposited</span>
+              <strong>${money(stats?.total_deposit)}</strong>
+              <small className="mwl-muted">{stats?.deposit_count || 0} approved</small>
+            </div>
+          </div>
+          <div className="mdb-kpi">
+            <span className="mdb-kpi-icon mwl-icon-purple"><IconArrowUp size={18} /></span>
+            <div>
+              <span className="mdb-kpi-label">Total withdrawn</span>
+              <strong>${money(stats?.total_withdrawal)}</strong>
+              <small className="mwl-muted">{stats?.withdrawal_count || 0} processed</small>
+            </div>
+          </div>
+          <div className="mdb-kpi">
+            <span className="mdb-kpi-icon mdb-kpi-icon--green"><IconTrend size={18} /></span>
+            <div>
+              <span className="mdb-kpi-label">Signal profit</span>
+              <strong style={{ color: profit < 0 ? '#ef4444' : '#16a34a' }}>{profit < 0 ? '-' : ''}${money(Math.abs(profit))}</strong>
+              <small className="mwl-muted">Updated live</small>
+            </div>
+          </div>
+          <div className="mdb-kpi">
+            <span className="mdb-kpi-icon mdb-kpi-icon--gold"><IconBroadcast size={18} /></span>
+            <div>
+              <span className="mdb-kpi-label">Spent on signals</span>
+              <strong>${money(stats?.total_signal_fees)}</strong>
+              <small className="mwl-muted">Free after a Stop Loss</small>
+            </div>
+          </div>
+        </section>
       </div>
 
       <DepositModal isOpen={isDepositOpen} onClose={() => { setIsDepositOpen(false); refreshUserProfile(); fetchStats(); }} />

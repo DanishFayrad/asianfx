@@ -184,3 +184,9 @@
   .mdb-kpis { grid-template-columns: 1fr; }
   .mdb-kpi strong { font-size: 1.25rem; }
 }
+
+/* ---------- Member wallet (.mwl-*) — reuses .awl-hero + .mdb-kpi ---------- */
+.mwl-hero { margin-bottom: 16px; }
+.mwl-kpis { margin-bottom: 0; }
+.mdb-kpi small.mwl-muted { color: var(--t-text-dim); font-weight: 500; }
+.mwl-icon-purple { color: #9333ea; background: rgba(147, 51, 234, 0.12); }
