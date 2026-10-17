@@ -1,11 +1,11 @@
 :root {
-  --primary: #d4af37;
+  --primary: var(--t-accent);
   --bg-dark: var(--t-bg);
   --bg-card: var(--t-surface);
   --bg-hover: var(--t-surface-2);
   --text-main: var(--t-text);
   --text-dim: var(--t-text-muted);
-  --border: rgba(212, 175, 55, 0.2);
+  --border: rgba(var(--t-accent-rgb), 0.2);
   --success: #10b981;
   --danger: #ef4444;
 }
@@ -74,7 +74,7 @@ body {
 }
 
 .menu.active {
-  background: rgba(212, 175, 55, 0.1);
+  background: rgba(var(--t-accent-rgb), 0.1);
   color: var(--t-gold);
   border-left: 3px solid var(--primary);
 }
@@ -337,7 +337,7 @@ body {
 }
 
 .wallet-fee-icon {
-  background: #d4af37;
+  background: var(--t-accent);
   width: 36px;
   height: 36px;
   border-radius: 10px;
@@ -346,3 +346,6 @@ body {
   font-size: 1.05rem;
   margin-bottom: 4px;
 }
+
+/* The balance icon is a white glyph — darken it on the light theme */
+:root[data-theme="light"] .wallet-page .card.total .card-top img { filter: invert(1) brightness(0.35); }

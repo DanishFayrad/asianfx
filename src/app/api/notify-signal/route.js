@@ -33,7 +33,7 @@ const buildEmail = (signal, siteUrl) => {
         <span style="display:inline-block;margin-left:8px;padding:4px 10px;border-radius:6px;font-size:13px;color:#fff;background:${sideColor}">${escapeHtml(side)}</span>
       </div>
       <div style="color:#8b95a7;font-size:14px;margin-top:8px">
-        ${locked ? `⏳ Unlocks in about <b style="color:#f3d27a">${minutes} minute${minutes > 1 ? 's' : ''}</b>` : '🟢 Live now'}
+        ${locked ? `⏳ Unlocks in about <b style="color:#ffffff">${minutes} minute${minutes > 1 ? 's' : ''}</b>` : '🟢 Live now'}
       </div>
     </div>
     <p style="color:#c5cbd6;font-size:14px;line-height:1.6;margin:0 0 22px">

@@ -1,20 +1,32 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSelector } from 'react-redux';
 import transactionService from '../../services/transactionService';
-import signalService from '../../services/signalService';
+import signalService, { getSignalLevelError } from '../../services/signalService';
 import authService from '../../services/authService';
 import { setUser, logout } from '../../redux/slices/authSlice';
 import { connectRealtime } from '../../services/realtimeService';
 import { useDispatch } from 'react-redux';
 import toast from 'react-hot-toast';
-import ThemeToggle from '@/components/ThemeToggle';
-import AdminSidebar from '../../components/AdminSidebar';
+import AdminSidebar, { initials } from '../../components/AdminSidebar';
+import AdminHeader from '@/components/admin/AdminHeader';
+import { IconCheck, IconX, IconClock, IconImage, IconSend, IconTrash, IconSearch, IconInbox, IconTransactions } from '@/components/admin/AdminIcons';
 import '../../styles/adminSignals.css';
-import '../../styles/transaction.css';
+import '../../styles/adminTransactions.css';
+
+const PAGE_SIZE = 25;
+const FILTERS = [
+  { key: 'pending', label: 'Pending' },
+  { key: 'approved', label: 'Approved' },
+  { key: 'rejected', label: 'Rejected' },
+  { key: 'all', label: 'All' },
+];
+const money = (n) => Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const statusKey = (st) => (st === 'approved' || st === 'completed' ? 'approved' : st === 'pending' ? 'pending' : 'rejected');
+const statusLabel = (st) => ({ approved: 'Approved', pending: 'Pending', rejected: 'Rejected' }[statusKey(st)]);
+const formatMethod = (m) => (!m ? '—' : m.toUpperCase().replace(/_/g, ' '));
 
 export default function Transaction() {
   const router = useRouter();
@@ -73,8 +85,9 @@ export default function Transaction() {
     releaseMinutes: ''
   });
 
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const toggleProfile = () => setIsProfileOpen(!isProfileOpen);
+  const [filter, setFilter] = useState('pending');
+  const [search, setSearch] = useState('');
+  const [visible, setVisible] = useState(PAGE_SIZE);
 
   // Custom Modal State
   const [confirmModal, setConfirmModal] = useState({
@@ -127,13 +140,15 @@ export default function Transaction() {
   }, [user]);
 
   const handleApprove = (id) => {
+    const tx = userTransactions.find((t) => t.id === id) || pendingDeposits.find((t) => t.id === id);
     setConfirmModal({
         isOpen: true,
         title: 'Approve Deposit',
-        message: 'Please enter the confirmed amount in USD:',
+        message: 'Check the payment proof, then enter the amount you actually received (USD):',
         type: 'approve',
         data: id,
-        inputValue: '100.00'
+        inputValue: '',                      // starts at 0 — admin types the confirmed amount
+        requestedAmount: tx?.amount ?? null,   // what the member said they sent (shown as a hint)
     });
   };
 
@@ -162,7 +177,7 @@ export default function Transaction() {
             toast.success("Deposit approved and wallet credited.");
             
             const tx = pendingDeposits.find(t => t.id === data);
-            const userObj = tx?.User || {id: tx?.user_id, name: 'User #' + tx?.user_id};
+            const userObj = tx?.User ? { ...tx.User, id: tx.user_id } : { id: tx?.user_id, name: 'Member' };
             openSignalModal(userObj);
         } else if (type === 'reject') {
             await transactionService.rejectTransaction(data);
@@ -229,6 +244,53 @@ export default function Transaction() {
     }
   };
 
+  const deposits = useMemo(() => userTransactions.filter((t) => t.type === 'deposit'), [userTransactions]);
+
+  const summary = useMemo(() => {
+    const today = new Date().toDateString();
+    const sum = (list) => list.reduce((acc, t) => acc + Number(t.amount || 0), 0);
+    const pending = deposits.filter((t) => statusKey(t.status) === 'pending');
+    const approved = deposits.filter((t) => statusKey(t.status) === 'approved');
+    return {
+      pendingCount: pending.length,
+      pendingAmount: sum(pending),
+      approvedCount: approved.length,
+      approvedAmount: sum(approved),
+      rejectedCount: deposits.filter((t) => statusKey(t.status) === 'rejected').length,
+      todayCount: deposits.filter((t) => new Date(t.created_at).toDateString() === today).length,
+    };
+  }, [deposits]);
+
+  const counts = useMemo(() => ({
+    pending: summary.pendingCount,
+    approved: summary.approvedCount,
+    rejected: summary.rejectedCount,
+    all: deposits.length,
+  }), [summary, deposits.length]);
+
+  const filteredRows = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return deposits.filter((t) =>
+      (filter === 'all' || statusKey(t.status) === filter) &&
+      (!q || [t.User?.name, t.User?.email].some((v) => (v || '').toLowerCase().includes(q))));
+  }, [deposits, filter, search]);
+
+  const visibleRows = filteredRows.slice(0, visible);
+
+  useEffect(() => { setVisible(PAGE_SIZE); }, [filter, search]);
+
+  const openProof = async (tx) => {
+    // Open the tab synchronously so the popup isn't blocked, then point it at the signed URL.
+    const win = window.open('', '_blank');
+    try {
+      const url = await transactionService.getProofUrl(tx.proof_image);
+      if (win) win.location.href = url; else window.open(url, '_blank');
+    } catch (e) {
+      if (win) win.close();
+      toast.error(e.response?.data?.message || 'Could not open proof');
+    }
+  };
+
   if (!mounted || (isAuthorizing && !user)) {
       return (
           <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--t-bg)', color: 'var(--t-text)' }}>
@@ -258,188 +320,183 @@ export default function Transaction() {
 
       {/*  MAIN  */}
       <main className="admin-main-content">
-        {/*  HEADER  */}
-        <div className="header-box">
-          <header className="header">
-            <div className="hamburger" onClick={toggleSidebar}>
-              ☰
-            </div>
-            <div className="header-left">
-              <h2>{user?.is_admin ? 'Admin Control' : 'Transaction History'}</h2>
-              <p>{user?.is_admin ? 'Manage user deposits and trades' : 'Track your transactions'}</p>
-            </div>
+        <AdminHeader
+          title="Deposits"
+          subtitle="Review payment proofs, approve deposits and send private signals"
+          onMenu={toggleSidebar}
+        />
 
-            <div className="header-right">
-              <ThemeToggle />
+        <div className="atx">
+          {/* SUMMARY */}
+          <section className="atx-kpis" aria-label="Deposit summary">
+            <div className="atx-kpi atx-kpi--warn">
+              <span className="atx-kpi-label"><IconClock size={15} /> Awaiting review</span>
+              <strong>{summary.pendingCount}</strong>
+              <small>${money(summary.pendingAmount)} requested</small>
+            </div>
+            <div className="atx-kpi atx-kpi--ok">
+              <span className="atx-kpi-label"><IconCheck size={15} /> Approved</span>
+              <strong>${money(summary.approvedAmount)}</strong>
+              <small>{summary.approvedCount} deposit{summary.approvedCount === 1 ? '' : 's'}</small>
+            </div>
+            <div className="atx-kpi">
+              <span className="atx-kpi-label"><IconX size={15} /> Rejected</span>
+              <strong>{summary.rejectedCount}</strong>
+              <small>requests</small>
+            </div>
+            <div className="atx-kpi">
+              <span className="atx-kpi-label"><IconTransactions size={15} /> Today</span>
+              <strong>{summary.todayCount}</strong>
+              <small>new request{summary.todayCount === 1 ? '' : 's'}</small>
+            </div>
+          </section>
 
-              <div style={{ position: 'relative' }}>
-                {user?.profile_image ? (
-                  <img 
-                    src={user.profile_image} 
-                    className="avatar" 
-                    alt="User" 
-                    onClick={toggleProfile} 
-                    style={{ cursor: 'pointer', border: isProfileOpen ? '2px solid var(--primary)' : '2px solid transparent', width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} 
-                  />
-                ) : (
-                  <div 
-                    onClick={toggleProfile}
-                    className="avatar"
-                    style={{ 
-                      width: '40px', 
-                      height: '40px', 
-                      borderRadius: '50%', 
-                      background: 'rgba(212, 175, 55, 0.1)', 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      justifyContent: 'center', 
-                      cursor: 'pointer',
-                      border: isProfileOpen ? '2px solid var(--primary)' : '1px solid var(--tw-10)' 
-                    }}
+          {/* TABLE CARD */}
+          <section className="atx-card">
+            <div className="atx-toolbar">
+              <div className="atx-tabs" role="tablist" aria-label="Filter by status">
+                {FILTERS.map((f) => (
+                  <button
+                    key={f.key}
+                    type="button"
+                    role="tab"
+                    aria-selected={filter === f.key}
+                    className={`atx-tab ${filter === f.key ? 'atx-tab--active' : ''}`}
+                    onClick={() => setFilter(f.key)}
                   >
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                      <circle cx="12" cy="7" r="4"></circle>
-                    </svg>
-                  </div>
-                )}
-
-                {/* Profile Dropdown */}
-                {isProfileOpen && (
-                    <div className="profile-dropdown show" style={{ 
-                        position: 'absolute', 
-                        top: '50px', 
-                        right: '0', 
-                        width: '240px', 
-                        background: 'var(--t-surface)', 
-                        border: '1px solid rgba(212,175,55,0.3)', 
-                        borderRadius: '12px', 
-                        padding: '1.25rem', 
-                        boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
-                        zIndex: 3000
-                    }}>
-                        <div style={{ borderBottom: '1px solid var(--tw-05)', paddingBottom: '12px', marginBottom: '12px' }}>
-                            <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>{mounted ? user?.name : ''}</div>
-                            <div style={{ fontSize: '0.75rem', color: 'var(--t-text-muted)' }}>{mounted ? user?.email : ''}</div>
-                        </div>
-                        <button 
-                            onClick={handleLogout} 
-                            style={{ 
-                                width: '100%', 
-                                padding: '10px', 
-                                background: 'rgba(239, 68, 68, 0.1)', 
-                                border: '1px solid #ef4444', 
-                                color: '#ef4444', 
-                                borderRadius: '8px', 
-                                cursor: 'pointer', 
-                                fontWeight: 700,
-                                fontSize: '0.85rem'
-                            }}
-                        >Log Out</button>
-                    </div>
-                )}
+                    {f.label}
+                    <span className="atx-tab-count">{counts[f.key]}</span>
+                  </button>
+                ))}
               </div>
+
+              <label className="atx-search">
+                <IconSearch size={16} />
+                <input
+                  type="search"
+                  placeholder="Search name or email…"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  aria-label="Search deposits"
+                />
+              </label>
             </div>
-          </header>
-        </div>
 
-        {/* ADMIN DEPOSIT MANAGEMENT CARD */}
-        <div className="card" style={{ marginBottom: '2rem', border: '1px solid rgba(212,175,55,0.3)' }}>
-          <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ color: 'var(--t-gold)' }}>💰 Deposit Management</h3>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>
-                Showing all recent requests (Manual Delete)
+            {loading && deposits.length === 0 ? (
+              <div className="atx-empty"><span className="btn-spinner dark" /> Loading deposits…</div>
+            ) : visibleRows.length === 0 ? (
+              <div className="atx-empty">
+                <IconInbox size={34} />
+                <strong>{search ? 'No matching deposits' : filter === 'pending' ? 'All caught up' : 'Nothing here yet'}</strong>
+                <span>{search ? 'Try a different name or email.' : filter === 'pending' ? 'There are no deposits waiting for review.' : 'Deposits will appear here as members submit them.'}</span>
               </div>
-          </div>
-          <div className="table-box" style={{ padding: '1rem', overflowX: 'auto' }}>
-              {userTransactions.filter(t => t.type === 'deposit').length === 0 ? (
-                  <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
-                      <img src="/images/svg (15).png" style={{ width: '40px', opacity: 0.2, marginBottom: '1rem' }} alt="Empty" />
-                      <p>No deposit requests found.</p>
-                  </div>
-              ) : (
-                <table style={{ width: '100%', minWidth: '800px', borderCollapse: 'collapse' }}>
-                    <thead>
-                        <tr style={{ background: 'var(--tw-05)', textAlign: 'left' }}>
-                            <th style={{ padding: '15px' }}>Date</th>
-                            <th style={{ padding: '15px' }}>User</th>
-                            <th style={{ padding: '15px' }}>Amount</th>
-                            <th style={{ padding: '15px' }}>Status</th>
-                            <th style={{ padding: '15px' }}>Actions</th>
+            ) : (
+              <div className="atx-table-wrap">
+                <table className="atx-table">
+                  <thead>
+                    <tr>
+                      <th>Member</th>
+                      <th>Requested</th>
+                      <th>Method</th>
+                      <th className="atx-right">Amount</th>
+                      <th>Status</th>
+                      <th className="atx-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {visibleRows.map((tx) => {
+                      const memberName = tx.User?.name || `Member #${String(tx.user_id).slice(0, 6)}`;
+                      const d = new Date(tx.created_at);
+                      return (
+                        <tr key={tx.id} className={tx.status === 'pending' ? 'atx-row--pending' : ''}>
+                          <td>
+                            <div className="atx-member">
+                              <span className="atx-avatar">{initials(memberName)}</span>
+                              <div>
+                                <strong>{memberName}</strong>
+                                <small>{tx.User?.email || '—'}</small>
+                              </div>
+                            </div>
+                          </td>
+                          <td>
+                            <div className="atx-date">
+                              <span>{d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                              <small>{d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}</small>
+                            </div>
+                          </td>
+                          <td><span className="atx-chip">{formatMethod(tx.payment_method)}</span></td>
+                          <td className="atx-right atx-amount">${money(tx.amount)}</td>
+                          <td>
+                            <span className={`atx-status atx-status--${statusKey(tx.status)}`}>
+                              <i aria-hidden="true" />{statusLabel(tx.status)}
+                            </span>
+                          </td>
+                          <td className="atx-right">
+                            <div className="atx-actions">
+                              {tx.status === 'pending' && (
+                                <>
+                                  <button type="button" className="atx-btn atx-btn--approve" onClick={() => handleApprove(tx.id)}>
+                                    <IconCheck size={15} /> Approve
+                                  </button>
+                                  <button type="button" className="atx-btn atx-btn--reject" onClick={() => handleReject(tx.id)}>
+                                    Reject
+                                  </button>
+                                </>
+                              )}
+                              <button
+                                type="button"
+                                className="atx-icon-btn"
+                                title="View payment proof"
+                                aria-label="View payment proof"
+                                disabled={!tx.proof_image}
+                                onClick={() => openProof(tx)}
+                              >
+                                <IconImage size={16} />
+                              </button>
+                              <button
+                                type="button"
+                                className="atx-icon-btn"
+                                title="Send private signal"
+                                aria-label="Send private signal"
+                                onClick={() => openSignalModal(tx.User ? { ...tx.User, id: tx.user_id } : { id: tx.user_id, name: memberName })}
+                              >
+                                <IconSend size={16} />
+                              </button>
+                              <button
+                                type="button"
+                                className="atx-icon-btn atx-icon-btn--danger"
+                                title="Delete record"
+                                aria-label="Delete record"
+                                onClick={() => handleDelete(tx.id)}
+                              >
+                                <IconTrash size={16} />
+                              </button>
+                            </div>
+                          </td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        {userTransactions.filter(t => t.type === 'deposit').slice(0, 20).map(tx => (
-                            <tr key={tx.id} style={{ borderBottom: '1px solid var(--tw-05)', background: (tx.status === 'completed' || tx.status === 'approved') ? 'rgba(34, 197, 94, 0.02)' : 'transparent' }}>
-                                <td style={{ padding: '15px' }}>
-                                    {new Date(tx.created_at).toLocaleDateString()}
-                                </td>
-                                <td style={{ padding: '15px' }}>
-                                    <div style={{ color: 'var(--t-text)', fontWeight: 'bold' }}>{tx.User?.name || 'User #' + tx.user_id}</div>
-                                    <small style={{ color: 'var(--text-dim)' }}>{tx.User?.email}</small>
-                                </td>
-                                <td style={{ padding: '15px', color: '#22c55e', fontWeight: 'bold' }}>${tx.amount}</td>
-                                <td style={{ padding: '15px' }}>
-                                    <span style={{ 
-                                        padding: '4px 8px', 
-                                        borderRadius: '4px', 
-                                        fontSize: '0.65rem', 
-                                        fontWeight: 900, 
-                                        background: (tx.status === 'completed' || tx.status === 'approved') ? 'rgba(34, 197, 94, 0.15)' : tx.status === 'pending' ? 'rgba(234, 179, 8, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-                                        color: (tx.status === 'completed' || tx.status === 'approved') ? '#22c55e' : tx.status === 'pending' ? '#eab308' : '#ef4444',
-                                        textTransform: 'uppercase'
-                                    }}>
-                                        {tx.status}
-                                    </span>
-                                </td>
-                                <td style={{ padding: '15px' }}>
-                                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-                                        {tx.status === 'pending' && (
-                                            <>
-                                                <button onClick={() => handleApprove(tx.id)} style={{ background: '#22c55e', color: 'black', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold' }}>Approve</button>
-                                                <button onClick={() => handleReject(tx.id)} style={{ background: '#ef4444', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold' }}>Reject</button>
-                                            </>
-                                        )}
-                                        
-                                        {(tx.status === 'completed' || tx.status === 'approved' || tx.status === 'pending') && (
-                                             <button onClick={() => openSignalModal(tx.User || {id: tx.user_id, name: 'User ' + tx.user_id})} style={{ background: 'var(--primary)', color: 'black', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold' }}>Send Signal</button>
-                                        )}
-
-                                        <button 
-                                            onClick={async () => {
-                                                // Open the tab synchronously so the popup isn't blocked, then point it at the signed URL.
-                                                const win = window.open('', '_blank');
-                                                try {
-                                                    const url = await transactionService.getProofUrl(tx.proof_image);
-                                                    if (win) win.location.href = url; else window.open(url, '_blank');
-                                                } catch (e) {
-                                                    if (win) win.close();
-                                                    toast.error(e.response?.data?.message || 'Could not open proof');
-                                                }
-                                            }}
-                                            style={{ background: 'var(--tw-10)', color: 'var(--t-text)', border: 'none', width: '28px', height: '28px', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                                            title="View Proof"
-                                        >🖼️</button>
-
-                                        <button onClick={() => handleDelete(tx.id)} style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid #ef4444', padding: '6px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold' }}>Delete</button>
-                                    </div>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
+                      );
+                    })}
+                  </tbody>
                 </table>
-              )}
-          </div>
+              </div>
+            )}
+
+            {filteredRows.length > visibleRows.length && (
+              <div className="atx-more">
+                <button type="button" className="atx-btn" onClick={() => setVisible((v) => v + PAGE_SIZE)}>
+                  Show more ({filteredRows.length - visibleRows.length} left)
+                </button>
+              </div>
+            )}
+          </section>
         </div>
-
-
 
         {/* SIGNAL MODAL */}
         {isSignalModalOpen && (
             <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(5px)' }}>
-                <div className="modal-content" style={{ background: 'var(--t-surface)', padding: '2.5rem', borderRadius: '20px', color: 'var(--t-text)', width: '450px', border: '1px solid #d4af37', boxShadow: '0 0 50px rgba(212, 175, 55, 0.2)' }}>
+                <div className="modal-content" style={{ background: 'var(--t-surface)', padding: '2.5rem', borderRadius: '20px', color: 'var(--t-text)', width: '450px', border: '1px solid var(--t-accent)', boxShadow: '0 0 50px rgba(var(--t-accent-rgb), 0.2)' }}>
                     <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-                        <div style={{ background: 'rgba(212, 175, 55, 0.1)', width: '60px', height: '60px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem' }}>
+                        <div style={{ background: 'rgba(var(--t-accent-rgb), 0.1)', width: '60px', height: '60px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem' }}>
                             <img src="/images/i (11).png" style={{ width: '30px', filter: 'invert(1)' }} alt="Signal" />
                         </div>
                         <h2 style={{ fontSize: '1.5rem', color: 'var(--t-gold)' }}>Send Private Signal</h2>
@@ -485,8 +542,14 @@ export default function Transaction() {
                         </div>
 
 
+                        {getSignalLevelError(signalData) && (
+                            <div role="alert" style={{ fontSize: '0.8rem', color: '#dc2626', background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '8px', padding: '8px 10px' }}>
+                                {getSignalLevelError(signalData)}
+                            </div>
+                        )}
+
                         <div style={{ display: 'flex', gap: '15px', marginTop: '0.5rem' }}>
-                            <button onClick={handleSendSignal} disabled={loading} style={{ flex: 2, background: '#d4af37', border: 'none', padding: '14px', borderRadius: '10px', cursor: 'pointer', fontWeight: 700, color: 'black', fontSize: '1rem', transition: '0.3s' }}>
+                            <button onClick={handleSendSignal} disabled={loading || !!getSignalLevelError(signalData)} style={{ opacity: getSignalLevelError(signalData) ? 0.5 : 1, flex: 2, background: 'var(--t-accent)', border: 'none', padding: '14px', borderRadius: '10px', cursor: 'pointer', fontWeight: 700, color: 'var(--t-on-accent)', fontSize: '1rem', transition: '0.3s' }}>
                                 {loading ? <><span className="btn-spinner dark"></span>Sending...</> : 'Broadcast Signal'}
                             </button>
                             <button onClick={() => setIsSignalModalOpen(false)} style={{ flex: 1, background: 'transparent', border: '1px solid var(--t-input-border)', color: 'var(--t-text)', padding: '14px', borderRadius: '10px', cursor: 'pointer' }}>Cancel</button>
@@ -512,11 +575,26 @@ export default function Transaction() {
                         <div style={{ marginBottom: '1.5rem' }}>
                             <label style={{ fontSize: '0.75rem', color: 'var(--t-text-dim)', fontWeight: 800, textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Amount (USD)</label>
                             <input 
+                                type="number"
+                                inputMode="decimal"
+                                min="0"
+                                step="0.01"
+                                placeholder="0.00"
                                 style={{ width: '100%', background: 'var(--t-surface-2)', border: '1px solid var(--t-input-border)', color: 'var(--t-text)', padding: '14px', borderRadius: '12px', fontSize: '1.1rem', fontWeight: 600, outline: 'none', textAlign: 'center' }} 
                                 value={confirmModal.inputValue} 
                                 onChange={(e) => setConfirmModal({...confirmModal, inputValue: e.target.value})}
                                 autoFocus
                             />
+                            {confirmModal.requestedAmount != null && (
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', marginTop: '10px', fontSize: '0.82rem', color: 'var(--t-text-muted)' }}>
+                                    <span>Member says they sent: <strong style={{ color: 'var(--t-text)' }}>${Number(confirmModal.requestedAmount).toFixed(2)}</strong></span>
+                                    <button
+                                        type="button"
+                                        onClick={() => setConfirmModal({ ...confirmModal, inputValue: Number(confirmModal.requestedAmount).toFixed(2) })}
+                                        style={{ background: 'transparent', border: '1px solid var(--tw-15)', color: 'var(--t-gold)', borderRadius: '8px', padding: '4px 10px', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer' }}
+                                    >Use this</button>
+                                </div>
+                            )}
                         </div>
                     )}
 

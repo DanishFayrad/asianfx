@@ -341,7 +341,7 @@ begin
 
     return json_build_object('message', 'Signal taken successfully!', 'signal_id', v_s.id, 'symbol', v_s.symbol, 'type', v_s.type,
                                  'entry_price', v_s.entry_price, 'target_price', v_s.target_price, 'stop_loss', v_s.stop_loss);
-end $;
+end $$;
 
 create or replace function public.approve_deposit(p_tx_id bigint, p_amount numeric)
 returns json language plpgsql security definer set search_path = public as $$

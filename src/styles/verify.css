@@ -1,11 +1,11 @@
 :root {
-  --primary-gold: #d4af37;
+  --primary-gold: var(--t-accent);
   --dark-bg: var(--t-bg);
   --card-bg: var(--t-surface);
   --text-main: var(--t-text);
   --text-dim: var(--t-text-muted);
   --glass: var(--t-field-2);
-  --glass-border: rgba(212, 175, 55, 0.2);
+  --glass-border: rgba(var(--t-accent-rgb), 0.2);
 }
 
 .verify-container {
@@ -43,13 +43,13 @@
 .icon-circle {
   width: 70px;
   height: 70px;
-  background: rgba(212, 175, 55, 0.1);
+  background: rgba(var(--t-accent-rgb), 0.1);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   margin: 0 auto 20px;
-  border: 1px solid rgba(212, 175, 55, 0.2);
+  border: 1px solid rgba(var(--t-accent-rgb), 0.2);
 }
 
 .icon-circle img {
@@ -88,7 +88,7 @@
 
 .verify-option:hover {
   background: var(--t-field);
-  border-color: rgba(212, 175, 55, 0.3);
+  border-color: rgba(var(--t-accent-rgb), 0.3);
   transform: translateY(-2px);
 }
 
@@ -114,7 +114,7 @@
 .icon {
   width: 44px;
   height: 44px;
-  background: rgba(212, 175, 55, 0.1);
+  background: rgba(var(--t-accent-rgb), 0.1);
   border-radius: 12px;
   display: flex;
   align-items: center;
@@ -137,7 +137,7 @@
 
 .verify-option.active {
   border: 1px solid var(--primary-gold);
-  background: rgba(212, 175, 55, 0.05);
+  background: rgba(var(--t-accent-rgb), 0.05);
 }
 
 .verify-option.active .radio {
@@ -161,14 +161,14 @@
   margin-top: 20px;
   width: 100%;
   padding: 14px;
-  background: var(--primary-gold);
+    background: var(--t-gradient);
   border: none;
   border-radius: 12px;
-  color: #000;
   font-size: 1rem;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.3s ease;
+    color: var(--t-on-accent);
 }
 
 .continue-btn:hover {

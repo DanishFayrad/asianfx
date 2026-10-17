@@ -70,7 +70,7 @@ export default function AdminDashboardStats({ adminStats, onNav = () => {} }) {
                 </div>
 
                 <div style={card} onClick={() => onNav('/admin/signals')}>
-                    <div style={{ background: '#d4af37', color: 'black', width: '50px', height: '50px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem' }}>📢</div>
+                    <div style={{ background: 'var(--t-accent)', color: 'var(--t-on-accent)', width: '50px', height: '50px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem' }}>📢</div>
                     <div>
                         <h4 style={{ margin: 0, fontSize: '1.1rem' }}>Global Center</h4>
                         <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-dim)' }}>Manage signals & market trends</p>

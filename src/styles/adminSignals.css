@@ -1,7 +1,7 @@
 /* ADMIN SIGNALS HIGH-FIDELITY CSS */
 :root {
-  --admin-primary: #d4af37;
-  --admin-primary-hover: #b8962e;
+  --admin-primary: var(--t-accent);
+  --admin-primary-hover: var(--t-accent-strong);
   --admin-bg-main: var(--t-bg);
   --admin-bg-card: var(--t-surface);
   --admin-bg-sidebar: var(--t-bg);
@@ -74,12 +74,12 @@
 }
 
 .admin-item:hover {
-    background: rgba(212, 175, 55, 0.1);
+    background: rgba(var(--t-accent-rgb), 0.1);
     color: var(--t-gold);
 }
 
 .admin-item.active {
-    background: rgba(212, 175, 55, 0.1);
+    background: rgba(var(--t-accent-rgb), 0.1);
     border-right: 3px solid var(--admin-primary);
     border-radius: 8px 0 0 8px;
     color: var(--t-gold);
@@ -184,12 +184,12 @@
 }
 
 .admin-asset-card:hover {
-    border-color: rgba(212, 175, 55, 0.4);
+    border-color: rgba(var(--t-accent-rgb), 0.4);
 }
 
 .admin-asset-card.active {
     border-color: var(--admin-primary);
-    background: rgba(212, 175, 55, 0.05);
+    background: rgba(var(--t-accent-rgb), 0.05);
 }
 
 .admin-asset-top {
@@ -283,8 +283,7 @@
 
 .admin-btn-broadcast {
     width: 100%;
-    background: var(--admin-primary);
-    color: black;
+    background: var(--t-gradient);
     border: none;
     padding: 16px;
     border-radius: 12px;
@@ -296,6 +295,7 @@
     align-items: center;
     justify-content: center;
     gap: 8px;
+    color: var(--t-on-accent);
 }
 
 .admin-btn-broadcast:hover {

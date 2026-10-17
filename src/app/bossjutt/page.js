@@ -78,7 +78,7 @@ export default function SecretPage() {
                         style={{ width: '100%', padding: '0.75rem', marginBottom: '1.5rem', background: 'var(--t-surface-2)', border: '1px solid var(--t-input-border)', color: 'var(--t-text)', borderRadius: '6px' }}
                         required
                     />
-                    <button type="submit" disabled={loading} style={{ width: '100%', padding: '0.75rem', background: '#d4af37', color: 'black', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: loading ? 'not-allowed' : 'pointer' }}>
+                    <button type="submit" disabled={loading} style={{ width: '100%', padding: '0.75rem', background: 'var(--t-accent)', color: 'var(--t-on-accent)', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: loading ? 'not-allowed' : 'pointer' }}>
                         {loading ? 'Logging in...' : 'Login'}
                     </button>
                 </form>

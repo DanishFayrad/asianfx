@@ -1,11 +1,11 @@
 :root {
-  --primary: #d4af37;
+  --primary: var(--t-accent);
   --bg-dark: var(--t-bg);
   --bg-card: var(--t-surface);
   --bg-hover: var(--t-surface-2);
   --text-main: var(--t-text);
   --text-dim: var(--t-text-muted);
-  --border: rgba(212, 175, 55, 0.2);
+  --border: rgba(var(--t-accent-rgb), 0.2);
   --success: #10b981;
   --danger: #ef4444;
   --warning: #f59e0b;
@@ -94,7 +94,7 @@ body {
 }
 
 .menu.active {
-  background: rgba(212, 175, 55, 0.1);
+  background: rgba(var(--t-accent-rgb), 0.1);
   color: var(--t-gold);
   border-left-color: var(--primary);
 }
@@ -160,7 +160,7 @@ body {
 
 .balance {
   background: var(--primary);
-  color: #000;
+  color: var(--t-on-accent);
   border: none;
   padding: 8px 16px;
   border-radius: 8px;
@@ -261,7 +261,7 @@ body {
 
 .filter-btn {
   background: var(--primary);
-  color: #000;
+  color: var(--t-on-accent);
   border: none;
   padding: 10px 24px;
   border-radius: 8px;
@@ -345,7 +345,7 @@ td {
 
 .pagination button.active {
   background: var(--primary);
-  color: #000;
+  color: var(--t-on-accent);
   border-color: var(--primary);
 }
 

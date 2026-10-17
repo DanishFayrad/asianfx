@@ -1,0 +1,302 @@
+/* =====================================================================
+   Admin → Deposits page (.atx-*). Theme-aware via tokens in globals.css.
+   ===================================================================== */
+
+.atx {
+  padding: 28px 32px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 1280px;
+}
+
+/* ---------- KPI strip ---------- */
+.atx-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.atx-kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: var(--t-surface);
+  border: 1px solid var(--tw-08);
+}
+
+.atx-kpi-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--t-text-muted);
+}
+
+.atx-kpi strong {
+  font-size: 1.45rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--t-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.atx-kpi small { font-size: 0.78rem; color: var(--t-text-dim); }
+
+.atx-kpi--warn { border-color: rgba(245, 158, 11, 0.35); }
+.atx-kpi--warn .atx-kpi-label { color: #d97706; }
+.atx-kpi--ok .atx-kpi-label { color: #16a34a; }
+
+/* ---------- Card + toolbar ---------- */
+.atx-card {
+  background: var(--t-surface);
+  border: 1px solid var(--tw-08);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.atx-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--tw-08);
+}
+
+.atx-tabs {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 12px;
+  background: var(--tw-03);
+  border: 1px solid var(--tw-08);
+}
+
+.atx-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--t-text-muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.atx-tab:hover { color: var(--t-text); }
+
+.atx-tab--active {
+  background: var(--t-surface-2);
+  color: var(--t-text);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+.atx-tab-count {
+  min-width: 20px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  background: var(--tw-08);
+  color: var(--t-text-muted);
+}
+
+.atx-tab--active .atx-tab-count { background: rgba(var(--t-accent-rgb), 0.18); color: var(--t-gold); }
+
+.atx-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 240px;
+  padding: 0 12px;
+  height: 38px;
+  border-radius: 10px;
+  color: var(--t-text-dim);
+  background: var(--t-field);
+  border: 1px solid var(--tw-10);
+  transition: border-color 0.15s ease;
+}
+
+.atx-search:focus-within { border-color: var(--t-gold); }
+
+.atx-search input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--t-text);
+  font: inherit;
+  font-size: 0.88rem;
+}
+
+/* ---------- Table ---------- */
+.atx-table-wrap { overflow-x: auto; }
+
+.atx-table {
+  width: 100%;
+  min-width: 860px;
+  border-collapse: collapse;
+}
+
+.atx-table th {
+  text-align: left;
+  padding: 11px 16px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--t-text-dim);
+  background: var(--tw-02);
+  border-bottom: 1px solid var(--tw-08);
+  white-space: nowrap;
+}
+
+.atx-table td {
+  padding: 13px 16px;
+  font-size: 0.88rem;
+  color: var(--t-text);
+  border-bottom: 1px solid var(--tw-05);
+  vertical-align: middle;
+}
+
+.atx-table tbody tr { transition: background-color 0.12s ease; }
+.atx-table tbody tr:hover { background: var(--tw-02); }
+.atx-table tbody tr:last-child td { border-bottom: none; }
+.atx-row--pending { box-shadow: inset 3px 0 0 #f59e0b; }
+
+.atx-right { text-align: right !important; }
+
+.atx-member { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.atx-member div { display: flex; flex-direction: column; min-width: 0; line-height: 1.3; }
+.atx-member strong { font-weight: 600; }
+.atx-member small { font-size: 0.78rem; color: var(--t-text-dim); }
+.atx-avatar { width: 34px; height: 34px; font-size: 0.75rem; }
+
+.atx-date { display: flex; flex-direction: column; line-height: 1.3; white-space: nowrap; }
+.atx-date small { font-size: 0.75rem; color: var(--t-text-dim); }
+
+.atx-chip {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--t-text-muted);
+  background: var(--tw-05);
+  border: 1px solid var(--tw-08);
+  white-space: nowrap;
+}
+
+.atx-amount {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.atx-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.atx-status i { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.atx-status--pending  { color: #d97706; background: rgba(245, 158, 11, 0.12); }
+.atx-status--approved { color: #16a34a; background: rgba(34, 197, 94, 0.12); }
+.atx-status--rejected { color: #dc2626; background: rgba(239, 68, 68, 0.1); }
+
+/* ---------- Actions ---------- */
+.atx-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.atx-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  color: var(--t-text);
+  background: var(--t-surface-2);
+  border: 1px solid var(--tw-10);
+  transition: filter 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.atx-btn:hover { border-color: var(--tw-20); }
+
+.atx-btn--approve { color: #fff; background: #16a34a; border-color: #16a34a; }
+.atx-btn--approve:hover { filter: brightness(1.08); border-color: #16a34a; }
+
+.atx-btn--reject { color: #dc2626; background: transparent; border-color: rgba(239, 68, 68, 0.45); }
+.atx-btn--reject:hover { background: rgba(239, 68, 68, 0.08); border-color: #dc2626; }
+
+.atx-icon-btn {
+  width: 32px;
+  height: 32px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--t-text-muted);
+  background: transparent;
+  border: 1px solid var(--tw-10);
+  transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.atx-icon-btn:hover:not(:disabled) { color: var(--t-gold); border-color: rgba(var(--t-accent-rgb), 0.5); background: rgba(var(--t-accent-rgb), 0.08); }
+.atx-icon-btn--danger:hover:not(:disabled) { color: #dc2626; border-color: rgba(239, 68, 68, 0.5); background: rgba(239, 68, 68, 0.08); }
+.atx-icon-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* ---------- Empty / more ---------- */
+.atx-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 56px 16px;
+  text-align: center;
+  color: var(--t-text-dim);
+  font-size: 0.88rem;
+}
+
+.atx-empty strong { color: var(--t-text); font-size: 1rem; margin-top: 4px; }
+
+.atx-more { display: flex; justify-content: center; padding: 14px; border-top: 1px solid var(--tw-05); }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1100px) {
+  .atx-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 900px) {
+  .atx { padding: 18px 16px 40px; }
+}
+
+@media (max-width: 600px) {
+  .atx-kpi strong { font-size: 1.2rem; }
+  .atx-toolbar { flex-direction: column; align-items: stretch; }
+  .atx-tabs { overflow-x: auto; }
+  .atx-search { min-width: 0; }
+}

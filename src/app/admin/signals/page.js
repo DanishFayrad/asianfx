@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { useSelector, useDispatch } from 'react-redux';
-import signalService from '../../../services/signalService';
+import signalService, { getSignalLevelError } from '../../../services/signalService';
 import authService from '../../../services/authService';
 import transactionService from '../../../services/transactionService';
 import { serverTimeOffset, updateServerTimeOffset } from '../../../services/serverTime';
@@ -425,7 +425,13 @@ export default function AdminSignals() {
                     </div>
                 )}
 
-                <button type="submit" className="admin-btn-broadcast" disabled={loading}>
+                {getSignalLevelError({ type, ...formData }) && (
+                    <div role="alert" style={{ marginTop: '1rem', fontSize: '0.8rem', color: '#dc2626', background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '8px', padding: '8px 10px' }}>
+                        {getSignalLevelError({ type, ...formData })}
+                    </div>
+                )}
+
+                <button type="submit" className="admin-btn-broadcast" disabled={loading || !!getSignalLevelError({ type, ...formData })}>
                    {loading ? <><span className="btn-spinner dark"></span>Processing...</> : (
                        <>
                         <img src="/images/svg (13).png" style={{ height: '18px', filter: 'invert(1)' }} alt="Broadcast" />
@@ -451,7 +457,7 @@ export default function AdminSignals() {
                 <p className="admin-subtitle">Set a breaking news style timer for all users</p>
                 
                 {activeGlobalTimer ? (
-                    <div style={{ background: 'rgba(212, 175, 55, 0.1)', border: '1px solid #d4af37', borderRadius: '12px', padding: '1.5rem', textAlign: 'center', marginBottom: '1.5rem' }}>
+                    <div style={{ background: 'rgba(var(--t-accent-rgb), 0.1)', border: '1px solid var(--t-accent)', borderRadius: '12px', padding: '1.5rem', textAlign: 'center', marginBottom: '1.5rem' }}>
                         <div style={{ fontSize: '0.75rem', color: 'var(--t-gold)', fontWeight: 800, textTransform: 'uppercase', marginBottom: '5px' }}>Active Timer</div>
                         <div style={{ fontSize: '2.5rem', fontWeight: 900, color: 'var(--t-gold)', fontFamily: 'monospace' }}>
                             {(() => {
@@ -596,7 +602,7 @@ export default function AdminSignals() {
                                        toast.success("Timer extended by 2 minutes");
                                    } catch (e) { toast.error("Failed to extend timer"); }
                                }}
-                               style={{ background: 'rgba(212, 175, 55, 0.1)', border: '1px solid #d4af37', color: 'var(--t-gold)', fontSize: '10px', padding: '2px 8px', borderRadius: '4px', cursor: 'pointer' }}
+                               style={{ background: 'rgba(var(--t-accent-rgb), 0.1)', border: '1px solid var(--t-accent)', color: 'var(--t-gold)', fontSize: '10px', padding: '2px 8px', borderRadius: '4px', cursor: 'pointer' }}
                            >
                                + 2 Min
                            </button>

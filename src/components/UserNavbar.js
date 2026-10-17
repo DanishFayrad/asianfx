@@ -74,7 +74,7 @@ export default function UserNavbar({ active, user, onLogout }) {
                                 onClick={toggleProfile}
                                 style={{
                                     width: '40px', height: '40px', borderRadius: '50%',
-                                    background: 'rgba(212, 175, 55, 0.1)',
+                                    background: 'rgba(var(--t-accent-rgb), 0.1)',
                                     display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
                                     border: isProfileOpen ? '2px solid var(--primary)' : '1px solid var(--tw-10)'
                                 }}

@@ -1,0 +1,266 @@
+/* =====================================================================
+   Admin shell — sidebar (.asb), page header (.ahd) and shared admin UI.
+   All colors come from the theme tokens in globals.css (light + dark).
+   ===================================================================== */
+
+/* ---------- Sidebar ---------- */
+.asb {
+  width: 248px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 22px 14px 14px;
+  background: var(--t-surface);
+  border-right: 1px solid var(--tw-08);
+  height: 100vh;
+  position: sticky;
+  top: 0;
+}
+
+.asb-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 10px 22px;
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--t-text);
+}
+
+.asb-brand b { color: var(--t-gold); font-weight: 700; }
+
+.asb-brand em {
+  margin-left: auto;
+  font-style: normal;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--t-gold);
+  border: 1px solid rgba(var(--t-accent-rgb), 0.35);
+  background: rgba(var(--t-accent-rgb), 0.08);
+  padding: 3px 7px;
+  border-radius: 999px;
+}
+
+.asb-section {
+  padding: 0 12px 8px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--t-text-dim);
+}
+
+.asb-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.asb-link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 0.92rem;
+  font-weight: 500;
+  color: var(--t-text-muted);
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.asb-link svg { flex-shrink: 0; opacity: 0.9; }
+
+.asb-link:hover {
+  background: var(--tw-05);
+  color: var(--t-text);
+}
+
+.asb-link--active {
+  background: rgba(var(--t-accent-rgb), 0.12);
+  color: var(--t-gold);
+  font-weight: 600;
+}
+
+.asb-link--active::before {
+  content: '';
+  position: absolute;
+  left: -14px;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--t-gold);
+}
+
+.asb-badge {
+  margin-left: auto;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-style: normal;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #fff;
+  background: #ef4444;
+}
+
+.asb-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 10px 4px;
+  margin-top: 12px;
+  border-top: 1px solid var(--tw-08);
+}
+
+.asb-avatar,
+.atx-avatar {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-weight: 700;
+  color: var(--t-on-accent);
+  background: linear-gradient(135deg, var(--t-accent-2), var(--t-accent));
+}
+
+.asb-avatar { width: 36px; height: 36px; font-size: 0.8rem; }
+
+.asb-user-text {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.3;
+}
+
+.asb-user-text strong {
+  font-size: 0.85rem;
+  color: var(--t-text);
+}
+
+.asb-user-text small {
+  font-size: 0.72rem;
+  color: var(--t-text-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.asb-logout {
+  margin-left: auto;
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  cursor: pointer;
+  color: var(--t-text-muted);
+  background: transparent;
+  border: 1px solid var(--tw-10);
+  transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.asb-logout:hover {
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.5);
+  background: rgba(239, 68, 68, 0.08);
+}
+
+/* ---------- Page header (also restyles the older .admin-top-navbar) ---------- */
+.ahd,
+.admin-top-navbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 32px;
+  background: color-mix(in srgb, var(--t-bg) 82%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--tw-08);
+}
+
+.ahd-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
+
+.ahd-title,
+.admin-page-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--t-text);
+}
+
+.ahd-subtitle,
+.admin-subtitle {
+  margin-top: 3px;
+  font-size: 0.85rem;
+  color: var(--t-text-muted);
+}
+
+.ahd-actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+
+.ahd-menu {
+  display: none;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border-radius: 10px;
+  cursor: pointer;
+  color: var(--t-text);
+  background: var(--t-surface);
+  border: 1px solid var(--tw-10);
+}
+
+/* ---------- Responsive: sidebar becomes a drawer ---------- */
+@media (max-width: 900px) {
+  .asb {
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 2000;
+    transform: translateX(-105%);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+  }
+
+  .asb--open { transform: translateX(0); box-shadow: 20px 0 50px rgba(0, 0, 0, 0.35); }
+
+  .ahd-menu { display: grid; }
+
+  .ahd,
+  .admin-top-navbar { padding: 14px 16px; flex-direction: row; align-items: center; }
+
+  .ahd-title,
+  .admin-page-title { font-size: 1.15rem; }
+
+  .ahd-subtitle,
+  .admin-subtitle { display: none; }
+}
+
+/* Older admin pages use .admin-btn-hamburger — show it whenever the sidebar is a drawer */
+@media (max-width: 900px) {
+  .admin-btn-hamburger {
+    display: grid !important;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    margin-right: 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    color: var(--t-text);
+    background: var(--t-surface);
+    border: 1px solid var(--tw-10);
+  }
+}

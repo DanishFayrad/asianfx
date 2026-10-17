@@ -1,11 +1,11 @@
 :root {
-  --primary-gold: #d4af37;
+  --primary-gold: var(--t-accent);
   --dark-bg: var(--t-bg);
   --card-bg: var(--t-surface);
   --text-main: var(--t-text);
   --text-dim: var(--t-text-muted);
   --glass: var(--t-field-2);
-  --glass-border: rgba(212, 175, 55, 0.2);
+  --glass-border: rgba(var(--t-accent-rgb), 0.2);
 }
 
 .otp-container {
@@ -43,13 +43,13 @@
 .icon-circle {
   width: 70px;
   height: 70px;
-  background: rgba(212, 175, 55, 0.1);
+  background: rgba(var(--t-accent-rgb), 0.1);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   margin: 0 auto 20px;
-  border: 1px solid rgba(212, 175, 55, 0.2);
+  border: 1px solid rgba(var(--t-accent-rgb), 0.2);
 }
 
 .icon-circle img {
@@ -97,16 +97,15 @@ h2 {
 .otp-inputs input:focus {
   border-color: var(--primary-gold);
   background: var(--t-field);
-  box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.1);
+  box-shadow: 0 0 0 4px rgba(var(--t-accent-rgb), 0.1);
 }
 
 .verify-btn {
   width: 100%;
   padding: 14px;
-  background: var(--primary-gold);
+    background: var(--t-gradient);
   border: none;
   border-radius: 12px;
-  color: #000;
   font-size: 1rem;
   font-weight: 700;
   cursor: pointer;
@@ -116,6 +115,7 @@ h2 {
   align-items: center;
   gap: 10px;
   margin-bottom: 20px;
+    color: var(--t-on-accent);
 }
 
 .verify-btn:hover {

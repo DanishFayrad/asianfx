@@ -40,6 +40,7 @@ export default function Login() {
   };
 
   return (
+    <div className="login-page">
     <div className="login-container">
       <div className="login-icon">
         <img src="/images/logo-mark.svg" className="logo" alt="AsianFX Signals" style={{ width: '100%', height: '100%' }} />
@@ -112,6 +113,7 @@ export default function Login() {
       <div className="footer">
         Don't have an account? <Link href="/register">Sign up</Link>
       </div>
+    </div>
     </div>
   );
 }

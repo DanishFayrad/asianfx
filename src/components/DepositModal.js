@@ -99,10 +99,10 @@ export default function DepositModal({ isOpen, onClose }) {
           maxHeight: '92vh',
           overflowY: 'auto',
           borderRadius: '24px',
-          border: '1px solid rgba(212, 175, 55, 0.3)',
+          border: '1px solid rgba(var(--t-accent-rgb), 0.3)',
           padding: '30px 26px',
           position: 'relative',
-          boxShadow: '0 25px 60px rgba(0, 0, 0, 0.85), 0 0 40px rgba(212, 175, 55, 0.1)',
+          boxShadow: '0 25px 60px rgba(0, 0, 0, 0.85), 0 0 40px rgba(var(--t-accent-rgb), 0.1)',
           color: 'var(--t-text)',
           fontFamily: 'inherit'
         }}
@@ -151,8 +151,8 @@ export default function DepositModal({ isOpen, onClose }) {
             width: '54px',
             height: '54px',
             borderRadius: '16px',
-            background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.25), rgba(212, 175, 55, 0.05))',
-            border: '1px solid rgba(212, 175, 55, 0.4)',
+            background: 'linear-gradient(135deg, rgba(var(--t-accent-rgb), 0.25), rgba(var(--t-accent-rgb), 0.05))',
+            border: '1px solid rgba(var(--t-accent-rgb), 0.4)',
             marginBottom: '12px'
           }}>
             <span style={{ fontSize: '26px' }}>💰</span>
@@ -168,7 +168,7 @@ export default function DepositModal({ isOpen, onClose }) {
         {/* Binance / USDT TRC20 Wallet Box */}
         <div style={{
           background: 'var(--tw-03)',
-          border: '1px solid rgba(212, 175, 55, 0.25)',
+          border: '1px solid rgba(var(--t-accent-rgb), 0.25)',
           borderRadius: '16px',
           padding: '16px 18px',
           marginBottom: '20px'
@@ -176,7 +176,7 @@ export default function DepositModal({ isOpen, onClose }) {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
             <span style={{ fontSize: '0.8rem', color: 'var(--t-text-muted)', fontWeight: 600 }}>USDT Deposit Address:</span>
             <div style={{ display: 'flex', gap: '6px' }}>
-              <span style={{ background: 'rgba(212, 175, 55, 0.15)', color: 'var(--t-gold)', padding: '2px 8px', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 700 }}>
+              <span style={{ background: 'rgba(var(--t-accent-rgb), 0.15)', color: 'var(--t-gold)', padding: '2px 8px', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 700 }}>
                 TRC20
               </span>
               <span style={{ background: 'rgba(34, 197, 94, 0.15)', color: '#22c55e', padding: '2px 8px', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 700 }}>
@@ -190,7 +190,7 @@ export default function DepositModal({ isOpen, onClose }) {
             alignItems: 'center',
             justifyContent: 'space-between',
             background: '#090d16',
-            border: '1px dashed rgba(212, 175, 55, 0.4)',
+            border: '1px dashed rgba(var(--t-accent-rgb), 0.4)',
             borderRadius: '10px',
             padding: '10px 14px',
             gap: '8px'
@@ -208,7 +208,7 @@ export default function DepositModal({ isOpen, onClose }) {
               type="button"
               onClick={handleCopy}
               style={{
-                background: copied ? '#22c55e' : '#d4af37',
+                background: copied ? '#22c55e' : 'var(--t-accent)',
                 color: '#000000',
                 border: 'none',
                 padding: '6px 12px',
@@ -257,7 +257,7 @@ export default function DepositModal({ isOpen, onClose }) {
                   outline: 'none',
                   transition: 'border-color 0.2s'
                 }}
-                onFocus={(e) => e.target.style.borderColor = '#d4af37'}
+                onFocus={(e) => e.target.style.borderColor = 'var(--t-accent)'}
                 onBlur={(e) => e.target.style.borderColor = 'var(--tw-10)'}
               />
             </div>
@@ -270,8 +270,8 @@ export default function DepositModal({ isOpen, onClose }) {
                   type="button"
                   onClick={() => setDepositAmount(amt.toString())}
                   style={{
-                    background: depositAmount === amt.toString() ? 'rgba(212, 175, 55, 0.25)' : 'var(--tw-05)',
-                    border: depositAmount === amt.toString() ? '1px solid #d4af37' : '1px solid var(--tw-10)',
+                    background: depositAmount === amt.toString() ? 'rgba(var(--t-accent-rgb), 0.25)' : 'var(--tw-05)',
+                    border: depositAmount === amt.toString() ? '1px solid var(--t-accent)' : '1px solid var(--tw-10)',
                     color: depositAmount === amt.toString() ? '#facc15' : '#cbd5e1',
                     padding: '4px 10px',
                     borderRadius: '8px',
@@ -293,7 +293,7 @@ export default function DepositModal({ isOpen, onClose }) {
               Upload Payment Proof (Screenshot)
             </label>
             <div style={{
-              border: '2px dashed rgba(212, 175, 55, 0.3)',
+              border: '2px dashed rgba(var(--t-accent-rgb), 0.3)',
               borderRadius: '14px',
               padding: '18px',
               textAlign: 'center',
@@ -323,7 +323,7 @@ export default function DepositModal({ isOpen, onClose }) {
                     style={{
                       maxHeight: '120px',
                       borderRadius: '10px',
-                      border: '1px solid #d4af37',
+                      border: '1px solid var(--t-accent)',
                       marginBottom: '8px',
                       boxShadow: '0 4px 12px rgba(0,0,0,0.4)'
                     }}
@@ -352,15 +352,15 @@ export default function DepositModal({ isOpen, onClose }) {
             disabled={isSubmitting}
             style={{
               width: '100%',
-              background: 'linear-gradient(135deg, #facc15 0%, #d4af37 100%)',
-              color: '#000000',
+              background: 'linear-gradient(135deg, #facc15 0%, var(--t-accent) 100%)',
+              color: 'var(--t-on-accent)',
               border: 'none',
               padding: '14px',
               borderRadius: '12px',
               fontWeight: 800,
               fontSize: '1rem',
               cursor: isSubmitting ? 'not-allowed' : 'pointer',
-              boxShadow: '0 8px 24px rgba(212, 175, 55, 0.3)',
+              boxShadow: '0 8px 24px rgba(var(--t-accent-rgb), 0.3)',
               transition: 'all 0.2s ease',
               display: 'flex',
               alignItems: 'center',

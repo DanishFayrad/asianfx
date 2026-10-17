@@ -32,7 +32,7 @@ const ICONS = {
 };
 
 const MARKETS = [
-    { code: 'XAU', name: 'Gold', pair: 'XAU/USD', note: 'Our flagship market — the most actively signalled pair.', color: '#d4af37' },
+    { code: 'XAU', name: 'Gold', pair: 'XAU/USD', note: 'Our flagship market — the most actively signalled pair.', color: 'var(--t-accent)' },
     { code: 'XAG', name: 'Silver', pair: 'XAG/USD', note: 'Precious-metal setups with tight, defined risk.', color: '#c0c7d1' },
     { code: 'FX', name: 'Forex', pair: 'Major pairs', note: 'EUR/USD, GBP/USD, USD/JPY and other majors.', color: '#60a5fa' },
     { code: '₿', name: 'Crypto', pair: 'BTC/USDT', note: 'Bitcoin signals for 24/7 market opportunities.', color: '#f7931a' },
@@ -119,12 +119,12 @@ export default function Home() {
                         <svg className={styles.mockChart} viewBox="0 0 300 80" preserveAspectRatio="none" aria-hidden="true">
                             <defs>
                                 <linearGradient id="mockFill" x1="0" x2="0" y1="0" y2="1">
-                                    <stop offset="0%" stopColor="#d4af37" stopOpacity="0.35" />
-                                    <stop offset="100%" stopColor="#d4af37" stopOpacity="0" />
+                                    <stop offset="0%" stopColor="var(--t-accent)" stopOpacity="0.35" />
+                                    <stop offset="100%" stopColor="var(--t-accent)" stopOpacity="0" />
                                 </linearGradient>
                             </defs>
                             <path d="M0 60 L30 55 L60 62 L90 48 L120 52 L150 38 L180 42 L210 28 L240 32 L270 18 L300 12 L300 80 L0 80 Z" fill="url(#mockFill)" />
-                            <path d="M0 60 L30 55 L60 62 L90 48 L120 52 L150 38 L180 42 L210 28 L240 32 L270 18 L300 12" fill="none" stroke="#d4af37" strokeWidth="2" />
+                            <path d="M0 60 L30 55 L60 62 L90 48 L120 52 L150 38 L180 42 L210 28 L240 32 L270 18 L300 12" fill="none" stroke="var(--t-accent)" strokeWidth="2" />
                         </svg>
                         <div className={styles.mockFoot}>
                             <span>Signal fee</span>

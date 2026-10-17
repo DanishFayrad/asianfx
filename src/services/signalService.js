@@ -28,6 +28,19 @@ const validateSignal = ({ symbol, type, entry_price, target_price, stop_loss }) 
     }
 };
 
+// For live form hints: returns a human message, or null when the levels are valid.
+// Empty fields return null (the form just isn't finished yet).
+export const getSignalLevelError = ({ type, entry_price, target_price, stop_loss }) => {
+    const nums = [entry_price, target_price, stop_loss];
+    if (nums.some((v) => v === '' || v === null || v === undefined)) return null;
+    try {
+        validateSignal({ symbol: 'X', type, entry_price: parseFloat(entry_price), target_price: parseFloat(target_price), stop_loss: parseFloat(stop_loss) });
+        return null;
+    } catch (e) {
+        return e.message;
+    }
+};
+
 const createSignal = async (signalData) => {
     const minutes = parseFloat(signalData.timer_minutes);
     const row = {

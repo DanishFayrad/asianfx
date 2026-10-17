@@ -81,7 +81,7 @@ export default function AdminUsersTable({ users = [], loading = false }) {
                                     <div style={{ display: 'flex', flexDirection: 'column' }}>
                                         <span style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
                                             {u.name || 'Unnamed'}
-                                            {u.is_admin && <span style={{ fontSize: '0.6rem', background: 'rgba(212,175,55,0.15)', color: 'var(--admin-primary)', padding: '2px 6px', borderRadius: '6px', letterSpacing: '0.5px' }}>ADMIN</span>}
+                                            {u.is_admin && <span style={{ fontSize: '0.6rem', background: 'rgba(var(--t-accent-rgb), 0.15)', color: 'var(--admin-primary)', padding: '2px 6px', borderRadius: '6px', letterSpacing: '0.5px' }}>ADMIN</span>}
                                         </span>
                                         <span style={{ fontSize: '0.75rem', color: 'var(--admin-text-muted)' }}>{u.email}</span>
                                     </div>

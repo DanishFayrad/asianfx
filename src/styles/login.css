@@ -5,11 +5,15 @@
   box-sizing: border-box;
 }
 
-body{
-  height: 100vh;
+/* Scoped to the login page only — a global body rule here used to leak to every
+   page visited after login (e.g. the wallet page got vertically centered). */
+.login-page{
+  min-height: 100vh;
+  width: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
+  padding: 24px 16px;
   color: var(--t-text);
 }
 
@@ -119,10 +123,11 @@ h1{
   width: 100%;
   padding: 12px;
   border: none;
-  border-radius: 10px;
-  background: #d4af37;
+  border-radius: 10px; 
+  background: var(--t-gradient);
   font-weight: 600;
   cursor: pointer;
+  color: var(--t-on-accent);
 }
 
 /* DIVIDER */

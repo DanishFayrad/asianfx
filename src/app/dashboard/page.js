@@ -185,7 +185,7 @@ export default function Dashboard() {
             toast(toastMsg, {
                 style: {
                     background: 'var(--primary)',
-                    color: 'black',
+                    color: 'var(--t-on-accent)',
                     fontWeight: 700
                 },
                 duration: 6000
@@ -490,7 +490,7 @@ export default function Dashboard() {
               <ThemeToggle />
               <button
                 onClick={() => router.push('/admin/signals')}
-                style={{ background: 'var(--admin-primary)', color: '#0a0b10', border: 'none', padding: '10px 18px', borderRadius: '8px', cursor: 'pointer', fontWeight: 700 }}
+                style={{ background: 'var(--admin-primary)', color: 'var(--t-on-accent)', border: 'none', padding: '10px 18px', borderRadius: '8px', cursor: 'pointer', fontWeight: 700 }}
               >
                 + New Signal
               </button>
@@ -535,12 +535,12 @@ export default function Dashboard() {
       )}
 
       {mounted && !user?.is_admin && signalBanner && (
-        <div style={{ background: 'rgba(212, 175, 55, 0.15)', borderBottom: '2px solid #d4af37', padding: '12px 1rem', color: 'var(--t-gold)', fontSize: '0.9rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '15px', zIndex: 1100, position: 'relative' }}>
+        <div style={{ background: 'rgba(var(--t-accent-rgb), 0.15)', borderBottom: '2px solid var(--t-accent)', padding: '12px 1rem', color: 'var(--t-gold)', fontSize: '0.9rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '15px', zIndex: 1100, position: 'relative' }}>
             <span style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span style={{ fontSize: '1.2rem' }}>📈</span> 
                 {signalBanner.title}: {signalBanner.message}
                 {signalBanner.signal?.release_at && new Date(signalBanner.signal.release_at).getTime() > currentTime.getTime() && (
-                  <span style={{ background: 'rgba(0,0,0,0.5)', padding: '4px 12px', borderRadius: '6px', marginLeft: '10px', border: '1px solid #d4af37', display: 'inline-flex', alignItems: 'center', gap: '5px', animation: 'pulse 2s infinite' }}>
+                  <span style={{ background: 'rgba(0,0,0,0.5)', padding: '4px 12px', borderRadius: '6px', marginLeft: '10px', border: '1px solid var(--t-accent)', display: 'inline-flex', alignItems: 'center', gap: '5px', animation: 'pulse 2s infinite' }}>
                     <span style={{ fontSize: '1.1rem' }}>⌛</span>
                     <span style={{ fontWeight: 800, fontFamily: 'monospace', letterSpacing: '1px' }}>{formatCountdown(signalBanner.signal.release_at)}</span>
                   </span>
@@ -553,8 +553,8 @@ export default function Dashboard() {
                     if (tableElement) tableElement.scrollIntoView({ behavior: 'smooth' });
                 }} 
                 style={{ 
-                    background: '#d4af37', 
-                    color: 'black', 
+                    background: 'var(--t-accent)', 
+                    color: 'var(--t-on-accent)', 
                     border: 'none', 
                     padding: '5px 15px', 
                     borderRadius: '4px', 
@@ -735,8 +735,8 @@ export default function Dashboard() {
 
                     {/* REFERRAL / AFFILIATE SECTION */}
                     <div className="affiliate-center" style={{ 
-                        background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.05) 0%, rgba(0, 0, 0, 0.3) 100%)', 
-                        border: '1px solid rgba(212, 175, 55, 0.2)', 
+                        background: 'linear-gradient(135deg, rgba(var(--t-accent-rgb), 0.05) 0%, rgba(0, 0, 0, 0.3) 100%)', 
+                        border: '1px solid rgba(var(--t-accent-rgb), 0.2)', 
                         borderRadius: '24px', 
                         padding: '2rem', 
                         marginBottom: '2.5rem',
@@ -750,7 +750,7 @@ export default function Dashboard() {
                         
                         <div className="affiliate-info">
                             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '1rem' }}>
-                                <div style={{ background: '#d4af37', color: 'black', width: '40px', height: '40px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>💰</div>
+                                <div style={{ background: 'var(--t-accent)', color: 'var(--t-on-accent)', width: '40px', height: '40px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>💰</div>
                                 <h3 style={{ color: 'var(--t-text)', margin: 0, fontSize: '1.4rem' }}>Refer & Earn</h3>
                             </div>
                             <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', lineHeight: '1.6', marginBottom: '1.5rem' }}>
@@ -771,26 +771,26 @@ export default function Dashboard() {
                                             navigator.clipboard.writeText(link);
                                             toast.success('Link copied!');
                                         }}
-                                        style={{ background: '#d4af37', color: 'black', border: 'none', borderRadius: '6px', padding: '4px 10px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
+                                        style={{ background: 'var(--t-accent)', color: 'var(--t-on-accent)', border: 'none', borderRadius: '6px', padding: '4px 10px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
                                     >COPY</button>
                                 </div>
                             </div>
                         </div>
 
                         <div className="affiliate-stats-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                            <div style={{ background: 'rgba(212, 175, 55, 0.1)', border: '1px solid rgba(212, 175, 55, 0.2)', borderRadius: '12px', padding: '1rem', textAlign: 'center' }}>
+                            <div style={{ background: 'rgba(var(--t-accent-rgb), 0.1)', border: '1px solid rgba(var(--t-accent-rgb), 0.2)', borderRadius: '12px', padding: '1rem', textAlign: 'center' }}>
                                 <span style={{ fontSize: '0.6rem', color: 'var(--t-gold)', fontWeight: 600, textTransform: 'uppercase' }}>Referrals</span>
                                 <h3 style={{ fontSize: '1.25rem', margin: '5px 0', color: 'var(--t-text)' }}>{mounted ? (user?.referral_count || '0') : '0'}</h3>
                             </div>
-                            <div style={{ background: 'rgba(212, 175, 55, 0.1)', border: '1px solid rgba(212, 175, 55, 0.2)', borderRadius: '12px', padding: '1rem', textAlign: 'center' }}>
+                            <div style={{ background: 'rgba(var(--t-accent-rgb), 0.1)', border: '1px solid rgba(var(--t-accent-rgb), 0.2)', borderRadius: '12px', padding: '1rem', textAlign: 'center' }}>
                                 <span style={{ fontSize: '0.6rem', color: 'var(--t-gold)', fontWeight: 600, textTransform: 'uppercase' }}>Deposits</span>
                                 <h3 style={{ fontSize: '1.25rem', margin: '5px 0', color: 'var(--t-text)' }}>${mounted ? (user?.total_referral_deposits?.toFixed(2) || '0.00') : '0.00'}</h3>
                             </div>
-                            <div style={{ background: 'rgba(212, 175, 55, 0.2)', border: '1px solid rgba(212, 175, 55, 0.4)', borderRadius: '12px', padding: '1rem', textAlign: 'center', gridColumn: 'span 2' }}>
+                            <div style={{ background: 'rgba(var(--t-accent-rgb), 0.2)', border: '1px solid rgba(var(--t-accent-rgb), 0.4)', borderRadius: '12px', padding: '1rem', textAlign: 'center', gridColumn: 'span 2' }}>
                                 <span style={{ fontSize: '0.65rem', color: 'var(--t-gold)', fontWeight: 700, textTransform: 'uppercase' }}>Commission</span>
                                 <h2 style={{ fontSize: '1.75rem', margin: '5px 0', color: 'var(--t-text)' }}>${mounted ? (user?.affiliate_balance?.toFixed(2) || '0.00') : '0.00'}</h2>
                                 <button 
-                                    style={{ marginTop: '0.5rem', background: '#d4af37', border: 'none', color: 'black', padding: '6px 15px', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 800, cursor: 'pointer', width: '100%' }}
+                                    style={{ marginTop: '0.5rem', background: 'var(--t-accent)', border: 'none', color: 'var(--t-on-accent)', padding: '6px 15px', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 800, cursor: 'pointer', width: '100%' }}
                                     onClick={() => toast.error('Minimum withdrawal is $10')}
                                 >Withdraw</button>
                             </div>
@@ -889,7 +889,7 @@ export default function Dashboard() {
                                                                         onMouseOver={(e) => { 
                                                                             if (!(signal.release_at && new Date(signal.release_at).getTime() > currentTime.getTime())) {
                                                                                 e.currentTarget.style.transform = 'scale(1.15)';
-                                                                                e.currentTarget.style.filter = 'drop-shadow(0 0 12px rgba(212, 175, 55, 0.6))';
+                                                                                e.currentTarget.style.filter = 'drop-shadow(0 0 12px rgba(var(--t-accent-rgb), 0.6))';
                                                                             }
                                                                         }}
                                                                         onMouseOut={(e) => { 
@@ -905,7 +905,7 @@ export default function Dashboard() {
                                                                         }}
                                                                     />
                                                                     {signal.release_at && new Date(signal.release_at).getTime() > currentTime.getTime() && (
-                                                                        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'var(--t-field)', border: '1px solid #d4af37', borderRadius: '6px', padding: '2px 6px', pointerEvents: 'none', whiteSpace: 'nowrap', zIndex: 10, boxShadow: '0 4px 12px rgba(0,0,0,0.5)' }}>
+                                                                        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'var(--t-field)', border: '1px solid var(--t-accent)', borderRadius: '6px', padding: '2px 6px', pointerEvents: 'none', whiteSpace: 'nowrap', zIndex: 10, boxShadow: '0 4px 12px rgba(0,0,0,0.5)' }}>
                                                                             <div style={{ fontSize: '10px', color: 'var(--t-gold)', fontWeight: 900, fontFamily: 'monospace', letterSpacing: '0.5px' }}>
                                                                                 {formatCountdown(signal.release_at)}
                                                                             </div>
@@ -999,19 +999,19 @@ export default function Dashboard() {
                         <div style={{ position: 'relative', zIndex: 100 }}>
                             <div style={{ 
                                 background: 'linear-gradient(180deg, var(--t-surface) 0%, #2c240a 100%)', 
-                                border: '1px solid #d4af37', 
+                                border: '1px solid var(--t-accent)', 
                                 borderRadius: '20px', 
                                 padding: '1.25rem', 
                                 textAlign: 'center',
-                                boxShadow: '0 10px 25px rgba(0, 0, 0, 0.4), 0 0 15px rgba(212, 175, 55, 0.05)'
+                                boxShadow: '0 10px 25px rgba(0, 0, 0, 0.4), 0 0 15px rgba(var(--t-accent-rgb), 0.05)'
                             }}>
-                                <div style={{ background: 'rgba(212, 175, 55, 0.1)', width: '40px', height: '40px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.75rem', fontSize: '1.2rem' }}>⌛</div>
+                                <div style={{ background: 'rgba(var(--t-accent-rgb), 0.1)', width: '40px', height: '40px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.75rem', fontSize: '1.2rem' }}>⌛</div>
                                 <h2 style={{ color: 'var(--t-text)', fontSize: '1rem', fontWeight: 800, marginBottom: '0.25rem', textTransform: 'uppercase', letterSpacing: '1px' }}>
                                     Next <span style={{ color: 'var(--t-gold)' }}>Gold</span> Signal
                                 </h2>
                                 
                                 <div style={{ margin: '1rem 0' }}>
-                                    <div style={{ fontSize: '2rem', fontWeight: 900, color: 'var(--t-gold)', fontFamily: 'monospace', textShadow: '0 0 8px rgba(212, 175, 55, 0.3)' }}>
+                                    <div style={{ fontSize: '2rem', fontWeight: 900, color: 'var(--t-gold)', fontFamily: 'monospace', textShadow: '0 0 8px rgba(var(--t-accent-rgb), 0.3)' }}>
                                         {formatCountdown(globalTimer)}
                                     </div>
                                     <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', fontWeight: 700, letterSpacing: '2px', marginTop: '2px' }}>COUNTDOWN</div>
@@ -1022,7 +1022,7 @@ export default function Dashboard() {
                                         <button 
                                             onClick={handleRequestAccess}
                                             disabled={isSubmitting}
-                                            style={{ width: '100%', background: '#d4af37', color: 'black', border: 'none', padding: '10px', borderRadius: '10px', fontWeight: 800, fontSize: '0.8rem', cursor: 'pointer', transition: '0.3s', boxShadow: '0 4px 10px rgba(212, 175, 55, 0.2)' }}
+                                            style={{ width: '100%', background: 'var(--t-accent)', color: 'var(--t-on-accent)', border: 'none', padding: '10px', borderRadius: '10px', fontWeight: 800, fontSize: '0.8rem', cursor: 'pointer', transition: '0.3s', boxShadow: '0 4px 10px rgba(var(--t-accent-rgb), 0.2)' }}
                                         >
                                             {isSubmitting ? <><span className="btn-spinner dark"></span>Sending...</> : 'REQUEST ACCESS'}
                                         </button>
@@ -1048,7 +1048,7 @@ export default function Dashboard() {
             <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(10px)' }}>
                 <div className="modal-content" style={{ background: 'var(--t-surface)', padding: '2.5rem', borderRadius: '24px', color: 'var(--t-text)', width: '400px', border: '1px solid var(--tw-10)', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}>
                     <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-                        <div style={{ background: 'rgba(212, 175, 55, 0.1)', width: '64px', height: '64px', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}>
+                        <div style={{ background: 'rgba(var(--t-accent-rgb), 0.1)', width: '64px', height: '64px', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}>
                             <img src={getSymbolIcon(signalToTake.symbol)} style={{ width: '32px' }} alt="Symbol" />
                         </div>
                         <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '0.5rem' }}>Confirm Signal</h2>
@@ -1078,7 +1078,7 @@ export default function Dashboard() {
                         <button 
                             onClick={confirmTakeSignal} 
                             disabled={isSubmitting}
-                            style={{ flex: 2, background: 'var(--primary)', border: 'none', padding: '14px', borderRadius: '12px', cursor: isSubmitting ? 'not-allowed' : 'pointer', opacity: isSubmitting ? 0.7 : 1, fontWeight: 700, color: 'black', fontSize: '1rem' }}
+                            style={{ flex: 2, background: 'var(--primary)', border: 'none', padding: '14px', borderRadius: '12px', cursor: isSubmitting ? 'not-allowed' : 'pointer', opacity: isSubmitting ? 0.7 : 1, fontWeight: 700, color: 'var(--t-on-accent)', fontSize: '1rem' }}
                         >
                             {isSubmitting ? 'Processing...' : 'Take Signal'}
                         </button>
@@ -1128,18 +1128,18 @@ export default function Dashboard() {
                     borderRadius: '32px', 
                     color: 'var(--t-text)', 
                     width: '450px', 
-                    border: '1px solid rgba(212, 175, 55, 0.3)', 
-                    boxShadow: '0 0 50px rgba(212, 175, 55, 0.15)',
+                    border: '1px solid rgba(var(--t-accent-rgb), 0.3)', 
+                    boxShadow: '0 0 50px rgba(var(--t-accent-rgb), 0.15)',
                     position: 'relative',
                     overflow: 'hidden',
                     animation: 'slideUp 0.5s cubic-bezier(0.4, 0, 0.2, 1)'
                 }}>
                     {/* Decorative element */}
-                    <div style={{ position: 'absolute', top: '-50px', right: '-50px', width: '150px', height: '150px', background: 'rgba(212, 175, 55, 0.05)', borderRadius: '50%', filter: 'blur(40px)' }}></div>
+                    <div style={{ position: 'absolute', top: '-50px', right: '-50px', width: '150px', height: '150px', background: 'rgba(var(--t-accent-rgb), 0.05)', borderRadius: '50%', filter: 'blur(40px)' }}></div>
                     
                     <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
                         <div style={{ 
-                            background: 'rgba(212, 175, 55, 0.1)', 
+                            background: 'rgba(var(--t-accent-rgb), 0.1)', 
                             width: '80px', 
                             height: '80px', 
                             borderRadius: '24px', 
@@ -1147,7 +1147,7 @@ export default function Dashboard() {
                             alignItems: 'center', 
                             justifyContent: 'center', 
                             margin: '0 auto 1.5rem',
-                            border: '1px solid rgba(212, 175, 55, 0.2)',
+                            border: '1px solid rgba(var(--t-accent-rgb), 0.2)',
                             boxShadow: '0 10px 20px rgba(0,0,0,0.2)'
                         }}>
                             <img src={getSymbolIcon(incomingSignal.symbol)} style={{ width: '40px' }} alt="Symbol" />
@@ -1187,8 +1187,8 @@ export default function Dashboard() {
                             }} 
                             style={{ 
                                 width: '100%', 
-                                background: '#d4af37', 
-                                color: 'black', 
+                                background: 'var(--t-accent)', 
+                                color: 'var(--t-on-accent)', 
                                 border: 'none', 
                                 padding: '16px', 
                                 borderRadius: '16px', 
@@ -1196,7 +1196,7 @@ export default function Dashboard() {
                                 fontWeight: 800, 
                                 fontSize: '1.1rem',
                                 transition: '0.3s',
-                                boxShadow: '0 10px 20px rgba(212, 175, 55, 0.2)'
+                                boxShadow: '0 10px 20px rgba(var(--t-accent-rgb), 0.2)'
                             }}
                             onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
                             onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}

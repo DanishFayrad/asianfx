@@ -58,7 +58,7 @@ export default function RootLayout({ children }) {
                   style: {
                     background: 'var(--t-surface-2)',
                     color: 'var(--t-text)',
-                    border: '1px solid rgba(212,175,55,0.25)'
+                    border: '1px solid rgba(var(--t-accent-rgb), 0.25)'
                   },
                 }}
               />

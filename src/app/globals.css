@@ -1,7 +1,7 @@
 /* =====================================================================
    THEME TOKENS — every page reads its neutral colors from these.
    Dark ("Midnight") is the default; <html data-theme="light"> = "Ivory".
-   Brand accents (gold / green / red) stay the same in both themes.
+   Accent = gold (--t-accent*, text on it = --t-on-accent). Green/red stay for BUY/SELL. Green/red stay reserved for BUY/profit and SELL/loss.
    --tw-NN = "white at NN% alpha" in dark  → "ink at a similar alpha" in light.
    ===================================================================== */
 
@@ -17,7 +17,16 @@
   --t-input-border: #26324d;
   --t-field: rgba(13, 19, 34, 0.75);
   --t-field-2: rgba(21, 29, 49, 0.75);
-  --t-gold: #d4af37;
+
+  /* Brand accent: gold. Gold buttons carry dark text. */
+  --t-accent: #d4af37;
+  --t-accent-rgb: 212, 175, 55;
+  --t-accent-2: #f3d27a;
+  --t-accent-strong: #b8862b;
+  --t-on-accent: #111111;
+  --t-gold: #d4af37;          /* gold used as TEXT */
+  --t-gradient: linear-gradient(135deg, #f3d27a 0%, #d4af37 100%);
+
   --t-glow-1: rgba(212, 175, 55, 0.09);
   --t-glow-2: rgba(56, 189, 248, 0.06);
   --t-grid: rgba(255, 255, 255, 0.022);
@@ -38,8 +47,8 @@
   --foreground: var(--t-text);
 
   /* Legacy names still used by older stylesheets */
-  --primary-gold: #d4af37;
-  --primary-gold-light: #f1c40f;
+  --primary-gold: var(--t-accent);
+  --primary-gold-light: var(--t-accent-2);
   --dark-bg: var(--t-bg);
   --card-bg: var(--t-surface);
   --text-main: var(--t-text);
@@ -60,7 +69,15 @@
   --t-input-border: #ddd3bc;
   --t-field: #fffdf8;
   --t-field-2: #faf6ec;
-  --t-gold: #8f6b07;
+
+  --t-accent: #d4af37;
+  --t-accent-rgb: 212, 175, 55;
+  --t-accent-2: #f3d27a;
+  --t-accent-strong: #8f6b07;
+  --t-on-accent: #111111;
+  --t-gold: #8f6b07;          /* deeper gold for readable text on ivory */
+  --t-gradient: linear-gradient(135deg, #f3d27a 0%, #d4af37 100%);
+
   --t-glow-1: rgba(212, 175, 55, 0.16);
   --t-glow-2: rgba(16, 185, 129, 0.07);
   --t-grid: rgba(70, 52, 15, 0.045);
@@ -151,7 +168,7 @@ h1, h2, h3, h4 {
   letter-spacing: -0.015em;
 }
 
-::selection { background: rgba(212, 175, 55, 0.35); }
+::selection { background: rgba(var(--t-accent-rgb), 0.35); }
 
 /* color-scheme: dark would make unstyled button text white — keep the old dark default
    (most such buttons sit on gold). Buttons that set their own color are unaffected. */
@@ -173,7 +190,7 @@ a {
 .premium-loader {
   width: 50px;
   height: 50px;
-  border: 3px solid rgba(212, 175, 55, 0.1);
+  border: 3px solid rgba(var(--t-accent-rgb), 0.1);
   border-radius: 50%;
   border-top-color: var(--primary-gold);
   animation: spin 1s ease-in-out infinite;
@@ -188,7 +205,7 @@ a {
   right: -6px;
   bottom: -6px;
   border: 3px solid transparent;
-  border-top-color: rgba(212, 175, 55, 0.4);
+  border-top-color: rgba(var(--t-accent-rgb), 0.4);
   border-radius: 50%;
   animation: spin 2s linear infinite;
 }
