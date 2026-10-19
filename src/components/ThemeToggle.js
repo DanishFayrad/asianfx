@@ -30,10 +30,10 @@ export default function ThemeToggle({ floating = false }) {
     const [theme, setTheme] = useState(null);
 
     useEffect(() => {
-        setTheme(document.documentElement.getAttribute('data-theme') || 'dark');
+        setTheme(document.documentElement.getAttribute('data-theme') || 'light');
         // Keep every toggle on the page in sync.
         const observer = new MutationObserver(() =>
-            setTheme(document.documentElement.getAttribute('data-theme') || 'dark'));
+            setTheme(document.documentElement.getAttribute('data-theme') || 'light'));
         observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
         return () => observer.disconnect();
     }, []);

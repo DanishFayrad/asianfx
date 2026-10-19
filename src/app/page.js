@@ -75,9 +75,6 @@ export default function Home() {
             <section className={styles.hero}>
                 <div className={`${styles.container} ${styles.heroGrid}`}>
                     <div>
-                        <span className={styles.eyebrow}>
-                            <i className={styles.liveDot} aria-hidden="true" /> Live trading signals
-                        </span>
                         <h1 className={styles.heroTitle}>
                             Gold, Forex &amp; Crypto signals — <span className={styles.gold}>delivered live.</span>
                         </h1>
@@ -108,7 +105,6 @@ export default function Home() {
                     <div className={styles.signalMock} aria-label="Example of a signal">
                         <div className={styles.mockTop}>
                             <span className={styles.mockTag}>Example signal</span>
-                            <span className={styles.mockLive}><i className={styles.liveDot} aria-hidden="true" /> Live</span>
                         </div>
                         <div className={styles.mockPair}>
                             <span className={styles.mockBadge}>XAU</span>

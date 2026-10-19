@@ -248,3 +248,120 @@
   tr.sig-row .sig-btn,
   tr.sig-row .sig-owned { flex: 1; justify-content: center; height: 42px; }
 }
+
+/* ---------- "Next signal" countdown box (sticky sidebar) ---------- */
+.db-sidebar-column {
+  top: 96px !important;         /* just below the sticky navbar */
+  width: 300px;
+}
+
+.gtm {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  border-radius: 18px;
+  background:
+    radial-gradient(260px 160px at 100% 0%, rgba(var(--t-accent-rgb), 0.16), transparent 70%),
+    var(--t-surface);
+  border: 1px solid rgba(var(--t-accent-rgb), 0.45);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+}
+
+.gtm-head { display: flex; align-items: center; gap: 10px; }
+.gtm-head > div { display: flex; flex-direction: column; line-height: 1.25; min-width: 0; }
+.gtm-head small { font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--t-text-muted); }
+.gtm-head strong { font-size: 0.98rem; color: var(--t-text); }
+
+.gtm-icon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  color: var(--t-gold);
+  background: rgba(var(--t-accent-rgb), 0.15);
+}
+
+.gtm-soon {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #d97706;
+  background: rgba(245, 158, 11, 0.12);
+}
+
+.gtm-soon i { width: 6px; height: 6px; border-radius: 50%; background: currentColor; animation: gtmPulse 1.6s ease-in-out infinite; }
+
+@keyframes gtmPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+.gtm-time {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.gtm-time > div {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 0 8px;
+  border-radius: 14px;
+  background: var(--tw-03);
+  border: 1px solid var(--tw-08);
+}
+
+.gtm-time b {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 2.3rem;
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--t-gold);
+  font-variant-numeric: tabular-nums;
+}
+
+.gtm-time small { font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--t-text-dim); }
+.gtm-time > span { font-size: 1.8rem; font-weight: 800; color: var(--t-text-dim); }
+
+.gtm-note { margin: 0; font-size: 0.82rem; line-height: 1.5; color: var(--t-text-muted); text-align: center; }
+
+.gtm-btn {
+  height: 44px;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--t-on-accent);
+  background: var(--t-gradient);
+  box-shadow: 0 6px 18px rgba(var(--t-accent-rgb), 0.3);
+  transition: transform 0.15s ease;
+}
+
+.gtm-btn:hover { transform: translateY(-1px); }
+.gtm-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+.gtm-status {
+  padding: 12px;
+  border-radius: 12px;
+  text-align: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.gtm-status--pending { color: #d97706; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.35); }
+.gtm-status--granted { color: #16a34a; background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.35); }
+
+/* Tablets/phones: the box sits on top of the content instead of a side column */
+@media (max-width: 992px) {
+  .db-sidebar-column { width: 100% !important; position: static !important; }
+}

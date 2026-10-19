@@ -31,14 +31,14 @@ import AuthGuard from './AuthGuard';
 import BlockedScreen from "@/components/BlockedScreen";
 import ThemeToggle from "@/components/ThemeToggle";
 
-// Runs before first paint: saved choice (or ?theme=light|dark) wins, otherwise dark.
-const themeInitScript = `(function(){try{var q=new URLSearchParams(location.search).get('theme');if(q==='light'||q==='dark'){localStorage.setItem('theme',q);}var t=localStorage.getItem('theme');if(t!=='light'&&t!=='dark'){t='dark';}document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();`;
+// Runs before first paint: saved choice (or ?theme=light|dark) wins, otherwise light.
+const themeInitScript = `(function(){try{var q=new URLSearchParams(location.search).get('theme');if(q==='light'||q==='dark'){localStorage.setItem('theme',q);}var t=localStorage.getItem('theme');if(t!=='light'&&t!=='dark'){t='light';}document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','light');}})();`;
 
 export default function RootLayout({ children }) {
   const isBlocked = false; // Set to true to block the site
 
   return (
-    <html lang="en" data-theme="dark" className={`${geistSans.variable} ${geistMono.variable} ${spaceGrotesk.variable}`} suppressHydrationWarning>
+    <html lang="en" data-theme="light" className={`${geistSans.variable} ${geistMono.variable} ${spaceGrotesk.variable}`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>

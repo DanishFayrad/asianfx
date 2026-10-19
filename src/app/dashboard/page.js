@@ -970,48 +970,40 @@ export default function Dashboard() {
                 {/* STICKY SIDEBAR FOR GLOBAL TIMER */}
                 {mounted && !user?.is_admin && globalTimer && !isGlobalTimerHidden && (
                     <aside className="db-sidebar-column">
-                        <div style={{ position: 'relative', zIndex: 100 }}>
-                            <div style={{ 
-                                background: 'linear-gradient(180deg, var(--t-surface) 0%, #2c240a 100%)', 
-                                border: '1px solid var(--t-accent)', 
-                                borderRadius: '20px', 
-                                padding: '1.25rem', 
-                                textAlign: 'center',
-                                boxShadow: '0 10px 25px rgba(0, 0, 0, 0.4), 0 0 15px rgba(var(--t-accent-rgb), 0.05)'
-                            }}>
-                                <div style={{ background: 'rgba(var(--t-accent-rgb), 0.1)', width: '40px', height: '40px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.75rem', fontSize: '1.2rem' }}>⌛</div>
-                                <h2 style={{ color: 'var(--t-text)', fontSize: '1rem', fontWeight: 800, marginBottom: '0.25rem', textTransform: 'uppercase', letterSpacing: '1px' }}>
-                                    Next <span style={{ color: 'var(--t-gold)' }}>Gold</span> Signal
-                                </h2>
-                                
-                                <div style={{ margin: '1rem 0' }}>
-                                    <div style={{ fontSize: '2rem', fontWeight: 900, color: 'var(--t-gold)', fontFamily: 'monospace', textShadow: '0 0 8px rgba(var(--t-accent-rgb), 0.3)' }}>
-                                        {formatCountdown(globalTimer)}
+                        {(() => {
+                            const [mins, secs] = formatCountdown(globalTimer).split(':');
+                            return (
+                                <div className="gtm">
+                                    <div className="gtm-head">
+                                        <span className="gtm-icon"><IconClock size={18} /></span>
+                                        <div>
+                                            <small>Next signal</small>
+                                            <strong>Gold · XAU/USD</strong>
+                                        </div>
+                                        <span className="gtm-soon"><i aria-hidden="true" /> Soon</span>
                                     </div>
-                                    <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', fontWeight: 700, letterSpacing: '2px', marginTop: '2px' }}>COUNTDOWN</div>
-                                </div>
 
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                    <div className="gtm-time" aria-label={`${mins} minutes ${secs} seconds left`}>
+                                        <div><b>{mins.padStart(2, '0')}</b><small>min</small></div>
+                                        <span aria-hidden="true">:</span>
+                                        <div><b>{secs}</b><small>sec</small></div>
+                                    </div>
+
                                     {!requestStatus ? (
-                                        <button 
-                                            onClick={handleRequestAccess}
-                                            disabled={isSubmitting}
-                                            style={{ width: '100%', background: 'var(--t-accent)', color: 'var(--t-on-accent)', border: 'none', padding: '10px', borderRadius: '10px', fontWeight: 800, fontSize: '0.8rem', cursor: 'pointer', transition: '0.3s', boxShadow: '0 4px 10px rgba(var(--t-accent-rgb), 0.2)' }}
-                                        >
-                                            {isSubmitting ? <><span className="btn-spinner dark"></span>Sending...</> : 'REQUEST ACCESS'}
-                                        </button>
+                                        <>
+                                            <p className="gtm-note">Request access now so you can take this signal the moment it&apos;s released.</p>
+                                            <button type="button" className="gtm-btn" onClick={handleRequestAccess} disabled={isSubmitting}>
+                                                {isSubmitting ? <><span className="btn-spinner dark"></span>Sending…</> : 'Request access'}
+                                            </button>
+                                        </>
                                     ) : requestStatus === 'pending' ? (
-                                        <div style={{ background: 'var(--tw-05)', border: '1px solid var(--tw-10)', padding: '10px', borderRadius: '10px', color: 'var(--t-gold)', fontWeight: 700, fontSize: '0.75rem' }}>
-                                            ⏳ PENDING
-                                        </div>
+                                        <div className="gtm-status gtm-status--pending">⏳ Request pending — waiting for admin</div>
                                     ) : (
-                                        <div style={{ background: 'rgba(34, 197, 94, 0.1)', border: '1px solid #22c55e', padding: '10px', borderRadius: '10px', color: '#22c55e', fontWeight: 700, fontSize: '0.75rem' }}>
-                                            ✅ GRANTED
-                                        </div>
+                                        <div className="gtm-status gtm-status--granted">✓ Access granted</div>
                                     )}
                                 </div>
-                            </div>
-                        </div>
+                            );
+                        })()}
                     </aside>
                 )}
             </div>
