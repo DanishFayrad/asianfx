@@ -1,5 +1,44 @@
 import { supabase } from '@/lib/supabaseClient';
 
+// ---------------------------------------------------------------------
+// Presence: who is on the site right now. One shared channel for the whole app.
+// AuthGuard tracks the logged-in user on every page; admin pages only listen for the count.
+// ---------------------------------------------------------------------
+let presenceChannel = null;
+let presenceKey = null;
+let lastPresenceCount = 0;
+const presenceListeners = new Set();
+
+const publishPresenceCount = () => {
+    const state = presenceChannel?.presenceState() || {};
+    lastPresenceCount = Object.values(state).filter((metas) => !metas[0]?.is_admin).length;
+    presenceListeners.forEach((fn) => fn(lastPresenceCount));
+};
+
+/** Track the logged-in user as present. Pass null on logout to stop tracking. */
+export function trackPresence(user) {
+    if (!user?.id) {
+        if (presenceChannel) supabase.removeChannel(presenceChannel);
+        presenceChannel = null;
+        presenceKey = null;
+        return;
+    }
+    if (presenceChannel && presenceKey === user.id) return;
+
+    if (presenceChannel) supabase.removeChannel(presenceChannel);
+    presenceKey = user.id;
+
+    const channel = supabase.channel('online-users', { config: { presence: { key: user.id } } });
+    presenceChannel = channel;
+    channel
+        .on('presence', { event: 'sync' }, publishPresenceCount)
+        .subscribe(async (status) => {
+            if (status === 'SUBSCRIBED') {
+                await channel.track({ is_admin: !!user.is_admin, online_at: new Date().toISOString() });
+            }
+        });
+}
+
 /**
  * Supabase Realtime connection with a socket.io-like API (on / emit / disconnect),
  * so pages that used socket.io keep the same event names:
@@ -19,8 +58,12 @@ export function connectRealtime(user) {
 
     const emit = (event, payload) => (handlers[event] || []).forEach((fn) => fn(payload));
 
+    const onPresenceCount = (count) => emit('active_clients_count', count);
+    presenceListeners.add(onPresenceCount);
+
     const start = () => {
         if (closed || !user?.id) return;
+        emit('active_clients_count', lastPresenceCount);
 
         const channel = supabase
             .channel(`rt-${user.id}-${Math.random().toString(36).slice(2)}`)
@@ -50,21 +93,6 @@ export function connectRealtime(user) {
             if (status === 'SUBSCRIBED') emit('connect');
         });
         channels.push(channel);
-
-        // Presence: lets admins see how many users are online.
-        const presence = supabase.channel('online-users', { config: { presence: { key: user.id } } });
-        presence
-            .on('presence', { event: 'sync' }, () => {
-                const state = presence.presenceState();
-                const count = Object.values(state).filter((metas) => !metas[0]?.is_admin).length;
-                emit('active_clients_count', count);
-            })
-            .subscribe(async (status) => {
-                if (status === 'SUBSCRIBED') {
-                    await presence.track({ is_admin: !!user.is_admin, online_at: new Date().toISOString() });
-                }
-            });
-        channels.push(presence);
     };
 
     // Defer so callers can register all .on() handlers first (like socket.io).
@@ -80,6 +108,7 @@ export function connectRealtime(user) {
         },
         disconnect() {
             closed = true;
+            presenceListeners.delete(onPresenceCount);
             channels.forEach((c) => supabase.removeChannel(c));
         },
     };

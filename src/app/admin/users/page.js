@@ -50,11 +50,20 @@ export default function AdminUsersPage() {
         const load = async () => {
             try {
                 setLoading(true);
-                const [usersList, stats] = await Promise.all([
+                const [usersList, stats, signalCounts] = await Promise.all([
                     transactionService.getAllUsers(),
-                    transactionService.getAdminStats().catch(() => null)
+                    transactionService.getAdminStats().catch(() => null),
+                    transactionService.getUserSignalCounts().catch((e) => {
+                        console.error('Failed to load signal counts', e);
+                        return {};
+                    })
                 ]);
-                setUsers(Array.isArray(usersList) ? usersList : []);
+                setUsers((Array.isArray(usersList) ? usersList : []).map((u) => ({
+                    ...u,
+                    signals_taken: signalCounts[u.id]?.taken || 0,
+                    signals_won: signalCounts[u.id]?.wins || 0,
+                    signals_lost: signalCounts[u.id]?.losses || 0,
+                })));
                 if (stats) setPendingDeposits(stats.pending_deposits || 0);
             } catch (e) {
                 console.error('Failed to load users', e);

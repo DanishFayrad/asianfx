@@ -15,6 +15,14 @@ import ThemeToggle from '@/components/ThemeToggle';
 import AdminSidebar from '../../../components/AdminSidebar';
 import '../../../styles/adminSignals.css';
 
+// Asset badge drawn as SVG so each market has its own symbol (₿, Au, Ag).
+const AssetIcon = ({ glyph }) => (
+  <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true">
+    <circle cx="14" cy="14" r="13" fill="rgba(0,0,0,0.12)" stroke="#fff" strokeOpacity="0.85" strokeWidth="1.5" />
+    <text x="14" y="14.5" textAnchor="middle" dominantBaseline="central" fontSize={glyph.length > 1 ? 11 : 16} fontWeight="700" fill="#fff" fontFamily="Arial, sans-serif">{glyph}</text>
+  </svg>
+);
+
 export default function AdminSignals() {
   const router = useRouter();
   const pathname = usePathname();
@@ -70,7 +78,7 @@ export default function AdminSignals() {
         closeConfirmModal();
         fetchAllAdminData();
     } catch (e) {
-        toast.error("Action failed");
+        toast.error(e.response?.data?.message || "Action failed");
     } finally {
         setLoading(false);
     }
@@ -85,9 +93,9 @@ export default function AdminSignals() {
 
   // Mock Assets data to match screenshot
   const assets = [
-    { id: 1, name: 'Bitcoin', symbol: 'BTCUSDT', displaySymbol: 'BTC/USDT', iconColor: '#F7931A', icon: '/images/div (14).png' },
-    { id: 2, name: 'Gold', symbol: 'XAUUSD', displaySymbol: 'XAU/USD', iconColor: '#FFD700', icon: '/images/div (15).png' },
-    { id: 3, name: 'Silver', symbol: 'XAGUSD', displaySymbol: 'XAG/USD', iconColor: '#C0C0C0', icon: '/images/div (16).png' },
+    { id: 1, name: 'Bitcoin', symbol: 'BTCUSDT', displaySymbol: 'BTC/USDT', iconColor: '#F7931A', glyph: '₿' },
+    { id: 2, name: 'Gold', symbol: 'XAUUSD', displaySymbol: 'XAU/USD', iconColor: '#C9A227', glyph: 'Au' },
+    { id: 3, name: 'Silver', symbol: 'XAGUSD', displaySymbol: 'XAG/USD', iconColor: '#8A9099', glyph: 'Ag' },
   ];
 
   const fetchAllAdminData = async () => {
@@ -229,7 +237,7 @@ export default function AdminSignals() {
           setGlobalTimerMinutes('');
           fetchAllAdminData();
       } catch (e) {
-          toast.error("Failed to set global timer");
+          toast.error(e.response?.data?.message || "Failed to set global timer");
       } finally {
           setLoading(false);
       }
@@ -314,7 +322,7 @@ export default function AdminSignals() {
                     <div className="admin-asset-top">
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                         <div className="admin-asset-icon-box" style={{ background: asset.iconColor }}>
-                           <img src={asset.icon} alt={asset.name} style={{ width: '28px' }} />
+                           <AssetIcon glyph={asset.glyph} />
                         </div>
                         <div>
                            <div style={{ fontWeight: 600 }}>{asset.name}</div>
@@ -533,83 +541,85 @@ export default function AdminSignals() {
         <section className="admin-recent-section">
            <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1.5rem' }}>Open &amp; Recent Signals <span style={{ fontSize: '0.8rem', fontWeight: 500, color: 'var(--admin-text-muted)' }}>— close every open signal with its result</span></h3>
            <div className="admin-recent-grid">
-              {[...recentSignals.filter(s => s.status === 'Active'), ...recentSignals.filter(s => s.status !== 'Active').slice(0, 3)].map((sig, idx) => (
-                <div key={sig.id || idx} className="admin-recent-card">
-                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <div style={{ background: sig.symbol.includes('ETH') ? '#627EEA' : sig.symbol.includes('BTC') ? '#F7931A' : '#FFD700', width: '40px', height: '40px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                         <img src={sig.symbol.includes('XAU') ? '/images/div (15).png' : sig.symbol.includes('XAG') ? '/images/div (16).png' : '/images/div (13).png'} alt={sig.symbol} style={{ width: '24px' }} />
+              {[...recentSignals.filter(s => s.status === 'Active'), ...recentSignals.filter(s => s.status !== 'Active').slice(0, 3)].map((sig, idx) => {
+                const isBuy = String(sig.type || '').toLowerCase() === 'buy';
+                const isOpen = sig.status === 'Active';
+                const locked = sig.release_at && new Date(sig.release_at) > currentTime;
+                const statusClass = String(sig.status).includes('Hit') ? 'win' : String(sig.status).includes('Stop') ? 'loss' : 'neutral';
+                return (
+                  <div key={sig.id || idx} className={`asg-card ${isOpen ? 'asg-card--open' : ''}`}>
+                    <div className="asg-top">
+                      <span className="asg-icon">{sig.symbol.includes('XAU') ? 'XAU' : sig.symbol.includes('XAG') ? 'XAG' : sig.symbol.includes('BTC') ? '₿' : 'FX'}</span>
+                      <div className="asg-title">
+                        <strong>{sig.symbol}</strong>
+                        <small>{new Date(sig.created_at).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}</small>
                       </div>
-                      <div>
-                         <h4 style={{ fontSize: '1rem', marginBottom: '2px' }}>{sig.symbol}</h4>
-                         <p style={{ fontSize: '0.8rem', color: 'var(--admin-text-muted)' }}>{new Date(sig.created_at).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}</p>
-                      </div>
-                   </div>
-                   <div style={{ textAlign: 'right' }}>
-                      <span style={{ padding: '4px 10px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 600, background: sig.type === 'Buy' ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)', color: sig.type === 'Buy' ? 'var(--admin-success)' : 'var(--admin-danger)' }}>
-                        {sig.type}
-                      </span>
-                      <div style={{ fontSize: '0.8rem', color: 'var(--admin-text-muted)', marginTop: '8px' }}>
-                         Entry: ${sig.entry_price}
-                      </div>
-                   </div>
-                   <div style={{ textAlign: 'center', borderLeft: '1px solid var(--admin-border-color)', paddingLeft: '10px' }}>
-                        <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--primary)' }}>{sig.total_taken || 0}</div>
-                        <div style={{ fontSize: '0.65rem', color: 'var(--admin-text-muted)', textTransform: 'uppercase' }}>Purchased</div>
-                   </div>
+                      <span className={`asg-side ${isBuy ? 'asg-side--buy' : 'asg-side--sell'}`}>{isBuy ? 'BUY' : 'SELL'}</span>
+                    </div>
 
-                   {/* Close the signal with its result — feeds the public track record & settles user results. */}
-                   <div style={{ width: '100%', marginTop: '10px', paddingTop: '10px', borderTop: '1px dashed var(--admin-border-color)', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                       {sig.status === 'Active' ? (
-                           <>
-                               <span style={{ fontSize: '0.7rem', color: 'var(--admin-text-muted)', marginRight: 'auto' }}>Result:</span>
-                               {[['TP Hit', 'var(--admin-success)'], ['Stop Loss', 'var(--admin-danger)'], ['Closed', 'var(--admin-text-muted)']].map(([label, color]) => (
-                                   <button
-                                       key={label}
-                                       type="button"
-                                       onClick={async () => {
-                                           try {
-                                               await signalService.updateSignalStatus(sig.id, label);
-                                               toast.success(`${sig.symbol} marked as ${label}`);
-                                               fetchAllAdminData();
-                                           } catch (e) { toast.error("Failed to update signal"); }
-                                       }}
-                                       style={{ background: 'transparent', border: `1px solid ${color}`, color, fontSize: '0.7rem', fontWeight: 600, padding: '3px 10px', borderRadius: '6px', cursor: 'pointer' }}
-                                   >{label}</button>
-                               ))}
-                           </>
-                       ) : (
-                           <span style={{ fontSize: '0.75rem', fontWeight: 700, color: sig.status.includes('Hit') ? 'var(--admin-success)' : sig.status.includes('Stop') ? 'var(--admin-danger)' : 'var(--admin-text-muted)' }}>
-                               {sig.status}
-                           </span>
-                       )}
-                   </div>
+                    <div className="asg-levels">
+                      <div><small>Entry</small><b>{sig.entry_price ?? '—'}</b></div>
+                      <div><small>Target</small><b className="asg-win">{sig.target_price ?? '—'}</b></div>
+                      <div><small>Stop loss</small><b className="asg-loss">{sig.stop_loss ?? '—'}</b></div>
+                    </div>
 
-                   {sig.release_at && new Date(sig.release_at) > new Date() && (
-                       <div style={{ width: '100%', marginTop: '10px', paddingTop: '10px', borderTop: '1px dashed var(--admin-border-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
-                           <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#f59e0b' }}>
-                               ⏳ {(() => {
-                                   const totalSeconds = Math.max(0, Math.floor((new Date(sig.release_at) - currentTime) / 1000));
-                                   const mins = Math.floor(totalSeconds / 60);
-                                   const secs = totalSeconds % 60;
-                                   return `${mins}:${secs.toString().padStart(2, '0')}`;
-                               })()}
-                           </span>
-                           <button 
-                               onClick={async () => {
-                                   try {
-                                       await signalService.extendSignalTimer(sig.id, 2);
-                                       fetchAllAdminData();
-                                       toast.success("Timer extended by 2 minutes");
-                                   } catch (e) { toast.error("Failed to extend timer"); }
-                               }}
-                               style={{ background: 'rgba(var(--t-accent-rgb), 0.1)', border: '1px solid var(--t-accent)', color: 'var(--t-gold)', fontSize: '10px', padding: '2px 8px', borderRadius: '4px', cursor: 'pointer' }}
-                           >
-                               + 2 Min
-                           </button>
-                       </div>
-                   )}
-                </div>
-              ))}
+                    <div className="asg-meta">
+                      <span>{sig.total_taken || 0} purchased</span>
+                      <span className="asg-dot" aria-hidden="true">•</span>
+                      <span>{sig.target_user_id ? 'Private' : 'Broadcast'}</span>
+                      {locked && (
+                        <>
+                          <span className="asg-dot" aria-hidden="true">•</span>
+                          <span className="asg-timer">
+                            ⏳ {(() => {
+                              const totalSeconds = Math.max(0, Math.floor((new Date(sig.release_at) - currentTime) / 1000));
+                              return `${Math.floor(totalSeconds / 60)}:${(totalSeconds % 60).toString().padStart(2, '0')}`;
+                            })()}
+                          </span>
+                          <button
+                            type="button"
+                            className="asg-extend"
+                            onClick={async () => {
+                              try {
+                                await signalService.extendSignalTimer(sig.id, 2);
+                                fetchAllAdminData();
+                                toast.success("Timer extended by 2 minutes");
+                              } catch (e) { toast.error("Failed to extend timer"); }
+                            }}
+                          >+2 min</button>
+                        </>
+                      )}
+                    </div>
+
+                    {/* Close the signal with its result — settles every member who took it. */}
+                    <div className="asg-result">
+                      {isOpen ? (
+                        <>
+                          <span className="asg-result-label">Close with result:</span>
+                          <div className="asg-result-btns">
+                            {[['TP Hit', 'win'], ['Stop Loss', 'loss'], ['Closed', 'neutral']].map(([label, kind]) => (
+                              <button
+                                key={label}
+                                type="button"
+                                className={`asg-result-btn asg-result-btn--${kind}`}
+                                onClick={async () => {
+                                  try {
+                                    await signalService.updateSignalStatus(sig.id, label);
+                                    toast.success(`${sig.symbol} marked as ${label}`);
+                                    fetchAllAdminData();
+                                  } catch (e) { toast.error("Failed to update signal"); }
+                                }}
+                              >{label}</button>
+                            ))}
+                          </div>
+                        </>
+                      ) : (
+                        <span className={`asg-status asg-status--${statusClass}`}>{sig.status}</span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
               {recentSignals.length === 0 && (
                 <p style={{ color: 'var(--admin-text-muted)' }}>No recent broadcasts found.</p>
               )}

@@ -233,6 +233,7 @@ export default function Dashboard() {
     return () => {
         socket.disconnect();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -368,6 +369,7 @@ export default function Dashboard() {
         document.body.classList.remove('dashboard-body');
         clearInterval(interval);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
   const [signalToTake, setSignalToTake] = useState(null);
@@ -733,8 +735,8 @@ export default function Dashboard() {
                             <span className="mdb-kpi-icon mdb-kpi-icon--gold"><IconWallet size={18} /></span>
                             <div>
                                 <span className="mdb-kpi-label">Wallet balance</span>
-                                <strong>${Number(user?.wallet_balance || 0).toFixed(2)}</strong>
-                                {user?.free_signals > 0 && (
+                                <strong>${mounted ? Number(user?.wallet_balance || 0).toFixed(2) : '0.00'}</strong>
+                                {mounted && user?.free_signals > 0 && (
                                     <small>🎁 {user.free_signals} free signal{user.free_signals > 1 ? 's' : ''}</small>
                                 )}
                             </div>

@@ -9,7 +9,8 @@ const ROWS_PER_PAGE = 8;
  *
  * Props:
  *  - users: array of { id, name, email, phone, country, wallet_balance,
- *                      is_active, is_admin, total_deposit, deposit_count, created_at }
+ *                      is_active, is_admin, total_deposit, deposit_count, created_at,
+ *                      free_signals, signals_taken, signals_won, signals_lost }
  *  - loading: boolean
  */
 export default function AdminUsersTable({ users = [], loading = false }) {
@@ -58,7 +59,7 @@ export default function AdminUsersTable({ users = [], loading = false }) {
             </div>
 
             <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '880px' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '1080px' }}>
                     <thead>
                         <tr>
                             <th style={th}>User</th>
@@ -67,13 +68,17 @@ export default function AdminUsersTable({ users = [], loading = false }) {
                             <th style={{ ...th, textAlign: 'right' }}>Total Deposited</th>
                             <th style={{ ...th, textAlign: 'right' }}>Deposits</th>
                             <th style={{ ...th, textAlign: 'right' }}>Wallet</th>
+                            <th style={{ ...th, textAlign: 'right' }}>Signals</th>
+                            <th style={{ ...th, textAlign: 'right' }}>Wins</th>
+                            <th style={{ ...th, textAlign: 'right' }}>Losses</th>
+                            <th style={{ ...th, textAlign: 'right' }}>Free Credits</th>
                             <th style={th}>Status</th>
                             <th style={th}>Joined</th>
                         </tr>
                     </thead>
                     <tbody>
                         {!loading && filtered.length === 0 && (
-                            <tr><td style={{ ...td, textAlign: 'center', color: 'var(--admin-text-muted)' }} colSpan={8}>No users found.</td></tr>
+                            <tr><td style={{ ...td, textAlign: 'center', color: 'var(--admin-text-muted)' }} colSpan={12}>No users found.</td></tr>
                         )}
                         {pageRows.map((u) => (
                             <tr key={u.id}>
@@ -91,6 +96,10 @@ export default function AdminUsersTable({ users = [], loading = false }) {
                                 <td style={{ ...td, textAlign: 'right', fontWeight: 700, color: 'var(--admin-success)' }}>${fmt(u.total_deposit)}</td>
                                 <td style={{ ...td, textAlign: 'right' }}>{u.deposit_count || 0}</td>
                                 <td style={{ ...td, textAlign: 'right' }}>${fmt(u.wallet_balance)}</td>
+                                <td style={{ ...td, textAlign: 'right' }}>{u.signals_taken || 0}</td>
+                                <td style={{ ...td, textAlign: 'right', color: 'var(--admin-success)' }}>{u.signals_won || 0}</td>
+                                <td style={{ ...td, textAlign: 'right', color: '#ef4444' }}>{u.signals_lost || 0}</td>
+                                <td style={{ ...td, textAlign: 'right', fontWeight: 700 }}>{u.free_signals || 0}</td>
                                 <td style={td}>
                                     <span style={{
                                         fontSize: '0.72rem', fontWeight: 600, padding: '3px 10px', borderRadius: '20px',

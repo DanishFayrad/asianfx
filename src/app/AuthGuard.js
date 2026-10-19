@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import authService from '@/services/authService';
 import { setAuth, logout } from '@/redux/slices/authSlice';
+import { trackPresence } from '@/services/realtimeService';
 
 // ---------------------------------------------------------------------
 // Route access rules — the single place that decides who may see what.
@@ -101,6 +102,11 @@ export default function AuthGuard({ children }) {
 
         return () => subscription.unsubscribe();
     }, [dispatch]);
+
+    // Show the logged-in user as "online" on every page (admins are excluded from the count).
+    useEffect(() => {
+        trackPresence(user);
+    }, [user?.id, user?.is_admin]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const decision = mounted ? decide(pathname, user, checked) : { wait: true };
 

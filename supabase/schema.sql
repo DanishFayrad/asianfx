@@ -429,7 +429,7 @@ begin
     if not public.is_admin() then raise exception 'Admin only'; end if;
     if p_minutes is null or p_minutes <= 0 then raise exception 'Invalid minutes'; end if;
     v_exp := now() + make_interval(secs => p_minutes * 60);
-    delete from public.signal_requests;
+    delete from public.signal_requests where true;  -- Supabase blocks DELETE without WHERE
     insert into public.app_settings (key, value, updated_at)
         values ('global_timer', jsonb_build_object('expires_at', v_exp), now())
         on conflict (key) do update set value = excluded.value, updated_at = now();
@@ -440,7 +440,7 @@ create or replace function public.clear_global_timer()
 returns json language plpgsql security definer set search_path = public as $$
 begin
     if not public.is_admin() then raise exception 'Admin only'; end if;
-    delete from public.signal_requests;
+    delete from public.signal_requests where true;  -- Supabase blocks DELETE without WHERE
     update public.app_settings set value = '{"expires_at": null}'::jsonb, updated_at = now()
         where key = 'global_timer';
     return json_build_object('message', 'Timer cleared');

@@ -71,6 +71,27 @@ const getAllUsers = async () => {
     return unwrap(await supabase.rpc('get_all_users'));
 };
 
+// Per-user signal counts (taken / wins / losses) keyed by user id.
+// Pages through user_signals so it is not capped at the default 1000 rows.
+const getUserSignalCounts = async () => {
+    const counts = {};
+    const pageSize = 1000;
+    for (let from = 0; ; from += pageSize) {
+        const rows = unwrap(await supabase
+            .from('user_signals')
+            .select('user_id, result')
+            .range(from, from + pageSize - 1));
+        rows.forEach(({ user_id, result }) => {
+            const c = (counts[user_id] ??= { taken: 0, wins: 0, losses: 0 });
+            c.taken += 1;
+            if (result === 'win') c.wins += 1;
+            if (result === 'loss') c.losses += 1;
+        });
+        if (rows.length < pageSize) break;
+    }
+    return counts;
+};
+
 const deleteTransaction = async (id) => {
     unwrap(await supabase.from('transactions').delete().eq('id', id));
     return { message: 'Transaction deleted' };
@@ -121,6 +142,7 @@ const transactionService = {
     getAdminStats,
     getWalletStats,
     getAllUsers,
+    getUserSignalCounts,
     deleteTransaction,
     getGlobalTransactionCount,
     getProofUrl,
