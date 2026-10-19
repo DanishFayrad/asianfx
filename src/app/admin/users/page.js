@@ -16,7 +16,7 @@ export default function AdminUsersPage() {
     const dispatch = useDispatch();
     const { user, token } = useSelector((state) => state.auth);
 
-    const [mounted, setMounted] = useState(false);
+    const [mounted, setMounted] = useState(true); // protected page: AuthGuard renders it client-side only, so no hydration flash guard needed
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -50,20 +50,11 @@ export default function AdminUsersPage() {
         const load = async () => {
             try {
                 setLoading(true);
-                const [usersList, stats, signalCounts] = await Promise.all([
-                    transactionService.getAllUsers(),
-                    transactionService.getAdminStats().catch(() => null),
-                    transactionService.getUserSignalCounts().catch((e) => {
-                        console.error('Failed to load signal counts', e);
-                        return {};
-                    })
+                const [usersList, stats] = await Promise.all([
+                    transactionService.getAllUsersWithSignals(),
+                    transactionService.getAdminStats().catch(() => null)
                 ]);
-                setUsers((Array.isArray(usersList) ? usersList : []).map((u) => ({
-                    ...u,
-                    signals_taken: signalCounts[u.id]?.taken || 0,
-                    signals_won: signalCounts[u.id]?.wins || 0,
-                    signals_lost: signalCounts[u.id]?.losses || 0,
-                })));
+                setUsers(usersList);
                 if (stats) setPendingDeposits(stats.pending_deposits || 0);
             } catch (e) {
                 console.error('Failed to load users', e);

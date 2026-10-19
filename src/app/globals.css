@@ -244,3 +244,25 @@ a {
   border: 2px solid rgba(0, 0, 0, 0.2);
   border-top-color: black;
 }
+
+/* Top progress bar shown while moving between pages */
+.route-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 10000;
+  height: 3px;
+  width: 0;
+  background: var(--t-gradient);
+  box-shadow: 0 0 10px rgba(var(--t-accent-rgb), 0.6);
+  pointer-events: none;
+}
+
+.route-progress--loading { animation: routeProgress 8s cubic-bezier(0.1, 0.7, 0.2, 1) forwards; }
+.route-progress--done { width: 100%; opacity: 0; transition: width 0.2s ease, opacity 0.3s ease 0.15s; }
+
+@keyframes routeProgress {
+  0% { width: 0; }
+  10% { width: 35%; }
+  100% { width: 90%; }
+}

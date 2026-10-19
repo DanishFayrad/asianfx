@@ -59,26 +59,25 @@ export default function AdminUsersTable({ users = [], loading = false }) {
             </div>
 
             <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '1080px' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '1000px' }}>
                     <thead>
                         <tr>
-                            <th style={th}>User</th>
-                            <th style={th}>Phone</th>
-                            <th style={th}>Country</th>
-                            <th style={{ ...th, textAlign: 'right' }}>Total Deposited</th>
-                            <th style={{ ...th, textAlign: 'right' }}>Deposits</th>
+                            <th style={th}>Member</th>
+                            <th style={th}>Contact</th>
+                            <th style={{ ...th, textAlign: 'right' }}>Deposited</th>
                             <th style={{ ...th, textAlign: 'right' }}>Wallet</th>
-                            <th style={{ ...th, textAlign: 'right' }}>Signals</th>
-                            <th style={{ ...th, textAlign: 'right' }}>Wins</th>
-                            <th style={{ ...th, textAlign: 'right' }}>Losses</th>
-                            <th style={{ ...th, textAlign: 'right' }}>Free Credits</th>
+                            <th style={{ ...th, textAlign: 'center' }}>Free signals</th>
+                            <th style={{ ...th, textAlign: 'center' }}>Signals</th>
+                            <th style={{ ...th, textAlign: 'center', color: '#16a34a' }}>Won</th>
+                            <th style={{ ...th, textAlign: 'center', color: '#dc2626' }}>Lost</th>
+                            <th style={{ ...th, textAlign: 'center' }}>Win rate</th>
                             <th style={th}>Status</th>
                             <th style={th}>Joined</th>
                         </tr>
                     </thead>
                     <tbody>
                         {!loading && filtered.length === 0 && (
-                            <tr><td style={{ ...td, textAlign: 'center', color: 'var(--admin-text-muted)' }} colSpan={12}>No users found.</td></tr>
+                            <tr><td style={{ ...td, textAlign: 'center', color: 'var(--admin-text-muted)' }} colSpan={11}>No users found.</td></tr>
                         )}
                         {pageRows.map((u) => (
                             <tr key={u.id}>
@@ -91,15 +90,61 @@ export default function AdminUsersTable({ users = [], loading = false }) {
                                         <span style={{ fontSize: '0.75rem', color: 'var(--admin-text-muted)' }}>{u.email}</span>
                                     </div>
                                 </td>
-                                <td style={td}>{u.phone || '—'}</td>
-                                <td style={td}>{u.country || '—'}</td>
-                                <td style={{ ...td, textAlign: 'right', fontWeight: 700, color: 'var(--admin-success)' }}>${fmt(u.total_deposit)}</td>
-                                <td style={{ ...td, textAlign: 'right' }}>{u.deposit_count || 0}</td>
-                                <td style={{ ...td, textAlign: 'right' }}>${fmt(u.wallet_balance)}</td>
-                                <td style={{ ...td, textAlign: 'right' }}>{u.signals_taken || 0}</td>
-                                <td style={{ ...td, textAlign: 'right', color: 'var(--admin-success)' }}>{u.signals_won || 0}</td>
-                                <td style={{ ...td, textAlign: 'right', color: '#ef4444' }}>{u.signals_lost || 0}</td>
-                                <td style={{ ...td, textAlign: 'right', fontWeight: 700 }}>{u.free_signals || 0}</td>
+                                <td style={td}>
+                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                        <span>{u.phone || '—'}</span>
+                                        <span style={{ fontSize: '0.75rem', color: 'var(--admin-text-muted)' }}>{u.country || '—'}</span>
+                                    </div>
+                                </td>
+                                <td style={{ ...td, textAlign: 'right' }}>
+                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                                        <span style={{ fontWeight: 700, color: 'var(--admin-success)' }}>${fmt(u.total_deposit)}</span>
+                                        <span style={{ fontSize: '0.75rem', color: 'var(--admin-text-muted)' }}>{u.deposit_count || 0} deposit{(u.deposit_count || 0) === 1 ? '' : 's'}</span>
+                                    </div>
+                                </td>
+                                <td style={{ ...td, textAlign: 'right', fontWeight: 600 }}>${fmt(u.wallet_balance)}</td>
+                                <td style={{ ...td, textAlign: 'center' }}>
+                                    {u.free_signals > 0 ? (
+                                        <span title={`${u.free_signals} free signal credit${u.free_signals > 1 ? 's' : ''} (earned from Stop Loss)`} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem', fontWeight: 700, padding: '3px 10px', borderRadius: '20px', background: 'rgba(var(--t-accent-rgb), 0.15)', color: 'var(--t-gold)' }}>
+                                            🎁 {u.free_signals}
+                                        </span>
+                                    ) : (
+                                        <span style={{ color: 'var(--admin-text-muted)' }}>0</span>
+                                    )}
+                                </td>
+                                {(() => {
+                                    const taken = Number(u.signals_taken || 0);
+                                    const won = Number(u.signals_won || 0);
+                                    const lost = Number(u.signals_lost || 0);
+                                    const open = Math.max(0, taken - won - lost);
+                                    const decided = won + lost;
+                                    const rate = decided > 0 ? Math.round((won / decided) * 100) : null;
+                                    const muted = { color: 'var(--admin-text-muted)' };
+                                    const num = (n, color) => n > 0
+                                        ? <span style={{ fontWeight: 700, fontSize: '0.95rem', color }}>{n}</span>
+                                        : <span style={muted}>0</span>;
+                                    return (
+                                        <>
+                                            <td style={{ ...td, textAlign: 'center' }}>
+                                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                                    <span style={{ fontWeight: 700 }}>{taken}</span>
+                                                    {open > 0 && <span style={{ fontSize: '0.72rem', color: '#d97706' }} title="No result yet (still open, or closed without TP/SL)">{open} open</span>}
+                                                </div>
+                                            </td>
+                                            <td style={{ ...td, textAlign: 'center' }} title="Signals that hit Take Profit">{num(won, '#16a34a')}</td>
+                                            <td style={{ ...td, textAlign: 'center' }} title="Signals that hit Stop Loss">{num(lost, '#dc2626')}</td>
+                                            <td style={{ ...td, textAlign: 'center' }}>
+                                                {rate === null ? <span style={muted}>—</span> : (
+                                                    <span style={{
+                                                        fontSize: '0.75rem', fontWeight: 700, padding: '3px 10px', borderRadius: '20px',
+                                                        background: rate >= 50 ? 'rgba(34, 197, 94, 0.12)' : 'rgba(239, 68, 68, 0.1)',
+                                                        color: rate >= 50 ? '#16a34a' : '#dc2626'
+                                                    }}>{rate}%</span>
+                                                )}
+                                            </td>
+                                        </>
+                                    );
+                                })()}
                                 <td style={td}>
                                     <span style={{
                                         fontSize: '0.72rem', fontWeight: 600, padding: '3px 10px', borderRadius: '20px',

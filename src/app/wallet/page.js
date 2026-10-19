@@ -22,7 +22,7 @@ export default function Wallet() {
   const router = useRouter();
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
-  const [mounted, setMounted] = useState(false);
+  const [mounted, setMounted] = useState(true); // protected page: AuthGuard renders it client-side only, so no hydration flash guard needed
   const [isDepositOpen, setIsDepositOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [stats, setStats] = useState(null);

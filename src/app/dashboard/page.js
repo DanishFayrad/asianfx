@@ -18,6 +18,7 @@ import UserNavbar from '@/components/UserNavbar';
 import { IconBroadcast, IconTrend, IconClock, IconWallet, IconUsers } from '@/components/admin/AdminIcons';
 import '../../styles/memberDashboard.css';
 import AdminSidebar from '../../components/AdminSidebar';
+import AdminHeader from '@/components/admin/AdminHeader';
 import AdminDashboardStats from '../../components/AdminDashboardStats';
 import AdminUsersTable from '../../components/AdminUsersTable';
 import '../../styles/dashboard.css';
@@ -26,7 +27,7 @@ export default function Dashboard() {
   const router = useRouter();
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
-  const [mounted, setMounted] = useState(false);
+  const [mounted, setMounted] = useState(true); // protected page: AuthGuard renders it client-side only, so no hydration flash guard needed
   
   useEffect(() => {
     setMounted(true);
@@ -261,8 +262,7 @@ export default function Dashboard() {
 
         try {
           setUsersLoading(true);
-          const usersList = await transactionService.getAllUsers();
-          setAdminUsers(Array.isArray(usersList) ? usersList : []);
+          setAdminUsers(await transactionService.getAllUsersWithSignals());
         } catch (e) {
           console.error("Failed to fetch users list", e);
         } finally {
@@ -482,35 +482,24 @@ export default function Dashboard() {
         {isMenuOpen && <div className="admin-backdrop" onClick={() => setIsMenuOpen(false)}></div>}
 
         <main className="admin-main-content">
-          <header className="admin-top-navbar">
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              <button className="admin-btn-hamburger" onClick={toggleMenu}>☰</button>
-              <div>
-                <h2 className="admin-page-title">Admin Dashboard</h2>
-                <p className="admin-subtitle">Global Platform Overview & Business Analytics</p>
+          <AdminHeader
+            title="Admin Dashboard"
+            subtitle="Platform overview, money and members at a glance"
+            onMenu={toggleMenu}
+          >
+            <button type="button" className="adb-new" onClick={() => router.push('/admin/signals')}>+ New signal</button>
+          </AdminHeader>
+
+          <div className="atx">
+            {adminNotification && (
+              <div className="adb-alert" role="status">
+                <span className="adb-alert-dot" aria-hidden="true" />
+                <span>{adminNotification}</span>
+                <button type="button" className="adb-alert-btn" onClick={() => router.push('/transaction')}>Review now</button>
+                <button type="button" className="adb-alert-close" onClick={() => setAdminNotification(null)} aria-label="Dismiss">✕</button>
               </div>
-            </div>
+            )}
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <ThemeToggle />
-              <button
-                onClick={() => router.push('/admin/signals')}
-                style={{ background: 'var(--admin-primary)', color: 'var(--t-on-accent)', border: 'none', padding: '10px 18px', borderRadius: '8px', cursor: 'pointer', fontWeight: 700 }}
-              >
-                + New Signal
-              </button>
-            </div>
-          </header>
-
-          {adminNotification && (
-            <div style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid #ef4444', borderRadius: '12px', padding: '12px 16px', margin: '0 2rem', color: '#ef4444', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '15px' }}>
-              <span style={{ fontWeight: 600 }}>{adminNotification}</span>
-              <button onClick={() => router.push('/transaction')} style={{ background: '#ef4444', color: 'white', border: 'none', padding: '4px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}>Review Now</button>
-              <button onClick={() => setAdminNotification(null)} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '1rem' }}>✕</button>
-            </div>
-          )}
-
-          <div style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
             <AdminDashboardStats adminStats={adminStats} onNav={(p) => router.push(p)} />
             <AdminUsersTable users={adminUsers} loading={usersLoading} />
           </div>

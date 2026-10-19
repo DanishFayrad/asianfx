@@ -92,6 +92,23 @@ const getUserSignalCounts = async () => {
     return counts;
 };
 
+// All users with their signal counts merged in (for the admin users table).
+const getAllUsersWithSignals = async () => {
+    const [usersList, signalCounts] = await Promise.all([
+        getAllUsers(),
+        getUserSignalCounts().catch((e) => {
+            console.error('Failed to load signal counts', e);
+            return {};
+        })
+    ]);
+    return (Array.isArray(usersList) ? usersList : []).map((u) => ({
+        ...u,
+        signals_taken: signalCounts[u.id]?.taken || 0,
+        signals_won: signalCounts[u.id]?.wins || 0,
+        signals_lost: signalCounts[u.id]?.losses || 0,
+    }));
+};
+
 const deleteTransaction = async (id) => {
     unwrap(await supabase.from('transactions').delete().eq('id', id));
     return { message: 'Transaction deleted' };
@@ -143,6 +160,7 @@ const transactionService = {
     getWalletStats,
     getAllUsers,
     getUserSignalCounts,
+    getAllUsersWithSignals,
     deleteTransaction,
     getGlobalTransactionCount,
     getProofUrl,

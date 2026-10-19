@@ -13,6 +13,7 @@ import { connectRealtime } from '../../../services/realtimeService';
 import toast from 'react-hot-toast';
 import ThemeToggle from '@/components/ThemeToggle';
 import AdminSidebar from '../../../components/AdminSidebar';
+import AdminHeader from '@/components/admin/AdminHeader';
 import '../../../styles/adminSignals.css';
 
 // Asset badge drawn as SVG so each market has its own symbol (₿, Au, Ag).
@@ -28,7 +29,7 @@ export default function AdminSignals() {
   const pathname = usePathname();
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
-  const [mounted, setMounted] = useState(false);
+  const [mounted, setMounted] = useState(true); // protected page: AuthGuard renders it client-side only, so no hydration flash guard needed
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -279,262 +280,181 @@ export default function AdminSignals() {
 
       {/* MAIN CONTENT */}
       <main className="admin-main-content">
-        <header className="admin-top-navbar">
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            <button className="admin-btn-hamburger" onClick={toggleSidebar}>☰</button>
-            <div>
-              <h2 className="admin-page-title">Signal Creation</h2>
-              <p className="admin-subtitle">Broadcast new signals</p>
+        <AdminHeader
+          title="Broadcast Signal"
+          subtitle="Create a signal, run a countdown and manage access requests"
+          onMenu={toggleSidebar}
+        >
+          <span className="bsg-online" title="Members on the site right now">
+            <i aria-hidden="true" /> {liveClientsCount} online
+          </span>
+        </AdminHeader>
+
+        <div className="bsg">
+          {/* ---------- NEW SIGNAL FORM ---------- */}
+          <form onSubmit={handleSubmit} className="bsg-card bsg-form">
+            <div className="bsg-card-head">
+              <h2>New signal</h2>
+              <p>Sent to every member instantly, or when the countdown ends.</p>
             </div>
-          </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <ThemeToggle />
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(34, 197, 94, 0.1)', padding: '6px 12px', borderRadius: '20px', border: '1px solid var(--admin-success)' }}>
-               <div style={{ width: '8px', height: '8px', background: 'var(--admin-success)', borderRadius: '50%', boxShadow: '0 0 8px var(--admin-success)' }}></div>
-               <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--admin-success)' }}>{liveClientsCount} active on web</span>
-            </div>
-          </div>
-        </header>
-
-        <form onSubmit={handleSubmit} className="admin-purchase-grid">
-          {/* ASSET SELECTION (LEFT) */}
-          <section>
-             <div className="admin-asset-header">
-                <div>
-                   <h3 style={{ fontSize: '1.25rem', marginBottom: '4px' }}>Select Trading Asset</h3>
-                   <p className="admin-subtitle" style={{ marginTop: 0 }}>Choose the asset to broadcast</p>
-                </div>
-             </div>
-
-             <div className="admin-search">
-                <img src="/images/svg (17).png" style={{ position: 'absolute', left: '12px', top: '14px', width: '20px' }} alt="Search" />
-                <input type="text" placeholder="Search coins or forex..." />
-             </div>
-
-             <div className="admin-asset-grid">
-                {assets.map(asset => (
-                  <div 
-                    key={asset.id} 
-                    className={`admin-asset-card ${selectedAsset?.id === asset.id ? 'active' : ''}`}
+            <div className="bsg-field">
+              <span className="bsg-label">Asset</span>
+              <div className="bsg-assets">
+                {assets.map((asset) => (
+                  <button
+                    key={asset.id}
+                    type="button"
+                    className={`bsg-asset ${selectedAsset?.id === asset.id ? 'is-active' : ''}`}
                     onClick={() => setSelectedAsset(asset)}
+                    aria-pressed={selectedAsset?.id === asset.id}
                   >
-                    <div className="admin-asset-top">
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <div className="admin-asset-icon-box" style={{ background: asset.iconColor }}>
-                           <AssetIcon glyph={asset.glyph} />
-                        </div>
-                        <div>
-                           <div style={{ fontWeight: 600 }}>{asset.name}</div>
-                           <div style={{ fontSize: '0.75rem', color: 'var(--admin-text-muted)' }}>{asset.displaySymbol}</div>
-                        </div>
-                      </div>
-                      <div className="admin-check-circle">
-                         {selectedAsset?.id === asset.id && <img src="/images/i (11).png" style={{ width: '14px', filter: 'invert(1)' }} alt="Checked" />}
-                      </div>
-                    </div>
-                  </div>
+                    <span className="bsg-asset-icon" style={{ background: asset.iconColor }}><AssetIcon glyph={asset.glyph} /></span>
+                    <span className="bsg-asset-text">
+                      <strong>{asset.name}</strong>
+                      <small>{asset.displaySymbol}</small>
+                    </span>
+                  </button>
                 ))}
-             </div>
-          </section>
-
-          {/* SIGNAL CONFIGURATION SUMMARY (RIGHT) */}
-          <aside>
-             <div className="admin-summary-card">
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1.5rem' }}>Signal Configuration</h3>
-                
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem', borderBottom: '1px solid var(--admin-border-color)', paddingBottom: '1rem' }}>
-                   <span style={{ color: 'var(--admin-text-muted)' }}>Selected Asset</span>
-                   <strong>{selectedAsset?.name || '---'}</strong>
-                </div>
-
-                <div className="admin-type-toggle">
-                    <div 
-                        className={`admin-type-btn buy ${type === 'Buy' ? 'active' : ''}`}
-                        onClick={() => setType('Buy')}
-                    >BUY</div>
-                    <div 
-                        className={`admin-type-btn sell ${type === 'Sell' ? 'active' : ''}`}
-                        onClick={() => setType('Sell')}
-                    >SELL</div>
-                </div>
-
-                <div className="admin-form-group">
-                    <label>Entry Price</label>
-                    <input 
-                        type="number" 
-                        step="any"
-                        name="entry_price"
-                        className="admin-form-input" 
-                        value={formData.entry_price}
-                        onChange={handleChange}
-                        placeholder="e.g. 2350.50" 
-                        required 
-                    />
-                </div>
-
-                <div className="admin-form-group">
-                    <label>Target Price (TP)</label>
-                    <input 
-                        type="number" 
-                        step="any"
-                        name="target_price"
-                        className="admin-form-input" 
-                        value={formData.target_price}
-                        onChange={handleChange}
-                        placeholder="e.g. 2360.00" 
-                        required 
-                    />
-                </div>
-
-                <div className="admin-form-group">
-                    <label>Stop Loss (SL)</label>
-                    <input 
-                        type="number" 
-                        step="any"
-                        name="stop_loss"
-                        className="admin-form-input" 
-                        value={formData.stop_loss}
-                        onChange={handleChange}
-                        placeholder="e.g. 2340.00" 
-                        required 
-                    />
-                </div>
-                
-                <div className="admin-form-group">
-                    <label>Category</label>
-                    <select 
-                        name="signal_type" 
-                        className="admin-form-input"
-                        value={formData.signal_type}
-                        onChange={handleChange}
-                    >
-                        <option value="free">Free Signal</option>
-                        <option value="premium">Premium Signal</option>
-                    </select>
-                </div>
-
-                <div className="admin-form-group">
-                    <label>Release Countdown (Minutes)</label>
-                    <input 
-                        type="number" 
-                        name="timer_minutes"
-                        className="admin-form-input" 
-                        value={formData.timer_minutes}
-                        onChange={handleChange}
-                        placeholder="e.g. 5 or 8 minutes" 
-                    />
-                    <small style={{ color: 'var(--admin-text-muted)', fontSize: '0.7rem' }}>Leave blank for instant broadcast</small>
-                </div>
-
-                {message && (
-                    <div style={{ textAlign: 'center', marginTop: '1rem', fontSize: '0.85rem', color: message.includes('success') ? 'var(--admin-success)' : 'var(--admin-danger)' }}>
-                        {message}
-                    </div>
-                )}
-
-                {getSignalLevelError({ type, ...formData }) && (
-                    <div role="alert" style={{ marginTop: '1rem', fontSize: '0.8rem', color: '#dc2626', background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '8px', padding: '8px 10px' }}>
-                        {getSignalLevelError({ type, ...formData })}
-                    </div>
-                )}
-
-                <button type="submit" className="admin-btn-broadcast" disabled={loading || !!getSignalLevelError({ type, ...formData })}>
-                   {loading ? <><span className="btn-spinner dark"></span>Processing...</> : (
-                       <>
-                        <img src="/images/svg (13).png" style={{ height: '18px', filter: 'invert(1)' }} alt="Broadcast" />
-                        Broadcast Signal
-                       </>
-                   )}
-                </button>
-                
-                <p style={{ fontSize: '0.7rem', color: 'var(--admin-text-muted)', textAlign: 'center', marginTop: '1rem' }}>
-                   ⓘ Signals are instantly broadcasted to all active clients.
-                </p>
               </div>
-          </aside>
-        </form>
+            </div>
 
-        {/* NEW GLOBAL TIMER & REQUESTS SECTION */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '2rem', marginBottom: '3rem' }}>
-            {/* GLOBAL TIMER CARD */}
-            <section className="admin-summary-card" style={{ margin: 0 }}>
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <span style={{ fontSize: '1.5rem' }}>⌛</span> Next Signal Countdown
-                </h3>
-                <p className="admin-subtitle">Set a breaking news style timer for all users</p>
-                
-                {activeGlobalTimer ? (
-                    <div style={{ background: 'rgba(var(--t-accent-rgb), 0.1)', border: '1px solid var(--t-accent)', borderRadius: '12px', padding: '1.5rem', textAlign: 'center', marginBottom: '1.5rem' }}>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--t-gold)', fontWeight: 800, textTransform: 'uppercase', marginBottom: '5px' }}>Active Timer</div>
-                        <div style={{ fontSize: '2.5rem', fontWeight: 900, color: 'var(--t-gold)', fontFamily: 'monospace' }}>
-                            {(() => {
-                                const totalSeconds = Math.max(0, Math.floor((new Date(activeGlobalTimer) - currentTime) / 1000));
-                                const mins = Math.floor(totalSeconds / 60);
-                                const secs = totalSeconds % 60;
-                                return `${mins}:${secs.toString().padStart(2, '0')}`;
-                            })()}
-                        </div>
-                        <button 
-                            onClick={handleClearGlobalTimer}
-                            style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid #ef4444', color: '#ef4444', padding: '6px 15px', borderRadius: '6px', cursor: 'pointer', marginTop: '10px', fontSize: '0.8rem' }}
-                        >Stop Timer</button>
-                    </div>
-                ) : (
-                    <div className="admin-form-group">
-                        <label>Timer Duration (Minutes)</label>
-                        <div style={{ display: 'flex', gap: '10px' }}>
-                            <input 
-                                type="number" 
-                                className="admin-form-input" 
-                                value={globalTimerMinutes}
-                                onChange={(e) => setGlobalTimerMinutes(e.target.value)}
-                                placeholder="e.g. 10" 
-                            />
-                            <button 
-                                onClick={handleSetGlobalTimer}
-                                className="admin-btn-broadcast" 
-                                style={{ margin: 0, whiteSpace: 'nowrap', width: 'auto', padding: '0 20px' }}
-                                disabled={loading || !globalTimerMinutes}
-                            >
-                                {loading ? <><span className="btn-spinner dark"></span>Starting...</> : 'Start Countdown'}
-                            </button>
-                        </div>
-                    </div>
-                )}
-                <small style={{ color: 'var(--admin-text-muted)' }}>ⓘ Setting this timer will clear all previous signal requests.</small>
-            </section>
+            <div className="bsg-field">
+              <span className="bsg-label">Direction</span>
+              <div className="bsg-dir">
+                <button type="button" className={`bsg-dir-btn bsg-dir-btn--buy ${type === 'Buy' ? 'is-active' : ''}`} onClick={() => setType('Buy')}>▲ Buy</button>
+                <button type="button" className={`bsg-dir-btn bsg-dir-btn--sell ${type === 'Sell' ? 'is-active' : ''}`} onClick={() => setType('Sell')}>▼ Sell</button>
+              </div>
+            </div>
 
-            {/* SIGNAL REQUESTS CARD */}
-            <section className="admin-summary-card" style={{ margin: 0, maxHeight: '400px', overflowY: 'auto' }}>
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <span style={{ fontSize: '1.5rem' }}>📥</span> Signal Access Requests
-                </h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    {signalRequests.length === 0 ? (
-                        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: '2rem 0' }}>No pending requests</p>
-                    ) : (
-                        signalRequests.map(req => (
-                            <div key={req.id} style={{ background: 'var(--tw-03)', border: '1px solid var(--admin-border-color)', borderRadius: '12px', padding: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <div>
-                                    <div style={{ fontWeight: 600 }}>{req.User?.name}</div>
-                                    <div style={{ fontSize: '0.7rem', color: 'var(--admin-text-muted)' }}>Wallet: ${req.User?.wallet_balance}</div>
-                                </div>
-                                <div>
-                                    {req.status === 'pending' ? (
-                                        <button 
-                                            onClick={() => handleApproveRequest(req.id)}
-                                            style={{ background: 'var(--admin-success)', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '6px', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 600 }}
-                                        >Approve</button>
-                                    ) : (
-                                        <span style={{ color: 'var(--admin-success)', fontSize: '0.75rem', fontWeight: 600 }}>Approved ✅</span>
-                                    )}
-                                </div>
-                            </div>
-                        ))
-                    )}
+            <div className="bsg-field">
+              <span className="bsg-label">Price levels</span>
+              <div className="bsg-levels">
+                <label>
+                  <small>Entry</small>
+                  <input type="number" step="any" name="entry_price" value={formData.entry_price} onChange={handleChange} placeholder="2350.50" required />
+                </label>
+                <label>
+                  <small className="bsg-win">Take profit</small>
+                  <input type="number" step="any" name="target_price" value={formData.target_price} onChange={handleChange} placeholder={type === 'Buy' ? '2360.00' : '2340.00'} required />
+                </label>
+                <label>
+                  <small className="bsg-loss">Stop loss</small>
+                  <input type="number" step="any" name="stop_loss" value={formData.stop_loss} onChange={handleChange} placeholder={type === 'Buy' ? '2344.00' : '2356.00'} required />
+                </label>
+              </div>
+              <p className="bsg-hint">
+                {type === 'Buy' ? 'BUY → Take profit above Entry, Stop loss below Entry.' : 'SELL → Take profit below Entry, Stop loss above Entry.'}
+              </p>
+            </div>
+
+            <div className="bsg-row2">
+              <label className="bsg-field">
+                <span className="bsg-label">Category</span>
+                <select name="signal_type" className="bsg-input" value={formData.signal_type} onChange={handleChange}>
+                  <option value="free">Free signal</option>
+                  <option value="premium">Premium signal</option>
+                </select>
+              </label>
+              <label className="bsg-field">
+                <span className="bsg-label">Release after (minutes)</span>
+                <input type="number" min="0" name="timer_minutes" className="bsg-input" value={formData.timer_minutes} onChange={handleChange} placeholder="Blank = instant" />
+              </label>
+            </div>
+
+            {getSignalLevelError({ type, ...formData }) && (
+              <div role="alert" className="bsg-alert bsg-alert--error">{getSignalLevelError({ type, ...formData })}</div>
+            )}
+            {message && (
+              <div role="status" className={`bsg-alert ${/success|scheduled/i.test(message) ? 'bsg-alert--ok' : 'bsg-alert--error'}`}>{message}</div>
+            )}
+
+            <button type="submit" className="bsg-submit" disabled={loading || !!getSignalLevelError({ type, ...formData })}>
+              {loading ? <><span className="btn-spinner dark"></span>Broadcasting…</> : (formData.timer_minutes ? `Schedule signal (${formData.timer_minutes} min)` : 'Broadcast signal now')}
+            </button>
+          </form>
+
+          {/* ---------- RIGHT COLUMN ---------- */}
+          <div className="bsg-side">
+            {/* Live preview of what members will see */}
+            <section className="bsg-card bsg-preview" aria-label="Preview">
+              <div className="bsg-card-head">
+                <h2>Preview</h2>
+                <p>How the signal appears to members after they take it</p>
+              </div>
+              <div className="bsg-preview-top">
+                <span className="bsg-asset-icon" style={{ background: selectedAsset?.iconColor || 'var(--t-accent)' }}><AssetIcon glyph={selectedAsset?.glyph || '?'} /></span>
+                <div className="bsg-asset-text">
+                  <strong>{selectedAsset?.displaySymbol || 'Choose an asset'}</strong>
+                  <small>{selectedAsset?.name || '—'} · {formData.signal_type === 'premium' ? 'Premium' : 'Free'}</small>
                 </div>
+                <span className={`bsg-pill ${type === 'Buy' ? 'bsg-pill--buy' : 'bsg-pill--sell'}`}>{type.toUpperCase()}</span>
+              </div>
+              <div className="bsg-preview-levels">
+                <div><small>Entry</small><b>{formData.entry_price || '—'}</b></div>
+                <div><small>Target</small><b className="bsg-win">{formData.target_price || '—'}</b></div>
+                <div><small>Stop</small><b className="bsg-loss">{formData.stop_loss || '—'}</b></div>
+              </div>
+              <p className="bsg-preview-foot">
+                {formData.timer_minutes ? `⏳ Locked for ${formData.timer_minutes} min after broadcast` : '⚡ Available instantly after broadcast'}
+              </p>
             </section>
+
+            {/* Global countdown */}
+            <section className="bsg-card">
+              <div className="bsg-card-head">
+                <h2>Next signal countdown</h2>
+                <p>Shows a countdown box on every member&apos;s dashboard</p>
+              </div>
+              {activeGlobalTimer ? (
+                <div className="bsg-timer">
+                  <span className="bsg-timer-label">Running</span>
+                  <b>
+                    {(() => {
+                      const totalSeconds = Math.max(0, Math.floor((new Date(activeGlobalTimer) - currentTime) / 1000));
+                      return `${Math.floor(totalSeconds / 60)}:${(totalSeconds % 60).toString().padStart(2, '0')}`;
+                    })()}
+                  </b>
+                  <button type="button" className="bsg-btn-ghost bsg-btn-ghost--danger" onClick={handleClearGlobalTimer}>Stop timer</button>
+                </div>
+              ) : (
+                <div className="bsg-inline">
+                  <input type="number" min="1" className="bsg-input" value={globalTimerMinutes} onChange={(e) => setGlobalTimerMinutes(e.target.value)} placeholder="Minutes, e.g. 10" />
+                  <button type="button" className="bsg-btn" onClick={handleSetGlobalTimer} disabled={loading || !globalTimerMinutes}>
+                    {loading ? 'Starting…' : 'Start'}
+                  </button>
+                </div>
+              )}
+              <p className="bsg-hint">Starting a timer clears all previous access requests.</p>
+            </section>
+
+            {/* Access requests */}
+            <section className="bsg-card">
+              <div className="bsg-card-head bsg-card-head--row">
+                <h2>Access requests</h2>
+                <span className="bsg-count">{signalRequests.filter((r) => r.status === 'pending').length} pending</span>
+              </div>
+              {signalRequests.length === 0 ? (
+                <p className="bsg-empty">No requests yet. Members can request access while a countdown is running.</p>
+              ) : (
+                <ul className="bsg-requests">
+                  {signalRequests.map((req) => (
+                    <li key={req.id}>
+                      <div>
+                        <strong>{req.User?.name || 'Member'}</strong>
+                        <small>Wallet: ${Number(req.User?.wallet_balance || 0).toFixed(2)}</small>
+                      </div>
+                      {req.status === 'pending' ? (
+                        <button type="button" className="bsg-btn bsg-btn--sm" onClick={() => handleApproveRequest(req.id)}>Approve</button>
+                      ) : (
+                        <span className="bsg-pill bsg-pill--buy">Approved</span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          </div>
         </div>
 
         {/* RECENT BROADCASTS SECTION */}

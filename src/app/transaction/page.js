@@ -33,7 +33,7 @@ export default function Transaction() {
   const dispatch = useDispatch();
   const { user, token } = useSelector((state) => state.auth);
   const [isAuthorizing, setIsAuthorizing] = useState(true);
-  const [mounted, setMounted] = useState(false);
+  const [mounted, setMounted] = useState(true); // protected page: AuthGuard renders it client-side only, so no hydration flash guard needed
   const [isActionLoading, setIsActionLoading] = useState(false);
   
   useEffect(() => {
