@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import ThemeToggle from '@/components/ThemeToggle';
+import { displayUserId } from '@/lib/memberId';
 import '../styles/dashboard.css';
 
 const LINKS = [
@@ -22,6 +23,21 @@ const LINKS = [
 export default function UserNavbar({ active, user, onLogout }) {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isProfileOpen, setIsProfileOpen] = useState(false);
+    const profileRef = useRef(null);
+
+    // Close the profile dropdown when the user taps or clicks anywhere outside it.
+    useEffect(() => {
+        if (!isProfileOpen) return;
+        const handleOutside = (e) => {
+            if (profileRef.current && !profileRef.current.contains(e.target)) setIsProfileOpen(false);
+        };
+        document.addEventListener('mousedown', handleOutside);
+        document.addEventListener('touchstart', handleOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleOutside);
+            document.removeEventListener('touchstart', handleOutside);
+        };
+    }, [isProfileOpen]);
 
     const toggleMenu = () => {
         setIsMenuOpen(!isMenuOpen);
@@ -61,7 +77,7 @@ export default function UserNavbar({ active, user, onLogout }) {
 
                 <div className="db-nav-actions">
                     <ThemeToggle />
-                    <div className="db-nav-icons">
+                    <div className="db-nav-icons" ref={profileRef}>
                         {user?.profile_image ? (
                             <img
                                 src={user.profile_image}
@@ -90,7 +106,7 @@ export default function UserNavbar({ active, user, onLogout }) {
                             <div className="dropdown-user-info">
                                 <span className="user-name">{user?.name || 'Trader'}</span>
                                 <span className="user-email">{user?.email || ''}</span>
-                                <span className="user-id">ID: #{user?.user_id || '---'}</span>
+                                <span className="user-id">ID: #{displayUserId(user?.user_id) ?? '---'}</span>
                             </div>
 
                             <div className="dropdown-balance">
@@ -99,7 +115,11 @@ export default function UserNavbar({ active, user, onLogout }) {
                             </div>
 
                             <button className="logout-btn" onClick={onLogout}>
-                                <img src="/images/arrow (1).png" style={{ height: '14px', filter: 'invert(1)' }} alt="" />
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                                    <path d="M16 17l5-5-5-5" />
+                                    <path d="M21 12H9" />
+                                </svg>
                                 Log Out
                             </button>
                         </div>

@@ -1,7 +1,7 @@
 import { supabase, unwrap, toError, getSessionUserId, PROOF_BUCKET } from '@/lib/supabaseClient';
 import authService, { isAdminUsername } from './authService';
 
-const WITH_USER = '*, User:profiles(name, email, wallet_balance)';
+const WITH_USER = '*, User:profiles(user_id, name, email, wallet_balance)';
 
 const requestDeposit = async (formData) => {
     const userId = await getSessionUserId();
@@ -69,6 +69,19 @@ const getWalletStats = async () => {
 
 const getAllUsers = async () => {
     return unwrap(await supabase.rpc('get_all_users'));
+};
+
+// action: 'activate' | 'deactivate' | 'delete' — checked on the server (admin only).
+const updateUserStatus = async (userId, action) => {
+    const { data } = await supabase.auth.getSession();
+    const res = await fetch('/api/admin-users', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', authorization: `Bearer ${data.session?.access_token || ''}` },
+        body: JSON.stringify({ userId, action }),
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) throw toError(body.message || 'Could not update the user');
+    return body;
 };
 
 // Per-user signal counts (taken / wins / losses) keyed by user id.
@@ -159,6 +172,7 @@ const transactionService = {
     getAdminStats,
     getWalletStats,
     getAllUsers,
+    updateUserStatus,
     getUserSignalCounts,
     getAllUsersWithSignals,
     deleteTransaction,

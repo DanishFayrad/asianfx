@@ -1,6 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
+import transactionService from '@/services/transactionService';
+import { displayUserId } from '@/lib/memberId';
 
 const ROWS_PER_PAGE = 8;
 
@@ -16,6 +19,26 @@ const ROWS_PER_PAGE = 8;
 export default function AdminUsersTable({ users = [], loading = false }) {
     const [query, setQuery] = useState('');
     const [page, setPage] = useState(1);
+    const [busyId, setBusyId] = useState(null);
+
+    // Activate / deactivate / delete a member from the Status dropdown.
+    // Reloads the page afterwards so the table shows the fresh data.
+    const handleStatusChange = async (u, value) => {
+        const action = value === 'delete' ? 'delete' : value === 'active' ? 'activate' : 'deactivate';
+        if (action === 'delete' && !window.confirm(
+            `Delete ${u.name || u.email}? Their account, deposits and signal history will be removed. This cannot be undone.`
+        )) return;
+
+        setBusyId(u.id);
+        try {
+            const { message } = await transactionService.updateUserStatus(u.id, action);
+            toast.success(message);
+            window.location.reload();
+        } catch (e) {
+            toast.error(e.message || 'Could not update the user');
+            setBusyId(null);
+        }
+    };
 
     const fmt = (n) => Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const fmtDate = (d) => {
@@ -27,8 +50,8 @@ export default function AdminUsersTable({ users = [], loading = false }) {
     const q = query.trim().toLowerCase();
     const filtered = q
         ? users.filter((u) =>
-            [u.name, u.email, u.phone, u.country, u.referral_code]
-                .some((f) => (f || '').toLowerCase().includes(q)))
+            [u.name, u.email, u.phone, u.country, u.referral_code, displayUserId(u.user_id)]
+                .some((f) => String(f ?? '').toLowerCase().includes(q)))
         : users;
 
     const totalPages = Math.max(1, Math.ceil(filtered.length / ROWS_PER_PAGE));
@@ -53,7 +76,7 @@ export default function AdminUsersTable({ users = [], loading = false }) {
                 <input
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Search name, email, phone…"
+                    placeholder="Search name, email, phone, ID…"
                     style={{ background: 'var(--admin-bg-main)', border: '1px solid var(--admin-border-color)', color: 'var(--admin-text-main)', padding: '10px 14px', borderRadius: '10px', minWidth: '240px', outline: 'none' }}
                 />
             </div>
@@ -88,6 +111,7 @@ export default function AdminUsersTable({ users = [], loading = false }) {
                                             {u.is_admin && <span style={{ fontSize: '0.6rem', background: 'rgba(var(--t-accent-rgb), 0.15)', color: 'var(--admin-primary)', padding: '2px 6px', borderRadius: '6px', letterSpacing: '0.5px' }}>ADMIN</span>}
                                         </span>
                                         {!u.is_admin && <span style={{ fontSize: '0.75rem', color: 'var(--admin-text-muted)' }}>{u.email}</span>}
+                                        {u.user_id != null && <span style={{ fontSize: '0.7rem', color: 'var(--admin-text-muted)' }}>ID: {displayUserId(u.user_id)}</span>}
                                     </div>
                                 </td>
                                 <td style={td}>
@@ -146,11 +170,26 @@ export default function AdminUsersTable({ users = [], loading = false }) {
                                     );
                                 })()}
                                 <td style={td}>
-                                    <span style={{
-                                        fontSize: '0.72rem', fontWeight: 600, padding: '3px 10px', borderRadius: '20px',
-                                        background: u.is_active ? 'rgba(34,197,94,0.12)' : 'rgba(156,163,175,0.12)',
-                                        color: u.is_active ? 'var(--admin-success)' : 'var(--admin-text-muted)'
-                                    }}>{u.is_active ? 'Active' : 'Inactive'}</span>
+                                    {u.is_admin ? (
+                                        <span style={{ color: 'var(--admin-text-muted)' }}>—</span>
+                                    ) : (
+                                        <select
+                                            value={u.is_active ? 'active' : 'inactive'}
+                                            disabled={busyId === u.id}
+                                            onChange={(e) => handleStatusChange(u, e.target.value)}
+                                            aria-label={`Status for ${u.name || u.email}`}
+                                            style={{
+                                                background: 'var(--admin-bg-main)', border: '1px solid var(--admin-border-color)',
+                                                color: u.is_active ? 'var(--admin-success)' : 'var(--admin-text-muted)',
+                                                padding: '5px 8px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 600,
+                                                cursor: busyId === u.id ? 'wait' : 'pointer', outline: 'none'
+                                            }}
+                                        >
+                                            <option value="active">Active</option>
+                                            <option value="inactive">Inactive</option>
+                                            <option value="delete">Delete</option>
+                                        </select>
+                                    )}
                                 </td>
                                 <td style={{ ...td, color: 'var(--admin-text-muted)' }}>{fmtDate(u.created_at)}</td>
                             </tr>

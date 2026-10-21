@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useSelector, useDispatch } from 'react-redux';
@@ -119,6 +119,16 @@ export default function Dashboard() {
         setScreenshot(file);
         setScreenshotPreview(URL.createObjectURL(file));
     }
+  };
+  const proofInputRef = useRef(null);
+  const clearScreenshot = () => {
+    setScreenshot(null);
+    setScreenshotPreview(null);
+    if (proofInputRef.current) proofInputRef.current.value = '';
+  };
+  const [isProofViewOpen, setIsProofViewOpen] = useState(false);
+  const viewScreenshot = () => {
+    if (screenshotPreview) setIsProofViewOpen(true);
   };
   const [currentPage, setCurrentPage] = useState(1);
   const [signals, setSignals] = useState([]);
@@ -686,27 +696,42 @@ export default function Dashboard() {
               <div className="amount-input-group">
                 <label>Upload Payment Proof (Screenshot)</label>
                 <input 
-                    type="file" 
+                    type="file"
+                    ref={proofInputRef}
                     accept="image/*"
-                    className="amount-input" 
+                    className="amount-input"
                     style={{ fontSize: '0.85rem', padding: '12px' }}
                     onChange={handleFileChange}
                 />
                 {screenshotPreview && (
-                  <div style={{ marginTop: '1rem', textAlign: 'center' }}>
+                  <div style={{ marginTop: '1rem', textAlign: 'center', position: 'relative' }}>
                     <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Preview:</p>
-                    <img 
-                      src={screenshotPreview} 
-                      alt="Proof Preview" 
-                      style={{ 
-                        height: '140px', 
-                        width: 'auto', 
-                        borderRadius: '12px', 
+                    <img
+                      src={screenshotPreview}
+                      alt="Proof Preview"
+                      style={{
+                        height: '140px',
+                        width: 'auto',
+                        borderRadius: '12px',
                         border: '2px solid var(--primary)',
                         padding: '4px',
                         background: 'rgba(0,0,0,0.5)'
-                      }} 
+                      }}
                     />
+                    <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginTop: '0.6rem' }}>
+                      <button
+                        type="button"
+                        onClick={viewScreenshot}
+                        style={{ background: 'var(--btn-primary)', color: '#111', border: 'none', padding: '6px 14px', borderRadius: '8px', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer' }}
+                      >View</button>
+                      <button
+                        type="button"
+                        onClick={clearScreenshot}
+                        aria-label="Remove screenshot"
+                        title="Remove screenshot"
+                        style={{ background: 'var(--tw-05)', color: 'var(--text-main, #111)', border: '1px solid var(--border-color)', width: '32px', height: '32px', borderRadius: '50%', cursor: 'pointer', fontSize: '0.95rem', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                      >✕</button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -723,6 +748,27 @@ export default function Dashboard() {
                 ⭐ Super Admin will verify and credit your wallet shortly.
               </p>
             </div>
+          </div>
+        )}
+
+        {isProofViewOpen && screenshotPreview && (
+          <div
+            onClick={() => setIsProofViewOpen(false)}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0, 0, 0, 0.9)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100000, padding: '1rem' }}
+          >
+            <button
+              type="button"
+              onClick={() => setIsProofViewOpen(false)}
+              aria-label="Close image"
+              style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'rgba(255, 255, 255, 0.15)', border: 'none', color: '#fff', width: '40px', height: '40px', borderRadius: '50%', cursor: 'pointer', fontSize: '1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            >✕</button>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={screenshotPreview}
+              alt="Proof full view"
+              onClick={(e) => e.stopPropagation()}
+              style={{ maxWidth: '100%', maxHeight: '90vh', objectFit: 'contain', borderRadius: '12px' }}
+            />
           </div>
         )}
 
@@ -991,7 +1037,7 @@ export default function Dashboard() {
                                                 <td>${history.invested_amount}</td>
                                                 <td>
                                                     <span className={`db-badge status ${history.result === 'win' ? 'hit' : history.result === 'loss' ? 'loss' : 'active'}`}>
-                                                        {history.result}
+                                                        {history.result === 'win' ? 'Profit' : history.result === 'loss' ? 'Loss' : history.result}
                                                     </span>
                                                 </td>
                                                 <td className="time">{new Date(history.taken_at).toLocaleDateString()}</td>

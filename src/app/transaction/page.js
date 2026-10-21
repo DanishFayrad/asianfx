@@ -12,6 +12,7 @@ import toast from 'react-hot-toast';
 import AdminSidebar, { initials } from '../../components/AdminSidebar';
 import AdminHeader from '@/components/admin/AdminHeader';
 import { IconCheck, IconX, IconClock, IconImage, IconTrash, IconSearch, IconInbox, IconTransactions } from '@/components/admin/AdminIcons';
+import { displayUserId } from '@/lib/memberId';
 import '../../styles/adminSignals.css';
 import '../../styles/adminTransactions.css';
 
@@ -241,7 +242,7 @@ export default function Transaction() {
     const q = search.trim().toLowerCase();
     return deposits.filter((t) =>
       (filter === 'all' || statusKey(t.status) === filter) &&
-      (!q || [t.User?.name, t.User?.email].some((v) => (v || '').toLowerCase().includes(q))));
+      (!q || [t.User?.name, t.User?.email, displayUserId(t.User?.user_id)].some((v) => String(v ?? '').toLowerCase().includes(q))));
   }, [deposits, filter, search]);
 
   const visibleRows = filteredRows.slice(0, visible);
@@ -331,7 +332,7 @@ export default function Transaction() {
                 <IconSearch size={16} />
                 <input
                   type="search"
-                  placeholder="Search name or email…"
+                  placeholder="Search name, email or ID…"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   aria-label="Search deposits"
@@ -372,6 +373,7 @@ export default function Transaction() {
                               <div>
                                 <strong>{memberName}</strong>
                                 <small>{tx.User?.email || '—'}</small>
+                                {tx.User?.user_id != null && <small>ID: {displayUserId(tx.User.user_id)}</small>}
                               </div>
                             </div>
                           </td>
@@ -473,7 +475,7 @@ export default function Transaction() {
                         <button 
                             onClick={executeConfirmAction} 
                             disabled={isActionLoading}
-                            style={{ flex: 2, background: confirmModal.type === 'approve' ? '#22c55e' : '#ef4444', border: 'none', padding: '14px', borderRadius: '12px', cursor: 'pointer', fontWeight: 700, color: 'var(--t-text)', fontSize: '1rem' }}
+                            style={{ flex: 2, background: ['approve', 'reject'].includes(confirmModal.type) ? '#22c55e' : '#ef4444', border: 'none', padding: '14px', borderRadius: '12px', cursor: 'pointer', fontWeight: 700, color: 'var(--t-text)', fontSize: '1rem' }}
                         >
                             {isActionLoading ? <><span className="btn-spinner"></span>Processing...</> : (confirmModal.type === 'approve' ? 'Approve' : confirmModal.type === 'delete' ? 'Yes, Delete' : 'Yes, Reject')}
                         </button>
