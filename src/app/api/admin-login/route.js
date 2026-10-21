@@ -71,7 +71,7 @@ export async function POST(request) {
     // Make sure this account is an admin (service role bypasses RLS).
     const { error: profileError } = await service
         .from('profiles')
-        .update({ is_admin: true, is_active: true, name: 'Administrator' })
+        .update({ is_admin: true, is_active: true, name: ADMIN_USERNAME.trim() })
         .eq('id', data.user.id);
     if (profileError) {
         return Response.json({ message: 'Could not grant admin access. Has schema.sql been run?' }, { status: 500 });
