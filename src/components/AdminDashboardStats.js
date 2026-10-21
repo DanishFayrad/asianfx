@@ -49,7 +49,6 @@ export default function AdminDashboardStats({ adminStats, onNav = () => {} }) {
                         <strong>Review deposits</strong>
                         <small>Check proofs, approve and credit wallets</small>
                     </span>
-                    {pending > 0 && <span className="adb-badge">{pending}</span>}
                 </button>
                 <button type="button" className="adb-action" onClick={() => onNav('/admin/signals')}>
                     <span className="adb-action-icon adb-bg-gold"><IconBroadcast size={20} /></span>

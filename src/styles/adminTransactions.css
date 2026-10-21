@@ -435,7 +435,7 @@
   font-weight: 700;
   white-space: nowrap;
   color: var(--t-on-accent);
-  background: var(--t-gradient);
+  background: var(--btn-primary);
   box-shadow: 0 6px 16px rgba(var(--t-accent-rgb), 0.25);
 }
 
@@ -465,8 +465,8 @@
   font: inherit;
   font-size: 0.8rem;
   font-weight: 700;
-  color: #fff;
-  background: #d97706;
+  color: #111;
+  background: var(--btn-primary);
   white-space: nowrap;
 }
 

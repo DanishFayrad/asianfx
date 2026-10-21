@@ -49,7 +49,7 @@ export default function AdminSidebar({ active, user, pendingDeposits = 0, onLogo
                     >
                         <Icon />
                         <span>{label}</span>
-                        {badge && pendingDeposits > 0 && <i className="asb-badge">{pendingDeposits}</i>}
+                        {badge && pendingDeposits > 0 && <i className="asb-badge" title={`${pendingDeposits} deposit(s) waiting for approval`}>Pending</i>}
                     </Link>
                 ))}
             </nav>

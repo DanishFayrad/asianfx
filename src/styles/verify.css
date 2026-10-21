@@ -161,7 +161,7 @@
   margin-top: 20px;
   width: 100%;
   padding: 14px;
-    background: var(--t-gradient);
+    background: var(--btn-primary);
   border: none;
   border-radius: 12px;
   font-size: 1rem;

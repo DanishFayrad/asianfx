@@ -4,7 +4,6 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSelector } from 'react-redux';
 import transactionService from '../../services/transactionService';
-import signalService, { getSignalLevelError } from '../../services/signalService';
 import authService from '../../services/authService';
 import { setUser, logout } from '../../redux/slices/authSlice';
 import { connectRealtime } from '../../services/realtimeService';
@@ -12,7 +11,7 @@ import { useDispatch } from 'react-redux';
 import toast from 'react-hot-toast';
 import AdminSidebar, { initials } from '../../components/AdminSidebar';
 import AdminHeader from '@/components/admin/AdminHeader';
-import { IconCheck, IconX, IconClock, IconImage, IconSend, IconTrash, IconSearch, IconInbox, IconTransactions } from '@/components/admin/AdminIcons';
+import { IconCheck, IconX, IconClock, IconImage, IconTrash, IconSearch, IconInbox, IconTransactions } from '@/components/admin/AdminIcons';
 import '../../styles/adminSignals.css';
 import '../../styles/adminTransactions.css';
 
@@ -71,19 +70,6 @@ export default function Transaction() {
   const [userTransactions, setUserTransactions] = useState([]);
   const [loading, setLoading] = useState(false);
   
-  // Modal for sending signal
-  const [isSignalModalOpen, setIsSignalModalOpen] = useState(false);
-  const [targetUser, setTargetUser] = useState(null);
-  const [signalData, setSignalData] = useState({
-    symbol: 'XAUUSD',
-    type: 'buy',
-    entry_price: '',
-    target_price: '',
-    stop_loss: '',
-    signal_type: 'premium',
-    description: '',
-    releaseMinutes: ''
-  });
 
   const [filter, setFilter] = useState('pending');
   const [search, setSearch] = useState('');
@@ -139,17 +125,31 @@ export default function Transaction() {
     }
   }, [user]);
 
-  const handleApprove = (id) => {
+  // "View" on a pending deposit: open the review modal with the payment screenshot.
+  const [proof, setProof] = useState({ url: '', loading: false, error: '' });
+
+  const handleApprove = async (id) => {
     const tx = userTransactions.find((t) => t.id === id) || pendingDeposits.find((t) => t.id === id);
     setConfirmModal({
         isOpen: true,
-        title: 'Approve Deposit',
-        message: 'Check the payment proof, then enter the amount you actually received (USD):',
+        title: 'Review Deposit',
+        message: 'Check the payment screenshot below, then approve or reject.',
         type: 'approve',
         data: id,
-        inputValue: '',                      // starts at 0 — admin types the confirmed amount
-        requestedAmount: tx?.amount ?? null,   // what the member said they sent (shown as a hint)
+        inputValue: '',
+        tx,
     });
+    if (!tx?.proof_image) {
+      setProof({ url: '', loading: false, error: 'No screenshot uploaded' });
+      return;
+    }
+    setProof({ url: '', loading: true, error: '' });
+    try {
+      const url = await transactionService.getProofUrl(tx.proof_image);
+      setProof({ url, loading: false, error: '' });
+    } catch (e) {
+      setProof({ url: '', loading: false, error: e.message || 'Could not load screenshot' });
+    }
   };
 
   const handleReject = (id) => {
@@ -164,21 +164,17 @@ export default function Transaction() {
   };
 
   const executeConfirmAction = async () => {
-    const { type, data, inputValue } = confirmModal;
+    const { type, data, tx } = confirmModal;
     setIsActionLoading(true);
     try {
         if (type === 'approve') {
-            const parsedAmount = parseFloat(inputValue);
-            if (isNaN(parsedAmount) || parsedAmount <= 0) {
-                toast.error("Please enter a valid amount.");
+            const amount = parseFloat(tx?.amount);
+            if (isNaN(amount) || amount <= 0) {
+                toast.error("This deposit has no valid amount.");
                 return;
             }
-            await transactionService.approveTransaction(data, parsedAmount);
+            await transactionService.approveTransaction(data, amount);
             toast.success("Deposit approved and wallet credited.");
-            
-            const tx = pendingDeposits.find(t => t.id === data);
-            const userObj = tx?.User ? { ...tx.User, id: tx.user_id } : { id: tx?.user_id, name: 'Member' };
-            openSignalModal(userObj);
         } else if (type === 'reject') {
             await transactionService.rejectTransaction(data);
             toast.success("Deposit request rejected.");
@@ -204,33 +200,6 @@ export default function Transaction() {
         data: id,
         inputValue: ''
     });
-  };
-
-  const openSignalModal = (userObj) => {
-    setTargetUser(userObj);
-    setIsSignalModalOpen(true);
-  };
-
-  const handleSendSignal = async () => {
-    try {
-        setLoading(true);
-        const payload = {
-            ...signalData,
-            target_user_id: targetUser.id,
-            timer_minutes: signalData.releaseMinutes || null
-        };
-
-        const created = await signalService.createSignal(payload);
-        toast.success(`Signal sent successfully to ${targetUser.name}`);
-        if (created.email?.error) toast.error(`Email not sent: ${created.email.error}`);
-        else if (created.email?.sent) toast.success(`Email sent to ${targetUser.name}`);
-        setIsSignalModalOpen(false);
-    } catch (e) {
-        console.error(e);
-        toast.error(e.response?.data?.message || 'Failed to send signal');
-    } finally {
-        setLoading(false);
-    }
   };
 
   const handleLogout = async () => {
@@ -279,18 +248,6 @@ export default function Transaction() {
 
   useEffect(() => { setVisible(PAGE_SIZE); }, [filter, search]);
 
-  const openProof = async (tx) => {
-    // Open the tab synchronously so the popup isn't blocked, then point it at the signed URL.
-    const win = window.open('', '_blank');
-    try {
-      const url = await transactionService.getProofUrl(tx.proof_image);
-      if (win) win.location.href = url; else window.open(url, '_blank');
-    } catch (e) {
-      if (win) win.close();
-      toast.error(e.response?.data?.message || 'Could not open proof');
-    }
-  };
-
   if (!mounted || (isAuthorizing && !user)) {
       return (
           <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--t-bg)', color: 'var(--t-text)' }}>
@@ -322,7 +279,7 @@ export default function Transaction() {
       <main className="admin-main-content">
         <AdminHeader
           title="Deposits"
-          subtitle="Review payment proofs, approve deposits and send private signals"
+          subtitle="Review payment proofs and approve deposits"
           onMenu={toggleSidebar}
         />
 
@@ -433,34 +390,12 @@ export default function Transaction() {
                           </td>
                           <td className="atx-right">
                             <div className="atx-actions">
-                              {tx.status === 'pending' && (
-                                <>
-                                  <button type="button" className="atx-btn atx-btn--approve" onClick={() => handleApprove(tx.id)}>
-                                    <IconCheck size={15} /> Approve
-                                  </button>
-                                  <button type="button" className="atx-btn atx-btn--reject" onClick={() => handleReject(tx.id)}>
-                                    Reject
-                                  </button>
-                                </>
-                              )}
                               <button
                                 type="button"
-                                className="atx-icon-btn"
-                                title="View payment proof"
-                                aria-label="View payment proof"
-                                disabled={!tx.proof_image}
-                                onClick={() => openProof(tx)}
+                                className={tx.status === 'pending' ? 'atx-btn atx-btn--approve' : 'atx-btn'}
+                                onClick={() => handleApprove(tx.id)}
                               >
-                                <IconImage size={16} />
-                              </button>
-                              <button
-                                type="button"
-                                className="atx-icon-btn"
-                                title="Send private signal"
-                                aria-label="Send private signal"
-                                onClick={() => openSignalModal(tx.User ? { ...tx.User, id: tx.user_id } : { id: tx.user_id, name: memberName })}
-                              >
-                                <IconSend size={16} />
+                                <IconImage size={15} /> View
                               </button>
                               <button
                                 type="button"
@@ -491,78 +426,11 @@ export default function Transaction() {
           </section>
         </div>
 
-        {/* SIGNAL MODAL */}
-        {isSignalModalOpen && (
-            <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(5px)' }}>
-                <div className="modal-content" style={{ background: 'var(--t-surface)', padding: '2.5rem', borderRadius: '20px', color: 'var(--t-text)', width: '450px', border: '1px solid var(--t-accent)', boxShadow: '0 0 50px rgba(var(--t-accent-rgb), 0.2)' }}>
-                    <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-                        <div style={{ background: 'rgba(var(--t-accent-rgb), 0.1)', width: '60px', height: '60px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem' }}>
-                            <img src="/images/i (11).png" style={{ width: '30px', filter: 'invert(1)' }} alt="Signal" />
-                        </div>
-                        <h2 style={{ fontSize: '1.5rem', color: 'var(--t-gold)' }}>Send Private Signal</h2>
-                        <p style={{ color: 'var(--text-dim)', fontSize: '0.9rem' }}>Recipient: <strong>{targetUser?.name}</strong></p>
-                    </div>
-
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                            <div>
-                                <label style={{ fontSize: '0.75rem', color: 'var(--t-text-muted)', textTransform: 'uppercase', fontWeight: 700, display: 'block', marginBottom: '6px' }}>Symbol</label>
-                                <input style={{ width: '100%', background: 'var(--t-surface-2)', border: '1px solid var(--t-input-border)', color: 'var(--t-text)', padding: '12px', borderRadius: '10px', outline: 'none' }} value={signalData.symbol} onChange={(e) => setSignalData({...signalData, symbol: e.target.value})} />
-                            </div>
-                            <div>
-                                <label style={{ fontSize: '0.75rem', color: 'var(--t-text-muted)', textTransform: 'uppercase', fontWeight: 700, display: 'block', marginBottom: '6px' }}>Signal Type</label>
-                                <select style={{ width: '100%', background: 'var(--t-surface-2)', border: '1px solid var(--t-input-border)', color: 'var(--t-text)', padding: '12px', borderRadius: '10px', outline: 'none' }} value={signalData.signal_type} onChange={(e) => setSignalData({...signalData, signal_type: e.target.value})}>
-                                    <option value="premium">💎 Premium</option>
-                                    <option value="free">🌐 Free</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div>
-                            <label style={{ fontSize: '0.75rem', color: 'var(--t-text-muted)', textTransform: 'uppercase', fontWeight: 700, display: 'block', marginBottom: '6px' }}>Order Type</label>
-                            <div style={{ display: 'flex', gap: '10px' }}>
-                                <button onClick={() => setSignalData({...signalData, type: 'buy'})} style={{ flex: 1, padding: '10px', borderRadius: '8px', border: signalData.type === 'buy' ? '2px solid #10b981' : '1px solid var(--t-input-border)', background: signalData.type === 'buy' ? 'rgba(16, 185, 129, 0.2)' : 'transparent', color: signalData.type === 'buy' ? '#10b981' : 'var(--t-text)', cursor: 'pointer', fontWeight: 700 }}>BUY</button>
-                                <button onClick={() => setSignalData({...signalData, type: 'sell'})} style={{ flex: 1, padding: '10px', borderRadius: '8px', border: signalData.type === 'sell' ? '2px solid #ef4444' : '1px solid var(--t-input-border)', background: signalData.type === 'sell' ? 'rgba(239, 68, 68, 0.2)' : 'transparent', color: signalData.type === 'sell' ? '#ef4444' : 'var(--t-text)', cursor: 'pointer', fontWeight: 700 }}>SELL</button>
-                            </div>
-                        </div>
-
-                        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr', gap: '10px' }}>
-                            <div>
-                                <label style={{ fontSize: '0.75rem', color: 'var(--t-text-muted)', marginBottom: '4px', display: 'block' }}>Entry</label>
-                                <input placeholder="1.234" style={{ width: '100%', background: 'var(--t-surface-2)', border: '1px solid var(--t-input-border)', color: 'var(--t-text)', padding: '10px', borderRadius: '8px' }} value={signalData.entry_price} onChange={(e) => setSignalData({...signalData, entry_price: e.target.value})} />
-                            </div>
-                            <div>
-                                <label style={{ fontSize: '0.75rem', color: 'var(--t-text-muted)', marginBottom: '4px', display: 'block' }}>TP</label>
-                                <input placeholder="1.250" style={{ width: '100%', background: 'var(--t-surface-2)', border: '1px solid var(--t-input-border)', color: 'var(--t-text)', padding: '10px', borderRadius: '8px' }} value={signalData.target_price} onChange={(e) => setSignalData({...signalData, target_price: e.target.value})} />
-                            </div>
-                            <div>
-                                <label style={{ fontSize: '0.75rem', color: 'var(--t-text-muted)', marginBottom: '4px', display: 'block' }}>SL</label>
-                                <input placeholder="1.220" style={{ width: '100%', background: 'var(--t-surface-2)', border: '1px solid var(--t-input-border)', color: 'var(--t-text)', padding: '10px', borderRadius: '8px' }} value={signalData.stop_loss} onChange={(e) => setSignalData({...signalData, stop_loss: e.target.value})} />
-                            </div>
-                        </div>
-
-
-                        {getSignalLevelError(signalData) && (
-                            <div role="alert" style={{ fontSize: '0.8rem', color: '#dc2626', background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '8px', padding: '8px 10px' }}>
-                                {getSignalLevelError(signalData)}
-                            </div>
-                        )}
-
-                        <div style={{ display: 'flex', gap: '15px', marginTop: '0.5rem' }}>
-                            <button onClick={handleSendSignal} disabled={loading || !!getSignalLevelError(signalData)} style={{ opacity: getSignalLevelError(signalData) ? 0.5 : 1, flex: 2, background: 'var(--t-accent)', border: 'none', padding: '14px', borderRadius: '10px', cursor: 'pointer', fontWeight: 700, color: 'var(--t-on-accent)', fontSize: '1rem', transition: '0.3s' }}>
-                                {loading ? <><span className="btn-spinner dark"></span>Sending...</> : 'Broadcast Signal'}
-                            </button>
-                            <button onClick={() => setIsSignalModalOpen(false)} style={{ flex: 1, background: 'transparent', border: '1px solid var(--t-input-border)', color: 'var(--t-text)', padding: '14px', borderRadius: '10px', cursor: 'pointer' }}>Cancel</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        )}
-
         {/* CUSTOM CONFIRM/PROMPT MODAL */}
         {confirmModal.isOpen && (
             <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(10px)' }}>
-                <div className="modal-content" style={{ background: 'var(--t-surface)', padding: '2.5rem', borderRadius: '24px', color: 'var(--t-text)', width: '400px', border: '1px solid var(--tw-10)', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}>
+                <div className="modal-content" style={{ background: 'var(--t-surface)', padding: 'clamp(1.25rem, 4vw, 2.5rem)', borderRadius: '24px', color: 'var(--t-text)', width: confirmModal.type === 'approve' ? 'min(560px, 94vw)' : 'min(400px, 94vw)', maxHeight: '94vh', overflowY: 'auto', border: '1px solid var(--tw-10)', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}>
+                    {confirmModal.type !== 'approve' && (
                     <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
                         <div style={{ background: confirmModal.type === 'approve' ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)', width: '64px', height: '64px', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}>
                             <span style={{ fontSize: '24px' }}>{confirmModal.type === 'approve' ? '✅' : '❌'}</span>
@@ -570,47 +438,61 @@ export default function Transaction() {
                         <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '0.5rem' }}>{confirmModal.title}</h2>
                         <p style={{ color: 'var(--t-text-muted)', fontSize: '0.95rem', lineHeight: '1.5' }}>{confirmModal.message}</p>
                     </div>
+                    )}
 
                     {confirmModal.type === 'approve' && (
                         <div style={{ marginBottom: '1.5rem' }}>
-                            <label style={{ fontSize: '0.75rem', color: 'var(--t-text-dim)', fontWeight: 800, textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Amount (USD)</label>
-                            <input 
-                                type="number"
-                                inputMode="decimal"
-                                min="0"
-                                step="0.01"
-                                placeholder="0.00"
-                                style={{ width: '100%', background: 'var(--t-surface-2)', border: '1px solid var(--t-input-border)', color: 'var(--t-text)', padding: '14px', borderRadius: '12px', fontSize: '1.1rem', fontWeight: 600, outline: 'none', textAlign: 'center' }} 
-                                value={confirmModal.inputValue} 
-                                onChange={(e) => setConfirmModal({...confirmModal, inputValue: e.target.value})}
-                                autoFocus
-                            />
-                            {confirmModal.requestedAmount != null && (
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', marginTop: '10px', fontSize: '0.82rem', color: 'var(--t-text-muted)' }}>
-                                    <span>Member says they sent: <strong style={{ color: 'var(--t-text)' }}>${Number(confirmModal.requestedAmount).toFixed(2)}</strong></span>
-                                    <button
-                                        type="button"
-                                        onClick={() => setConfirmModal({ ...confirmModal, inputValue: Number(confirmModal.requestedAmount).toFixed(2) })}
-                                        style={{ background: 'transparent', border: '1px solid var(--tw-15)', color: 'var(--t-gold)', borderRadius: '8px', padding: '4px 10px', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer' }}
-                                    >Use this</button>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px', padding: '12px 14px', borderRadius: '12px', background: 'var(--tw-03)', border: '1px solid var(--tw-08)', marginBottom: '12px' }}>
+                                <div style={{ minWidth: 0 }}>
+                                    <div style={{ fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{confirmModal.tx?.User?.name || 'Member'}</div>
+                                    <div style={{ fontSize: '0.78rem', color: 'var(--t-text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{confirmModal.tx?.User?.email || '—'}</div>
                                 </div>
-                            )}
+                                <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                                    <div style={{ fontSize: '0.72rem', color: 'var(--t-text-muted)' }}>Amount sent</div>
+                                    <div style={{ fontWeight: 800, fontSize: '1.15rem', color: '#16a34a' }}>${money(confirmModal.tx?.amount)}</div>
+                                </div>
+                            </div>
+                            <div style={{ borderRadius: '12px', border: '1px solid var(--tw-10)', background: 'var(--tw-03)', minHeight: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                                {proof.loading ? (
+                                    <span style={{ color: 'var(--t-text-muted)', fontSize: '0.85rem' }}><span className="btn-spinner dark" /> Loading screenshot…</span>
+                                ) : proof.url ? (
+                                    <a href={proof.url} target="_blank" rel="noopener noreferrer" title="Open full size" style={{ display: 'block', width: '100%' }}>
+                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                        <img src={proof.url} alt="Payment proof" style={{ display: 'block', width: '100%', maxHeight: '48vh', objectFit: 'contain' }} />
+                                    </a>
+                                ) : (
+                                    <span style={{ color: 'var(--t-text-muted)', fontSize: '0.85rem' }}>{proof.error || 'No screenshot'}</span>
+                                )}
+                            </div>
+                            {proof.url && <p style={{ fontSize: '0.75rem', color: 'var(--t-text-muted)', textAlign: 'center', marginTop: '6px' }}>Tap the image to open it full size</p>}
                         </div>
                     )}
 
-                    <div style={{ display: 'flex', gap: '12px' }}>
+                    <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                        {(confirmModal.type !== 'approve' || confirmModal.tx?.status === 'pending') && (
                         <button 
                             onClick={executeConfirmAction} 
                             disabled={isActionLoading}
                             style={{ flex: 2, background: confirmModal.type === 'approve' ? '#22c55e' : '#ef4444', border: 'none', padding: '14px', borderRadius: '12px', cursor: 'pointer', fontWeight: 700, color: 'var(--t-text)', fontSize: '1rem' }}
                         >
-                            {isActionLoading ? <><span className="btn-spinner"></span>Processing...</> : (confirmModal.type === 'approve' ? 'Confirm Approval' : confirmModal.type === 'delete' ? 'Yes, Delete' : 'Yes, Reject')}
+                            {isActionLoading ? <><span className="btn-spinner"></span>Processing...</> : (confirmModal.type === 'approve' ? 'Approve' : confirmModal.type === 'delete' ? 'Yes, Delete' : 'Yes, Reject')}
                         </button>
-                        <button 
-                            onClick={closeConfirmModal} 
+                        )}
+                        {confirmModal.type === 'approve' && confirmModal.tx?.status === 'pending' && (
+                            <button
+                                type="button"
+                                onClick={() => handleReject(confirmModal.data)}
+                                disabled={isActionLoading}
+                                style={{ flex: 1, background: 'transparent', border: '1.5px solid #ef4444', color: '#dc2626', padding: '14px', borderRadius: '12px', cursor: 'pointer', fontWeight: 700 }}
+                            >
+                                Reject
+                            </button>
+                        )}
+                        <button
+                            className="btn-cancel" onClick={closeConfirmModal}
                             style={{ flex: 1, background: 'var(--tw-05)', border: '1px solid var(--tw-10)', color: 'var(--t-text)', padding: '14px', borderRadius: '12px', cursor: 'pointer', fontWeight: 600 }}
                         >
-                            Cancel
+                            {confirmModal.type === 'approve' && confirmModal.tx?.status !== 'pending' ? 'Close' : 'Cancel'}
                         </button>
                     </div>
                 </div>

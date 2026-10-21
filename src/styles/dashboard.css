@@ -338,7 +338,7 @@
 }
 
 .deposit {
-    background: var(--t-gradient);
+    background: var(--btn-primary);
   border: none;
   padding: 0.75rem 1.5rem;
   border-radius: 8px;
@@ -473,24 +473,6 @@
   text-transform: uppercase;
 }
 
-.input-icon {
-  position: relative;
-}
-
-.input-icon span {
-  position: absolute;
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  display: flex;
-  align-items: center;
-}
-
-.input-icon img {
-    width: 16px;
-}
-
-.input-icon input,
 .filter-item select {
   width: 100%;
   padding: 10px 12px;
@@ -503,11 +485,6 @@
   transition: var(--transition);
 }
 
-.input-icon input {
-    padding-left: 38px;
-}
-
-.input-icon input:focus,
 .filter-item select:focus {
     border-color: var(--primary);
 }
@@ -1698,7 +1675,7 @@
 .sig-btn--take {
   border: none;
   color: var(--t-on-accent);
-  background: var(--t-gradient);
+  background: var(--btn-primary);
   box-shadow: 0 4px 14px rgba(var(--t-accent-rgb), 0.25);
 }
 

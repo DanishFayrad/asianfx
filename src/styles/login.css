@@ -85,7 +85,7 @@ h1{
   position: relative;
 }
 
-.input-icon {
+.input-wrapper > .input-icon {
   position: absolute;
   left: 12px;
   top: 50%;
@@ -99,7 +99,7 @@ h1{
 }
 
 /* RIGHT SIDE ICON */
-.input-icon-right {
+.input-wrapper > .input-icon-right {
   position: absolute;
   right: 12px;
   top: 50%;
@@ -134,7 +134,7 @@ h1{
   padding: 12px;
   border: none;
   border-radius: 10px; 
-  background: var(--t-gradient);
+  background: var(--btn-primary);
   font-weight: 600;
   cursor: pointer;
   color: var(--t-on-accent);
@@ -176,13 +176,13 @@ h1{
 }
 
 /* FOOTER */
-.footer{
+.login-footer{
   margin-top: 20px;
   font-size: 13px;
   color: var(--t-text-muted);
 }
 
-.footer a{
+.login-footer a{
   color: var(--t-gold);
   text-decoration: none;
 }
@@ -230,11 +230,11 @@ h1{
     padding-right: 38px;
   }
 
-  .input-icon {
+  .input-wrapper > .input-icon {
     width: 13px;
   }
 
-  .input-icon-right {
+  .input-wrapper > .input-icon-right {
     width: 16px;
   }
 
@@ -257,7 +257,7 @@ h1{
     align-items: flex-start;
   }
 
-  .footer {
+  .login-footer {
     font-size: 12px;
     text-align: center;
   }

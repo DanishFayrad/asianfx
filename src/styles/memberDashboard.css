@@ -112,7 +112,7 @@
   font-size: 0.8rem;
   font-weight: 700;
   color: var(--t-on-accent);
-  background: var(--t-gradient);
+  background: var(--btn-primary);
 }
 
 .mdb-refer-stats {
@@ -342,7 +342,7 @@
   font-size: 0.9rem;
   font-weight: 700;
   color: var(--t-on-accent);
-  background: var(--t-gradient);
+  background: var(--btn-primary);
   box-shadow: 0 6px 18px rgba(var(--t-accent-rgb), 0.3);
   transition: transform 0.15s ease;
 }

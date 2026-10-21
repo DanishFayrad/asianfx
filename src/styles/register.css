@@ -131,7 +131,7 @@
 
 .signup-submit-btn {
     width: 100%;
-    background: var(--t-gradient);
+    background: var(--btn-primary);
     border: none;
     border-radius: 12px;
     padding: 14px;

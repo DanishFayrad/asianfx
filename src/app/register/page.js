@@ -163,7 +163,7 @@ export default function Register() {
               <input
                 type={showPassword ? 'text' : 'password'}
                 name="password"
-                placeholder="••••••••"
+                placeholder="Enter your password"
                 value={password}
                 onChange={onChange}
                 required

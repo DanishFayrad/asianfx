@@ -127,6 +127,20 @@ export default function Dashboard() {
   const [adminStats, setAdminStats] = useState(null);
   const [adminUsers, setAdminUsers] = useState([]);
   const [usersLoading, setUsersLoading] = useState(false);
+  const [addressCopied, setAddressCopied] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
+
+  const DEPOSIT_ADDRESS = 'TA199GDmT2ybpMKdHwZkjMgo2awuk1N1fV';
+  const copyDepositAddress = async () => {
+    try {
+      await navigator.clipboard.writeText(DEPOSIT_ADDRESS);
+      setAddressCopied(true);
+      toast.success('Address copied!');
+      setTimeout(() => setAddressCopied(false), 2000);
+    } catch {
+      toast.error('Could not copy — please select and copy it manually.');
+    }
+  };
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const rowsPerPage = 6;
@@ -278,12 +292,19 @@ export default function Dashboard() {
 
   const confirmDelete = async () => {
     if (!signalIdToDelete) return;
-    // Members only hide a signal from their own list; deleting is admin-only.
+    // Members only remove a signal from their own dashboard; deleting is admin-only.
     if (!user?.is_admin) {
-        setRejectedSignalIds(prev => [...prev, signalIdToDelete]);
-        toast.success("Signal hidden");
-        setIsDeleteModalOpen(false);
-        setSignalIdToDelete(null);
+        const id = signalIdToDelete;
+        try {
+            await signalService.hideSignal(id);
+            setRejectedSignalIds(prev => [...prev, id]);
+            setSignalHistory(prev => prev.filter(h => h.signal_id !== id));
+            toast.success("Signal removed from your list");
+            setIsDeleteModalOpen(false);
+            setSignalIdToDelete(null);
+        } catch (error) {
+            toast.error(error.message || "Failed to remove signal");
+        }
         return;
     }
     try {
@@ -547,7 +568,7 @@ export default function Dashboard() {
                     if (tableElement) tableElement.scrollIntoView({ behavior: 'smooth' });
                 }} 
                 style={{ 
-                    background: 'var(--t-accent)', 
+                    background: 'var(--btn-primary)', 
                     color: 'var(--t-on-accent)', 
                     border: 'none', 
                     padding: '5px 15px', 
@@ -605,7 +626,7 @@ export default function Dashboard() {
                 {!activePendingDeposit && (
                     <button 
                         onClick={() => setIsDepositModalOpen(true)}
-                        style={{ marginLeft: 'auto', background: '#eab308', color: 'black', border: 'none', padding: '10px 20px', borderRadius: '8px', fontWeight: 700, cursor: 'pointer' }}
+                        style={{ marginLeft: 'auto', background: 'var(--btn-primary)', color: 'black', border: 'none', padding: '10px 20px', borderRadius: '8px', fontWeight: 700, cursor: 'pointer' }}
                     >Activate Now</button>
                 )}
             </div>
@@ -624,9 +645,22 @@ export default function Dashboard() {
               <div style={{ background: 'var(--tw-03)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '1.25rem', marginBottom: '1.5rem' }}>
                 <div style={{ textAlign: 'center' }}>
                     <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginBottom: '0.75rem' }}>Send USDT to this <strong>Binance</strong> address:</p>
-                    <div style={{ background: 'var(--t-bg)', padding: '12px', borderRadius: '8px', wordBreak: 'break-all', fontSize: '0.85rem', color: 'var(--primary)', border: '1px dashed var(--primary)', marginBottom: '0.75rem' }}>
-                       {/* / {transactionCount % 4 === 3 ? "TNK1ngQW59zsu5iHntaGKiuUJ9PmSYJYtS" : "TA199GDmT2ybpMKdHwZkjMgo2awuk1N1fV"} */}
-                       TA199GDmT2ybpMKdHwZkjMgo2awuk1N1fV
+                    {/* / {transactionCount % 4 === 3 ? "TNK1ngQW59zsu5iHntaGKiuUJ9PmSYJYtS" : "TA199GDmT2ybpMKdHwZkjMgo2awuk1N1fV"} */}
+                    <div
+                      onClick={copyDepositAddress}
+                      title="Click to copy"
+                      style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'var(--t-bg)', padding: '10px 10px 10px 14px', borderRadius: '8px', border: '1px dashed var(--primary)', marginBottom: '0.75rem', cursor: 'pointer' }}
+                    >
+                      <span style={{ flex: 1, minWidth: 0, wordBreak: 'break-all', fontSize: '0.9rem', fontWeight: 600, color: 'var(--t-text)', textAlign: 'left', userSelect: 'all' }}>
+                        {DEPOSIT_ADDRESS}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); copyDepositAddress(); }}
+                        style={{ flexShrink: 0, background: addressCopied ? '#22c55e' : 'var(--btn-primary)', color: addressCopied ? '#fff' : '#111', border: 'none', padding: '8px 14px', borderRadius: '8px', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer' }}
+                      >
+                        {addressCopied ? 'Copied ✓' : 'Copy'}
+                      </button>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', fontSize: '0.7rem', color: 'var(--text-muted)' }}>
                         <span>Network: <strong>TRC20</strong></span>
@@ -751,12 +785,19 @@ export default function Dashboard() {
                                 />
                                 <button
                                     type="button"
-                                    onClick={() => {
+                                    onClick={async () => {
                                         const baseUrl = window.location.origin.includes('localhost') ? 'https://www.asianfxsignals.com' : window.location.origin;
-                                        navigator.clipboard.writeText(`${baseUrl}/register?ref=${user?.referral_code}`);
-                                        toast.success('Link copied!');
+                                        try {
+                                            await navigator.clipboard.writeText(`${baseUrl}/register?ref=${user?.referral_code}`);
+                                            setLinkCopied(true);
+                                            toast.success('Link copied!');
+                                            setTimeout(() => setLinkCopied(false), 2000);
+                                        } catch {
+                                            toast.error('Could not copy — please select and copy it manually.');
+                                        }
                                     }}
-                                >Copy link</button>
+                                    style={linkCopied ? { background: '#22c55e', color: '#fff' } : undefined}
+                                >{linkCopied ? 'Copied ✓' : 'Copy link'}</button>
                             </div>
                         </div>
 
@@ -803,7 +844,13 @@ export default function Dashboard() {
                                         {loading ? (
                                             <tr><td colSpan="8" style={{ textAlign: 'center', padding: '40px' }}>Loading signals...</td></tr>
                                         ) : currentSignals.length === 0 ? (
-                                            <tr><td colSpan="8" style={{ textAlign: 'center', padding: '40px' }}>No active signals found.</td></tr>
+                                            <tr><td colSpan="8" style={{ textAlign: 'center', padding: '40px' }}>
+                                                {user?.is_active && (Number(user?.wallet_balance || 0) >= 1 || Number(user?.free_signals || 0) > 0)
+                                                    ? 'No active signals found.'
+                                                    : <>Signals are sent only to members with balance in their wallet.{' '}
+                                                        <button type="button" onClick={() => setIsDepositModalOpen(true)} style={{ background: 'none', border: 'none', color: 'var(--t-gold)', fontWeight: 700, cursor: 'pointer', textDecoration: 'underline', fontSize: 'inherit' }}>Deposit now</button>{' '}
+                                                        to start receiving signals.</>}
+                                            </td></tr>
                                         ) : (
                                             currentSignals.map((signal, index) => (
                                                 <tr key={signal.id || index} className="sig-row">
@@ -853,7 +900,7 @@ export default function Dashboard() {
                                                         {(() => {
                                                             const owned = signal.purchased || signalHistory.some(h => h.signal_id === signal.id);
                                                             const locked = signal.release_at && new Date(signal.release_at).getTime() > currentTime.getTime();
-                                                            const canHide = user?.is_admin || (signal.target_user_id !== null && signal.target_user_id !== undefined);
+                                                            const canHide = true; // admin: delete · member: remove from own list
                                                             return (
                                                                 <div className="sig-actions">
                                                                     {owned ? (
@@ -923,6 +970,7 @@ export default function Dashboard() {
                                             <th>Invested</th>
                                             <th>Result</th>
                                             <th>Date</th>
+                                            <th style={{ textAlign: 'right' }} aria-label="Remove"></th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -947,6 +995,19 @@ export default function Dashboard() {
                                                     </span>
                                                 </td>
                                                 <td className="time">{new Date(history.taken_at).toLocaleDateString()}</td>
+                                                <td style={{ textAlign: 'right' }}>
+                                                    {history.signal_id && (
+                                                        <button
+                                                            type="button"
+                                                            className="sig-hide"
+                                                            onClick={() => handleDeleteSignal(history.signal_id)}
+                                                            title="Remove from my list"
+                                                            aria-label="Remove from my list"
+                                                        >
+                                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
+                                                        </button>
+                                                    )}
+                                                </td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -1038,12 +1099,12 @@ export default function Dashboard() {
                         <button 
                             onClick={confirmTakeSignal} 
                             disabled={isSubmitting}
-                            style={{ flex: 2, background: 'var(--primary)', border: 'none', padding: '14px', borderRadius: '12px', cursor: isSubmitting ? 'not-allowed' : 'pointer', opacity: isSubmitting ? 0.7 : 1, fontWeight: 700, color: 'var(--t-on-accent)', fontSize: '1rem' }}
+                            style={{ flex: 2, background: 'var(--btn-primary)', border: 'none', padding: '14px', borderRadius: '12px', cursor: isSubmitting ? 'not-allowed' : 'pointer', opacity: isSubmitting ? 0.7 : 1, fontWeight: 700, color: 'var(--t-on-accent)', fontSize: '1rem' }}
                         >
                             {isSubmitting ? 'Processing...' : 'Take Signal'}
                         </button>
                         <button 
-                            onClick={() => setIsTakeSignalModalOpen(false)} 
+                            className="btn-cancel" onClick={() => setIsTakeSignalModalOpen(false)} 
                             style={{ flex: 1, background: 'var(--tw-05)', border: '1px solid var(--tw-10)', color: 'var(--t-text)', padding: '14px', borderRadius: '12px', cursor: 'pointer', fontWeight: 600 }}
                         >
                             Cancel
@@ -1061,19 +1122,19 @@ export default function Dashboard() {
                         <div style={{ background: 'rgba(239, 68, 68, 0.1)', width: '70px', height: '70px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}>
                             <span style={{ fontSize: '2.5rem', color: '#ef4444' }}>⚠️</span>
                         </div>
-                        <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '0.75rem' }}>{user?.is_admin ? 'Delete Signal?' : 'Hide Signal?'}</h2>
-                        <p style={{ color: 'var(--t-text-muted)', fontSize: '1rem', lineHeight: '1.6' }}>{user?.is_admin ? 'Are you sure you want to remove this signal? This action cannot be undone.' : 'This removes the signal from your list only.'}</p>
+                        <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '0.75rem' }}>{user?.is_admin ? 'Delete Signal?' : 'Remove Signal?'}</h2>
+                        <p style={{ color: 'var(--t-text-muted)', fontSize: '1rem', lineHeight: '1.6' }}>{user?.is_admin ? 'Are you sure you want to remove this signal? This action cannot be undone.' : 'This removes the signal from your dashboard. It will not come back.'}</p>
                     </div>
 
                     <div style={{ display: 'flex', gap: '15px' }}>
                         <button 
-                            onClick={() => { setIsDeleteModalOpen(false); setSignalIdToDelete(null); }}
+                            className="btn-cancel" onClick={() => { setIsDeleteModalOpen(false); setSignalIdToDelete(null); }}
                             style={{ flex: 1, background: 'var(--tw-05)', color: 'var(--t-text)', border: '1px solid var(--tw-10)', padding: '14px', borderRadius: '14px', cursor: 'pointer', fontWeight: 600, fontSize: '1rem' }}
                         >Cancel</button>
                         <button 
                             onClick={confirmDelete}
                             style={{ flex: 1, background: '#ef4444', color: 'white', border: 'none', padding: '14px', borderRadius: '14px', cursor: 'pointer', fontWeight: 700, fontSize: '1rem', boxShadow: '0 10px 20px -5px rgba(239, 68, 68, 0.4)' }}
-                        >Yes, Delete</button>
+                        >{user?.is_admin ? 'Yes, Delete' : 'Yes, Remove'}</button>
                     </div>
                 </div>
             </div>
@@ -1147,7 +1208,7 @@ export default function Dashboard() {
                             }} 
                             style={{ 
                                 width: '100%', 
-                                background: 'var(--t-accent)', 
+                                background: 'var(--btn-primary)', 
                                 color: 'var(--t-on-accent)', 
                                 border: 'none', 
                                 padding: '16px', 

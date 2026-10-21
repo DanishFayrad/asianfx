@@ -101,6 +101,15 @@ create table if not exists public.contact_messages (
     created_at timestamptz not null default now()
 );
 
+-- Signals a member removed from their own dashboard (live list + purchased history).
+-- Only hides them for that member — the signal and its win/loss record stay.
+create table if not exists public.hidden_signals (
+    user_id    uuid   not null references public.profiles(id) on delete cascade,
+    signal_id  bigint not null references public.signals(id)  on delete cascade,
+    created_at timestamptz not null default now(),
+    primary key (user_id, signal_id)
+);
+
 -- Free signal credits: one is granted for every taken signal that closes at Stop Loss.
 alter table public.profiles add column if not exists free_signals integer not null default 0;
 
@@ -122,6 +131,15 @@ create or replace function public.is_admin()
 returns boolean language sql stable security definer set search_path = public as $$
     select coalesce((select is_admin from public.profiles where id = auth.uid()), false);
 $$;
+
+-- Who receives BROADCAST signals: approved members who can actually pay for one right now
+-- (wallet ≥ $1 signal fee) or who hold a free credit from a Stop Loss.
+create or replace function public.can_receive_signals(p_user_id uuid)
+returns boolean language sql stable security definer set search_path = public as $$
+    select coalesce((select not p.is_admin and p.is_active and (p.wallet_balance >= 1 or p.free_signals > 0)
+                     from public.profiles p where p.id = p_user_id), false);
+$$;
+revoke execute on function public.can_receive_signals(uuid) from public, anon, authenticated;
 
 -- Create a profile row automatically when someone signs up.
 create or replace function public.handle_new_user()
@@ -178,7 +196,9 @@ begin
                'release_at', new.release_at, 'target_user_id', new.target_user_id, 'created_at', new.created_at))
     from public.profiles p
     where not p.is_admin
-      and (new.target_user_id is null or p.id = new.target_user_id);
+      -- Private → that member. Broadcast → only members with money (or a free credit) in their account.
+      and (p.id = new.target_user_id
+           or (new.target_user_id is null and p.is_active and (p.wallet_balance >= 1 or p.free_signals > 0)));
     return new;
 end $$;
 
@@ -199,6 +219,12 @@ alter table public.notifications    enable row level security;
 alter table public.signal_requests  enable row level security;
 alter table public.app_settings     enable row level security;
 alter table public.contact_messages enable row level security;
+alter table public.hidden_signals   enable row level security;
+
+-- hidden_signals: members read their own rows; writes go through hide_signal().
+drop policy if exists hidden_signals_select on public.hidden_signals;
+create policy hidden_signals_select on public.hidden_signals for select to authenticated
+    using (user_id = auth.uid());
 
 -- profiles: see yourself (admins see everyone); users may edit only harmless columns.
 drop policy if exists profiles_select on public.profiles;
@@ -505,7 +531,13 @@ returns json language sql stable security definer set search_path = public as $$
         from public.signals s
         left join public.user_signals us on us.signal_id = s.id and us.user_id = auth.uid()
         where auth.uid() is not null
-          and (s.target_user_id is null or s.target_user_id = auth.uid() or public.is_admin())
+          -- Admin: everything. Member: their private signals, signals they already took, and
+          -- broadcast signals only while they have money (or a free credit) in their account.
+          and (public.is_admin()
+               or s.target_user_id = auth.uid()
+               or us.id is not null
+               or (s.target_user_id is null and public.can_receive_signals(auth.uid())))
+          and not exists (select 1 from public.hidden_signals h where h.user_id = auth.uid() and h.signal_id = s.id)
         order by s.created_at desc
         limit 100
     ) x;
@@ -523,8 +555,19 @@ returns json language sql stable security definer set search_path = public as $$
         from public.user_signals us
         left join public.signals s on s.id = us.signal_id
         where us.user_id = auth.uid()
+          and not exists (select 1 from public.hidden_signals hs where hs.user_id = auth.uid() and hs.signal_id = us.signal_id)
     ) h;
 $$;
+
+-- A member removes a signal from their own dashboard (both lists). Admins delete signals instead.
+create or replace function public.hide_signal(p_signal_id bigint)
+returns json language plpgsql security definer set search_path = public as $$
+begin
+    if auth.uid() is null then raise exception 'Not authenticated'; end if;
+    insert into public.hidden_signals (user_id, signal_id) values (auth.uid(), p_signal_id)
+        on conflict do nothing;
+    return json_build_object('message', 'Signal removed from your list');
+end $$;
 
 create or replace function public.get_wallet_stats()
 returns json language sql stable security definer set search_path = public as $$

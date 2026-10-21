@@ -283,7 +283,7 @@
 
 .admin-btn-broadcast {
     width: 100%;
-    background: var(--t-gradient);
+    background: var(--btn-primary);
     border: none;
     padding: 16px;
     border-radius: 12px;

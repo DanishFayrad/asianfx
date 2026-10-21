@@ -12,7 +12,7 @@ export default function DepositModal({ isOpen, onClose }) {
   const [copied, setCopied] = useState(false);
 
   const walletAddress = "TA199GDmT2ybpMKdHwZkjMgo2awuk1N1fV";
-  const quickAmounts = [10, 25, 50, 100, 250, 500];
+  
 
   if (!isOpen) return null;
 
@@ -71,320 +71,101 @@ export default function DepositModal({ isOpen, onClose }) {
     onClose();
   };
 
+
+  // Same look as the Deposit modal on the Signals (dashboard) page.
+  const label = { display: 'block', fontSize: '0.85rem', color: 'var(--t-text-muted)', marginBottom: '0.75rem', fontWeight: 600 };
+  const field = { width: '100%', background: 'var(--tw-03)', border: '1px solid var(--tw-10)', borderRadius: '12px', color: 'var(--t-text)', fontSize: '0.85rem', padding: '12px', outline: 'none' };
+
   return (
-    <div 
-      className="modal-overlay" 
+    <div
       onClick={handleClose}
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(5, 7, 15, 0.85)',
-        backdropFilter: 'blur(10px)',
-        WebkitBackdropFilter: 'blur(10px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 99999,
-        padding: '16px',
-        animation: 'fadeIn 0.25s ease-out'
-      }}
+      style={{ position: 'fixed', inset: 0, background: 'rgba(0, 0, 0, 0.85)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 99999, padding: '1rem' }}
     >
-      <div 
-        className="deposit-modal-card" 
+      <div
         onClick={(e) => e.stopPropagation()}
-        style={{
-          background: 'linear-gradient(180deg, var(--t-surface) 0%, var(--t-surface) 100%)',
-          width: '100%',
-          maxWidth: '520px',
-          maxHeight: '92vh',
-          overflowY: 'auto',
-          borderRadius: '24px',
-          border: '1px solid rgba(var(--t-accent-rgb), 0.3)',
-          padding: '30px 26px',
-          position: 'relative',
-          boxShadow: '0 25px 60px rgba(0, 0, 0, 0.85), 0 0 40px rgba(var(--t-accent-rgb), 0.1)',
-          color: 'var(--t-text)',
-          fontFamily: 'inherit'
-        }}
+        style={{ background: 'var(--t-surface)', width: '100%', maxWidth: '500px', maxHeight: '90vh', overflowY: 'auto', borderRadius: '20px', border: '1px solid var(--tw-10)', padding: 'clamp(1.5rem, 5vw, 2.5rem)', position: 'relative', boxShadow: '0 20px 60px rgba(0, 0, 0, 0.8)', color: 'var(--t-text)' }}
       >
-        {/* Close Button */}
-        <button 
-          onClick={handleClose}
+        <button
           type="button"
-          style={{
-            position: 'absolute',
-            top: '20px',
-            right: '20px',
-            background: 'var(--tw-05)',
-            border: '1px solid var(--tw-10)',
-            color: 'var(--t-text-muted)',
-            width: '36px',
-            height: '36px',
-            borderRadius: '50%',
-            cursor: 'pointer',
-            fontSize: '18px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            transition: 'all 0.2s ease'
-          }}
-          onMouseOver={(e) => {
-            e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)';
-            e.currentTarget.style.color = '#ef4444';
-            e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.4)';
-          }}
-          onMouseOut={(e) => {
-            e.currentTarget.style.background = 'var(--tw-05)';
-            e.currentTarget.style.color = 'var(--t-text-muted)';
-            e.currentTarget.style.borderColor = 'var(--tw-10)';
-          }}
-        >
-          ✕
-        </button>
+          onClick={handleClose}
+          aria-label="Close"
+          style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'var(--tw-05)', border: 'none', color: 'var(--t-text)', width: '32px', height: '32px', borderRadius: '50%', cursor: 'pointer', fontSize: '1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        >✕</button>
 
-        {/* Modal Header */}
-        <div style={{ textAlign: 'center', marginBottom: '22px' }}>
-          <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: '54px',
-            height: '54px',
-            borderRadius: '16px',
-            background: 'linear-gradient(135deg, rgba(var(--t-accent-rgb), 0.25), rgba(var(--t-accent-rgb), 0.05))',
-            border: '1px solid rgba(var(--t-accent-rgb), 0.4)',
-            marginBottom: '12px'
-          }}>
-            <span style={{ fontSize: '26px' }}>💰</span>
-          </div>
-          <h2 style={{ fontSize: '1.6rem', fontWeight: 800, margin: '0 0 6px 0', color: 'var(--t-text)', letterSpacing: '-0.3px' }}>
-            Deposit Funds
-          </h2>
-          <p style={{ color: 'var(--t-text-muted)', fontSize: '0.88rem', margin: 0, lineHeight: 1.4 }}>
-            Transfer USDT and upload payment screenshot proof below
-          </p>
-        </div>
+        <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.5rem', textAlign: 'center', color: 'var(--t-text)' }}>Deposit Funds</h2>
+        <p style={{ color: 'var(--t-text-muted)', textAlign: 'center', fontSize: '0.9rem', marginBottom: '2rem' }}>Transfer USDT and upload payment proof below.</p>
 
-        {/* Binance / USDT TRC20 Wallet Box */}
-        <div style={{
-          background: 'var(--tw-03)',
-          border: '1px solid rgba(var(--t-accent-rgb), 0.25)',
-          borderRadius: '16px',
-          padding: '16px 18px',
-          marginBottom: '20px'
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-            <span style={{ fontSize: '0.8rem', color: 'var(--t-text-muted)', fontWeight: 600 }}>USDT Deposit Address:</span>
-            <div style={{ display: 'flex', gap: '6px' }}>
-              <span style={{ background: 'rgba(var(--t-accent-rgb), 0.15)', color: 'var(--t-gold)', padding: '2px 8px', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 700 }}>
-                TRC20
-              </span>
-              <span style={{ background: 'rgba(34, 197, 94, 0.15)', color: '#22c55e', padding: '2px 8px', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 700 }}>
-                BINANCE
-              </span>
-            </div>
-          </div>
-
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            background: '#090d16',
-            border: '1px dashed rgba(var(--t-accent-rgb), 0.4)',
-            borderRadius: '10px',
-            padding: '10px 14px',
-            gap: '8px'
-          }}>
-            <span style={{
-              fontFamily: 'monospace',
-              fontSize: '0.85rem',
-              color: '#facc15',
-              wordBreak: 'break-all',
-              fontWeight: 600
-            }}>
+        {/* Binance address */}
+        <div style={{ background: 'var(--tw-03)', border: '1px solid var(--tw-10)', borderRadius: '12px', padding: '1.25rem', marginBottom: '1.5rem', textAlign: 'center' }}>
+          <p style={{ color: 'var(--t-text-muted)', fontSize: '0.8rem', marginBottom: '0.75rem' }}>Send USDT to this <strong>Binance</strong> address:</p>
+          <div
+            onClick={handleCopy}
+            title="Click to copy"
+            style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'var(--t-bg)', padding: '10px 10px 10px 14px', borderRadius: '8px', border: '1px dashed var(--t-accent)', marginBottom: '0.75rem', cursor: 'pointer' }}
+          >
+            <span style={{ flex: 1, minWidth: 0, wordBreak: 'break-all', fontSize: '0.9rem', fontWeight: 600, color: 'var(--t-text)', textAlign: 'left', userSelect: 'all' }}>
               {walletAddress}
             </span>
             <button
               type="button"
-              onClick={handleCopy}
-              style={{
-                background: copied ? '#22c55e' : 'var(--t-accent)',
-                color: '#000000',
-                border: 'none',
-                padding: '6px 12px',
-                borderRadius: '8px',
-                fontSize: '0.75rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-                whiteSpace: 'nowrap',
-                transition: 'all 0.2s ease'
-              }}
+              onClick={(e) => { e.stopPropagation(); handleCopy(); }}
+              style={{ flexShrink: 0, background: copied ? '#22c55e' : 'var(--btn-primary)', color: copied ? '#fff' : '#111', border: 'none', padding: '8px 14px', borderRadius: '8px', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer' }}
             >
-              {copied ? 'Copied! ✓' : 'Copy'}
+              {copied ? 'Copied ✓' : 'Copy'}
             </button>
           </div>
-
-          <p style={{ margin: '8px 0 0 0', fontSize: '0.72rem', color: 'var(--t-text-dim)', textAlign: 'center' }}>
-            ⚠️ Only send USDT via TRC20 network to this address. Minimum deposit is $5.
-          </p>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', fontSize: '0.7rem', color: 'var(--t-text-muted)' }}>
+            <span>Network: <strong>TRC20</strong></span>
+            <span>•</span>
+            <span>Asset: <strong>USDT</strong></span>
+          </div>
         </div>
 
         <form onSubmit={handleSubmit}>
-          {/* Amount Input */}
-          <div style={{ marginBottom: '18px' }}>
-            <label style={{ display: 'block', fontSize: '0.82rem', color: 'var(--t-text)', fontWeight: 600, marginBottom: '8px' }}>
-              Amount Sent (USDT)
-            </label>
-            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-              <span style={{ position: 'absolute', left: '14px', color: 'var(--t-gold)', fontWeight: 800, fontSize: '1.2rem' }}>$</span>
-              <input
-                type="number"
-                min="5"
-                step="any"
-                required
-                placeholder="5.00"
-                value={depositAmount}
-                onChange={(e) => setDepositAmount(e.target.value)}
-                style={{
-                  width: '100%',
-                  background: 'var(--tw-03)',
-                  border: '1px solid var(--tw-10)',
-                  borderRadius: '12px',
-                  padding: '12px 14px 12px 34px',
-                  fontSize: '1.1rem',
-                  fontWeight: 700,
-                  color: 'var(--t-text)',
-                  outline: 'none',
-                  transition: 'border-color 0.2s'
-                }}
-                onFocus={(e) => e.target.style.borderColor = 'var(--t-accent)'}
-                onBlur={(e) => e.target.style.borderColor = 'var(--tw-10)'}
-              />
-            </div>
-
-            {/* Quick Amount Chips */}
-            <div style={{ display: 'flex', gap: '8px', marginTop: '10px', flexWrap: 'wrap' }}>
-              {quickAmounts.map((amt) => (
-                <button
-                  key={amt}
-                  type="button"
-                  onClick={() => setDepositAmount(amt.toString())}
-                  style={{
-                    background: depositAmount === amt.toString() ? 'rgba(var(--t-accent-rgb), 0.25)' : 'var(--tw-05)',
-                    border: depositAmount === amt.toString() ? '1px solid var(--t-accent)' : '1px solid var(--tw-10)',
-                    color: depositAmount === amt.toString() ? '#facc15' : '#cbd5e1',
-                    padding: '4px 10px',
-                    borderRadius: '8px',
-                    fontSize: '0.75rem',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease'
-                  }}
-                >
-                  ${amt}
-                </button>
-              ))}
-            </div>
+          <div style={{ marginBottom: '1rem' }}>
+            <label style={label}>Amount Sent (USDT)</label>
+            <input
+              type="number"
+              min="5"
+              step="any"
+              required
+              placeholder="Min $5"
+              value={depositAmount}
+              onChange={(e) => setDepositAmount(e.target.value)}
+              style={field}
+            />
           </div>
 
-          {/* Screenshot Upload */}
-          <div style={{ marginBottom: '22px' }}>
-            <label style={{ display: 'block', fontSize: '0.82rem', color: 'var(--t-text)', fontWeight: 600, marginBottom: '8px' }}>
-              Upload Payment Proof (Screenshot)
-            </label>
-            <div style={{
-              border: '2px dashed rgba(var(--t-accent-rgb), 0.3)',
-              borderRadius: '14px',
-              padding: '18px',
-              textAlign: 'center',
-              background: 'var(--tw-02)',
-              cursor: 'pointer',
-              position: 'relative'
-            }}>
-              <input
-                type="file"
-                accept="image/*"
-                required={!screenshot}
-                onChange={handleFileChange}
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  opacity: 0,
-                  cursor: 'pointer',
-                  width: '100%',
-                  height: '100%'
-                }}
-              />
-              {screenshotPreview ? (
-                <div>
-                  <img
-                    src={screenshotPreview}
-                    alt="Proof Preview"
-                    style={{
-                      maxHeight: '120px',
-                      borderRadius: '10px',
-                      border: '1px solid var(--t-accent)',
-                      marginBottom: '8px',
-                      boxShadow: '0 4px 12px rgba(0,0,0,0.4)'
-                    }}
-                  />
-                  <p style={{ margin: 0, fontSize: '0.75rem', color: '#22c55e', fontWeight: 600 }}>
-                    ✓ Screenshot attached: {screenshot?.name} (Click to change)
-                  </p>
-                </div>
-              ) : (
-                <div>
-                  <div style={{ fontSize: '28px', marginBottom: '4px' }}>📷</div>
-                  <p style={{ margin: '0 0 4px 0', fontSize: '0.85rem', fontWeight: 600, color: 'var(--t-text)' }}>
-                    Click or drag & drop payment proof
-                  </p>
-                  <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--t-text-dim)' }}>
-                    PNG, JPG, JPEG up to 10MB
-                  </p>
-                </div>
-              )}
-            </div>
+          <div style={{ marginBottom: '2rem' }}>
+            <label style={label}>Upload Payment Proof (Screenshot)</label>
+            <input
+              type="file"
+              accept="image/*"
+              required={!screenshot}
+              onChange={handleFileChange}
+              style={field}
+            />
+            {screenshotPreview && (
+              <div style={{ marginTop: '1rem', textAlign: 'center' }}>
+                <p style={{ fontSize: '0.7rem', color: 'var(--t-text-muted)', marginBottom: '0.5rem' }}>Preview:</p>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={screenshotPreview}
+                  alt="Proof Preview"
+                  style={{ height: '140px', width: 'auto', borderRadius: '12px', border: '2px solid var(--t-accent)', padding: '4px', background: 'rgba(0,0,0,0.5)' }}
+                />
+              </div>
+            )}
           </div>
 
-          {/* Submit Button */}
           <button
             type="submit"
-            disabled={isSubmitting}
-            style={{
-              width: '100%',
-              background: 'linear-gradient(135deg, #facc15 0%, var(--t-accent) 100%)',
-              color: 'var(--t-on-accent)',
-              border: 'none',
-              padding: '14px',
-              borderRadius: '12px',
-              fontWeight: 800,
-              fontSize: '1rem',
-              cursor: isSubmitting ? 'not-allowed' : 'pointer',
-              boxShadow: '0 8px 24px rgba(var(--t-accent-rgb), 0.3)',
-              transition: 'all 0.2s ease',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px'
-            }}
-            onMouseOver={(e) => {
-              if (!isSubmitting) e.currentTarget.style.transform = 'translateY(-2px)';
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-            }}
+            disabled={isSubmitting || !screenshot}
+            style={{ width: '100%', background: 'var(--btn-primary)', color: 'var(--t-on-accent)', border: 'none', padding: '1.25rem', borderRadius: '12px', fontWeight: 700, fontSize: '1rem', cursor: 'pointer' }}
           >
-            {isSubmitting ? (
-              <>⏳ Submitting Request...</>
-            ) : (
-              <>⚡ I Have Paid &amp; Submit Proof</>
-            )}
+            {isSubmitting ? <><span className="btn-spinner dark"></span>Processing...</> : 'I Have Paid'}
           </button>
         </form>
-
-        <p style={{ color: 'var(--t-text-dim)', fontSize: '0.72rem', textAlign: 'center', margin: '16px 0 0 0' }}>
-          ⭐ Admin will verify your transaction and credit your account balance.
-        </p>
       </div>
     </div>
   );

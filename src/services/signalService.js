@@ -88,6 +88,11 @@ const getUserSignalHistory = async () => {
     return unwrap(await supabase.rpc('get_my_signal_history'));
 };
 
+// Member: remove a signal from their own dashboard (live list + purchased history).
+const hideSignal = async (id) => {
+    return unwrap(await supabase.rpc('hide_signal', { p_signal_id: id }));
+};
+
 const deleteSignal = async (id) => {
     unwrap(await supabase.from('signals').delete().eq('id', id));
     return { message: 'Signal removed' };
@@ -141,6 +146,7 @@ const signalService = {
     takeSignal,
     getUserSignalHistory,
     deleteSignal,
+    hideSignal,
     setGlobalTimer,
     getGlobalTimer,
     clearGlobalTimer,

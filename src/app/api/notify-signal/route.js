@@ -78,9 +78,11 @@ export async function POST(request) {
     if (signalError || !signal) return Response.json({ message: 'Signal not found' }, { status: 404 });
 
     let query = supabase.from('profiles').select('email, name').eq('is_admin', false).not('email', 'is', null);
-    // Private signal → that member. Broadcast → only ACTIVE members (approved deposit): they are the
-    // ones who can take signals, and it keeps unverified sign-ups from eating the daily email quota.
-    query = signal.target_user_id ? query.eq('id', signal.target_user_id) : query.eq('is_active', true);
+    // Private signal → that member. Broadcast → only active members with money in their account
+    // (wallet ≥ $1 signal fee) or a free credit — the same rule the database uses (can_receive_signals).
+    query = signal.target_user_id
+        ? query.eq('id', signal.target_user_id)
+        : query.eq('is_active', true).or('wallet_balance.gte.1,free_signals.gt.0');
     const { data: recipients, error: recipientsError } = await query;
     if (recipientsError) return Response.json({ message: recipientsError.message }, { status: 500 });
     if (!recipients?.length) return Response.json({ sent: 0, failed: 0 });

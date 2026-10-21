@@ -87,7 +87,7 @@
 }
 
 .btnGold {
-  background: var(--t-gradient);
+  background: var(--btn-primary);
   color: var(--t-on-accent);
   border: none;
   box-shadow: 0 6px 24px rgba(var(--t-accent-rgb), 0.25);

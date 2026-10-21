@@ -110,7 +110,7 @@ export default function Login() {
 
       
 
-      <div className="footer">
+      <div className="login-footer">
         Don't have an account? <Link href="/register">Sign up</Link>
       </div>
     </div>

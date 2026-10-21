@@ -566,7 +566,7 @@ export default function AdminSignals() {
                             {loading ? <><span className="btn-spinner"></span>Processing...</> : (confirmModal.type === 'approve_request' ? 'Confirm Approval' : 'Yes, Stop Timer')}
                         </button>
                         <button 
-                            onClick={closeConfirmModal} 
+                            className="btn-cancel" onClick={closeConfirmModal} 
                             style={{ flex: 1, background: 'var(--tw-05)', border: '1px solid var(--tw-10)', color: 'var(--t-text)', padding: '14px', borderRadius: '12px', cursor: 'pointer', fontWeight: 600 }}
                         >
                             Cancel
