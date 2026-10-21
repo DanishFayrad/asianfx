@@ -133,6 +133,14 @@ export default function Dashboard() {
   const [currentPage, setCurrentPage] = useState(1);
   const [signals, setSignals] = useState([]);
   const [signalHistory, setSignalHistory] = useState([]);
+  // Member KPIs come from the signals this user has taken, not the platform-wide broadcast stats.
+  const myWins = signalHistory.filter((h) => h.result === 'win').length;
+  const myLosses = signalHistory.filter((h) => h.result === 'loss').length;
+  const myKpi = {
+    total: signalHistory.length,
+    active: signalHistory.length - myWins - myLosses,
+    rate: myWins + myLosses ? Math.round((100 * myWins) / (myWins + myLosses)) : 0,
+  };
   const [stats, setStats] = useState({ active_signals: 0, success_rate: 0, total_signals: 0, total_users: 0, platform_balance: '0', pending_deposits: 0 });
   const [adminStats, setAdminStats] = useState(null);
   const [adminUsers, setAdminUsers] = useState([]);
@@ -783,21 +791,21 @@ export default function Dashboard() {
                             <span className="mdb-kpi-icon"><IconBroadcast size={18} /></span>
                             <div>
                                 <span className="mdb-kpi-label">Total signals</span>
-                                <strong>{stats.total_signals ?? 0}</strong>
+                                <strong>{myKpi.total}</strong>
                             </div>
                         </div>
                         <div className="mdb-kpi">
                             <span className="mdb-kpi-icon mdb-kpi-icon--green"><IconTrend size={18} /></span>
                             <div>
                                 <span className="mdb-kpi-label">Hit target</span>
-                                <strong>{stats.success_rate ?? 0}%</strong>
+                                <strong>{myKpi.rate}%</strong>
                             </div>
                         </div>
                         <div className="mdb-kpi">
                             <span className="mdb-kpi-icon mdb-kpi-icon--live"><IconClock size={18} /></span>
                             <div>
                                 <span className="mdb-kpi-label">Active now</span>
-                                <strong>{stats.active_signals ?? 0}</strong>
+                                <strong>{myKpi.active}</strong>
                             </div>
                         </div>
                         <button type="button" className="mdb-kpi mdb-kpi--wallet" onClick={() => router.push('/wallet')}>
