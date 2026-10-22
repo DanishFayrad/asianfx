@@ -1184,7 +1184,16 @@ export default function Dashboard() {
                 }}>
                     {/* Decorative element */}
                     <div style={{ position: 'absolute', top: '-50px', right: '-50px', width: '150px', height: '150px', background: 'rgba(var(--t-accent-rgb), 0.05)', borderRadius: '50%', filter: 'blur(40px)' }}></div>
-                    
+
+                    {/* Close without rejecting — the signal stays available on the dashboard */}
+                    <button
+                        type="button"
+                        onClick={() => setIsSignalAlertOpen(false)}
+                        aria-label="Close alert"
+                        title="Close"
+                        style={{ position: 'absolute', top: '1rem', right: '1rem', zIndex: 1, background: 'var(--tw-05)', border: 'none', color: 'var(--t-text)', width: '32px', height: '32px', borderRadius: '50%', cursor: 'pointer', fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    >✕</button>
+
                     <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
                         <div style={{ 
                             background: 'rgba(var(--t-accent-rgb), 0.1)', 
