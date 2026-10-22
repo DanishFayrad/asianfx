@@ -229,6 +229,16 @@ export default function AdminSignals() {
     }
   };
 
+  const handleDeleteSignal = async (sig) => {
+      try {
+          await signalService.deleteSignal(sig.id);
+          toast.success(`${sig.symbol} signal deleted`);
+          fetchAllAdminData();
+      } catch (e) {
+          toast.error("Failed to delete signal");
+      }
+  };
+
   const handleSetGlobalTimer = async () => {
       if (!globalTimerMinutes) return;
       try {
@@ -332,15 +342,15 @@ export default function AdminSignals() {
               <div className="bsg-levels">
                 <label>
                   <small>Entry</small>
-                  <input type="number" step="any" name="entry_price" value={formData.entry_price} onChange={handleChange} placeholder="2350.50" required />
+                  <input type="number" step="any" name="entry_price" value={formData.entry_price} onChange={handleChange} placeholder="Enter price" required />
                 </label>
                 <label>
                   <small className="bsg-win">Take profit</small>
-                  <input type="number" step="any" name="target_price" value={formData.target_price} onChange={handleChange} placeholder={type === 'Buy' ? '2360.00' : '2340.00'} required />
+                  <input type="number" step="any" name="target_price" value={formData.target_price} onChange={handleChange} placeholder="Enter price" required />
                 </label>
                 <label>
                   <small className="bsg-loss">Stop loss</small>
-                  <input type="number" step="any" name="stop_loss" value={formData.stop_loss} onChange={handleChange} placeholder={type === 'Buy' ? '2344.00' : '2356.00'} required />
+                  <input type="number" step="any" name="stop_loss" value={formData.stop_loss} onChange={handleChange} placeholder="Enter price" required />
                 </label>
               </div>
               <p className="bsg-hint">
@@ -349,14 +359,7 @@ export default function AdminSignals() {
             </div>
 
             <div className="bsg-row2">
-              <label className="bsg-field">
-                <span className="bsg-label">Category</span>
-                <select name="signal_type" className="bsg-input" value={formData.signal_type} onChange={handleChange}>
-                  <option value="free">Free signal</option>
-                  <option value="premium">Premium signal</option>
-                </select>
-              </label>
-              <label className="bsg-field">
+              <label className="bsg-field" style={{ gridColumn: '1 / -1', flex: '1 1 100%', width: '100%' }}>
                 <span className="bsg-label">Release after (minutes)</span>
                 <input type="number" min="0" name="timer_minutes" className="bsg-input" value={formData.timer_minutes} onChange={handleChange} placeholder="Blank = instant" />
               </label>
@@ -400,60 +403,6 @@ export default function AdminSignals() {
               </p>
             </section>
 
-            {/* Global countdown */}
-            <section className="bsg-card">
-              <div className="bsg-card-head">
-                <h2>Next signal countdown</h2>
-                <p>Shows a countdown box on every member&apos;s dashboard</p>
-              </div>
-              {activeGlobalTimer ? (
-                <div className="bsg-timer">
-                  <span className="bsg-timer-label">Running</span>
-                  <b>
-                    {(() => {
-                      const totalSeconds = Math.max(0, Math.floor((new Date(activeGlobalTimer) - currentTime) / 1000));
-                      return `${Math.floor(totalSeconds / 60)}:${(totalSeconds % 60).toString().padStart(2, '0')}`;
-                    })()}
-                  </b>
-                  <button type="button" className="bsg-btn-ghost bsg-btn-ghost--danger" onClick={handleClearGlobalTimer}>Stop timer</button>
-                </div>
-              ) : (
-                <div className="bsg-inline">
-                  <input type="number" min="1" className="bsg-input" value={globalTimerMinutes} onChange={(e) => setGlobalTimerMinutes(e.target.value)} placeholder="Minutes, e.g. 10" />
-                  <button type="button" className="bsg-btn" onClick={handleSetGlobalTimer} disabled={loading || !globalTimerMinutes}>
-                    {loading ? 'Starting…' : 'Start'}
-                  </button>
-                </div>
-              )}
-              <p className="bsg-hint">Starting a timer clears all previous access requests.</p>
-            </section>
-
-            {/* Access requests */}
-            <section className="bsg-card">
-              <div className="bsg-card-head bsg-card-head--row">
-                <h2>Access requests</h2>
-                <span className="bsg-count">{signalRequests.filter((r) => r.status === 'pending').length} pending</span>
-              </div>
-              {signalRequests.length === 0 ? (
-                <p className="bsg-empty">No requests yet. Members can request access while a countdown is running.</p>
-              ) : (
-                <ul className="bsg-requests">
-                  {signalRequests.map((req) => (
-                    <li key={req.id}>
-                      <div>
-                        <strong>{req.User?.name || 'Member'}</strong>
-                        <small>Wallet: ${Number(req.User?.wallet_balance || 0).toFixed(2)}</small>
-                      </div>
-                      {req.status === 'pending' ? (
-                        <button type="button" className="bsg-btn bsg-btn--sm" onClick={() => handleApproveRequest(req.id)}>Approve</button>
-                      ) : (
-                        <span className="bsg-pill bsg-pill--buy">Approved</span>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
           </div>
         </div>
 
@@ -536,6 +485,13 @@ export default function AdminSignals() {
                       ) : (
                         <span className={`asg-status asg-status--${statusClass}`}>{sig.status}</span>
                       )}
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '10px' }}>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteSignal(sig)}
+                        style={{ background: 'transparent', border: '1px solid rgba(239, 68, 68, 0.4)', color: '#dc2626', padding: '5px 12px', borderRadius: '8px', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer' }}
+                      >Delete</button>
                     </div>
                   </div>
                 );

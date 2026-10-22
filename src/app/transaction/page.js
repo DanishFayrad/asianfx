@@ -475,7 +475,7 @@ export default function Transaction() {
                         <button 
                             onClick={executeConfirmAction} 
                             disabled={isActionLoading}
-                            style={{ flex: 2, background: ['approve', 'reject'].includes(confirmModal.type) ? '#22c55e' : '#ef4444', border: 'none', padding: '14px', borderRadius: '12px', cursor: 'pointer', fontWeight: 700, color: 'var(--t-text)', fontSize: '1rem' }}
+                            style={{ flex: 2, background: ['approve', 'reject'].includes(confirmModal.type) ? '#22c55e' : '#dc2626', border: 'none', padding: '14px', borderRadius: '12px', cursor: 'pointer', fontWeight: 700, color: confirmModal.type === 'delete' ? '#fff' : 'var(--t-text)', fontSize: '1rem' }}
                         >
                             {isActionLoading ? <><span className="btn-spinner"></span>Processing...</> : (confirmModal.type === 'approve' ? 'Approve' : confirmModal.type === 'delete' ? 'Yes, Delete' : 'Yes, Reject')}
                         </button>
@@ -492,7 +492,7 @@ export default function Transaction() {
                         )}
                         <button
                             className="btn-cancel" onClick={closeConfirmModal}
-                            style={{ flex: 1, background: 'var(--tw-05)', border: '1px solid var(--tw-10)', color: 'var(--t-text)', padding: '14px', borderRadius: '12px', cursor: 'pointer', fontWeight: 600 }}
+                            style={{ flex: 1, background: 'var(--admin-bg-main)', border: '1px solid var(--admin-border-color)', color: 'var(--admin-text-main)', padding: '14px', borderRadius: '12px', cursor: 'pointer', fontWeight: 600 }}
                         >
                             {confirmModal.type === 'approve' && confirmModal.tx?.status !== 'pending' ? 'Close' : 'Cancel'}
                         </button>

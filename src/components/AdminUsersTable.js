@@ -16,28 +16,47 @@ const ROWS_PER_PAGE = 8;
  *                      free_signals, signals_taken, signals_won, signals_lost }
  *  - loading: boolean
  */
-export default function AdminUsersTable({ users = [], loading = false }) {
+export default function AdminUsersTable({ users: rawUsers = [], loading = false }) {
     const [query, setQuery] = useState('');
     const [page, setPage] = useState(1);
     const [busyId, setBusyId] = useState(null);
+    // Local changes made from the Status dropdown, shown right away without a page reload.
+    const [statusOverrides, setStatusOverrides] = useState({});
+    const [deletedIds, setDeletedIds] = useState([]);
+    const [pendingDelete, setPendingDelete] = useState(null);
 
-    // Activate / deactivate / delete a member from the Status dropdown.
-    // Reloads the page afterwards so the table shows the fresh data.
-    const handleStatusChange = async (u, value) => {
-        const action = value === 'delete' ? 'delete' : value === 'active' ? 'activate' : 'deactivate';
-        if (action === 'delete' && !window.confirm(
-            `Delete ${u.name || u.email}? Their account, deposits and signal history will be removed. This cannot be undone.`
-        )) return;
+    const users = rawUsers
+        .filter((u) => !deletedIds.includes(u.id))
+        .map((u) => (u.id in statusOverrides ? { ...u, is_active: statusOverrides[u.id] } : u));
 
+    // Runs an activate / deactivate / delete action on the server and updates the table locally.
+    const performAction = async (u, action) => {
         setBusyId(u.id);
         try {
             const { message } = await transactionService.updateUserStatus(u.id, action);
             toast.success(message);
-            window.location.reload();
+            if (action === 'delete') setDeletedIds((ids) => [...ids, u.id]);
+            else setStatusOverrides((o) => ({ ...o, [u.id]: action === 'activate' }));
         } catch (e) {
             toast.error(e.message || 'Could not update the user');
+        } finally {
             setBusyId(null);
         }
+    };
+
+    // Status dropdown: Active / Inactive act right away; Delete asks for confirmation first.
+    const handleStatusChange = (u, value) => {
+        if (value === 'delete') {
+            setPendingDelete(u);
+            return;
+        }
+        performAction(u, value === 'active' ? 'activate' : 'deactivate');
+    };
+
+    const confirmDelete = () => {
+        const u = pendingDelete;
+        setPendingDelete(null);
+        performAction(u, 'delete');
     };
 
     const fmt = (n) => Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -179,15 +198,16 @@ export default function AdminUsersTable({ users = [], loading = false }) {
                                             onChange={(e) => handleStatusChange(u, e.target.value)}
                                             aria-label={`Status for ${u.name || u.email}`}
                                             style={{
-                                                background: 'var(--admin-bg-main)', border: '1px solid var(--admin-border-color)',
-                                                color: u.is_active ? 'var(--admin-success)' : 'var(--admin-text-muted)',
+                                                background: u.is_active ? 'rgba(34,197,94,0.12)' : 'rgba(156,163,175,0.12)',
+                                                border: `1px solid ${u.is_active ? 'rgba(34,197,94,0.4)' : 'rgba(156,163,175,0.4)'}`,
+                                                color: u.is_active ? '#16a34a' : '#6b7280',
                                                 padding: '5px 8px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 600,
                                                 cursor: busyId === u.id ? 'wait' : 'pointer', outline: 'none'
                                             }}
                                         >
-                                            <option value="active">Active</option>
-                                            <option value="inactive">Inactive</option>
-                                            <option value="delete">Delete</option>
+                                            <option value="active" style={{ color: '#16a34a', background: '#fdfcf8' }}>Active</option>
+                                            <option value="inactive" style={{ color: '#6b7280', background: '#fdfcf8' }}>Inactive</option>
+                                            <option value="delete" style={{ color: '#dc2626', background: '#fdfcf8' }}>Delete</option>
                                         </select>
                                     )}
                                 </td>
@@ -223,6 +243,38 @@ export default function AdminUsersTable({ users = [], loading = false }) {
                                 cursor: safePage >= totalPages ? 'not-allowed' : 'pointer', opacity: safePage >= totalPages ? 0.4 : 1, fontWeight: 600
                             }}
                         >Next</button>
+                    </div>
+                </div>
+            )}
+
+            {pendingDelete && (
+                <div
+                    onClick={() => setPendingDelete(null)}
+                    style={{ position: 'fixed', inset: 0, background: 'rgba(0, 0, 0, 0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '1rem' }}
+                >
+                    <div
+                        onClick={(e) => e.stopPropagation()}
+                        role="dialog"
+                        aria-modal="true"
+                        style={{ background: 'var(--admin-bg-card)', border: '1px solid var(--admin-border-color)', borderRadius: '18px', padding: '1.75rem', width: '100%', maxWidth: '380px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)', textAlign: 'center' }}
+                    >
+                        <div style={{ width: '52px', height: '52px', borderRadius: '16px', margin: '0 auto 1rem', display: 'grid', placeItems: 'center', background: 'rgba(239, 68, 68, 0.12)', color: '#dc2626', fontSize: '1.5rem' }}>⚠</div>
+                        <h3 style={{ margin: '0 0 0.5rem', fontSize: '1.1rem', color: 'var(--admin-text-main)' }}>Are you sure you want to delete this user?</h3>
+                        <p style={{ margin: '0 0 1.5rem', fontSize: '0.9rem', color: 'var(--admin-text-muted)', lineHeight: 1.5 }}>
+                            <strong>{pendingDelete.name || pendingDelete.email}</strong> — their account, deposits and signal history will be removed. This cannot be undone.
+                        </p>
+                        <div style={{ display: 'flex', gap: '10px' }}>
+                            <button
+                                type="button"
+                                onClick={() => setPendingDelete(null)}
+                                style={{ flex: 1, padding: '11px', borderRadius: '10px', border: '1px solid var(--admin-border-color)', background: 'var(--admin-bg-main)', color: 'var(--admin-text-main)', fontWeight: 700, cursor: 'pointer' }}
+                            >Cancel</button>
+                            <button
+                                type="button"
+                                onClick={confirmDelete}
+                                style={{ flex: 1, padding: '11px', borderRadius: '10px', border: 'none', background: '#dc2626', color: '#fff', fontWeight: 700, cursor: 'pointer' }}
+                            >Yes, delete</button>
+                        </div>
                     </div>
                 </div>
             )}

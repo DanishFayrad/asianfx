@@ -29,12 +29,13 @@
 .mdb-kpi-label { font-size: 0.78rem; font-weight: 600; color: var(--t-text-muted); }
 
 .mdb-kpi strong {
-  font-size: 1.4rem;
+  font-size: clamp(1.05rem, 1.6vw, 1.4rem);
   font-weight: 700;
   letter-spacing: -0.02em;
   line-height: 1.2;
   color: var(--t-text);
   font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
 }
 
 .mdb-kpi small { font-size: 0.75rem; font-weight: 600; color: var(--t-gold); }
@@ -360,6 +361,47 @@
 
 .gtm-status--pending { color: #d97706; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.35); }
 .gtm-status--granted { color: #16a34a; background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.35); }
+
+/* ---------- Small "next signal" timer chip, shown left of the Deposit button ---------- */
+.right-actions { flex-wrap: wrap; justify-content: flex-end; }
+
+.gtm-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 6px 5px 12px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--t-text-muted);
+  white-space: nowrap;
+  background: rgba(var(--t-accent-rgb), 0.1);
+  border: 1px solid rgba(var(--t-accent-rgb), 0.35);
+}
+
+.gtm-chip b {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--t-gold);
+  font-variant-numeric: tabular-nums;
+}
+
+.gtm-chip-btn {
+  border: none;
+  border-radius: 999px;
+  padding: 4px 11px;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  color: var(--t-on-accent);
+  background: var(--btn-primary);
+}
+
+.gtm-chip-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.gtm-chip-ok { font-size: 0.72rem; font-weight: 700; color: #16a34a; }
 
 /* Tablets/phones: the box sits on top of the content instead of a side column */
 @media (max-width: 992px) {

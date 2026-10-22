@@ -611,6 +611,18 @@ export default function Dashboard() {
           </div>
 
           <div className="right-actions">
+            {mounted && !user?.is_admin && globalTimer && !isGlobalTimerHidden && (
+              <div className="gtm-chip">
+                <span>Next signal in</span>
+                <b>{formatCountdown(globalTimer)}</b>
+                {!requestStatus && (
+                  <button type="button" className="gtm-chip-btn" onClick={handleRequestAccess} disabled={isSubmitting}>
+                    {isSubmitting ? 'Sending…' : 'Request access'}
+                  </button>
+                )}
+                {requestStatus && requestStatus !== 'pending' && <span className="gtm-chip-ok">✓ Access</span>}
+              </div>
+            )}
             {mounted && !user?.is_admin && (
                 <button className="deposit" onClick={() => setIsDepositModalOpen(true)}>Deposit</button>
             )}
@@ -1071,45 +1083,6 @@ export default function Dashboard() {
                     )}
                 </div>
 
-                {/* STICKY SIDEBAR FOR GLOBAL TIMER */}
-                {mounted && !user?.is_admin && globalTimer && !isGlobalTimerHidden && (
-                    <aside className="db-sidebar-column">
-                        {(() => {
-                            const [mins, secs] = formatCountdown(globalTimer).split(':');
-                            return (
-                                <div className="gtm">
-                                    <div className="gtm-head">
-                                        <span className="gtm-icon"><IconClock size={18} /></span>
-                                        <div>
-                                            <small>Next signal</small>
-                                            <strong>Gold · XAU/USD</strong>
-                                        </div>
-                                        <span className="gtm-soon"><i aria-hidden="true" /> Soon</span>
-                                    </div>
-
-                                    <div className="gtm-time" aria-label={`${mins} minutes ${secs} seconds left`}>
-                                        <div><b>{mins.padStart(2, '0')}</b><small>min</small></div>
-                                        <span aria-hidden="true">:</span>
-                                        <div><b>{secs}</b><small>sec</small></div>
-                                    </div>
-
-                                    {!requestStatus ? (
-                                        <>
-                                            <p className="gtm-note">Request access now so you can take this signal the moment it&apos;s released.</p>
-                                            <button type="button" className="gtm-btn" onClick={handleRequestAccess} disabled={isSubmitting}>
-                                                {isSubmitting ? <><span className="btn-spinner dark"></span>Sending…</> : 'Request access'}
-                                            </button>
-                                        </>
-                                    ) : requestStatus === 'pending' ? (
-                                        <div className="gtm-status gtm-status--pending">⏳ Request pending — waiting for admin</div>
-                                    ) : (
-                                        <div className="gtm-status gtm-status--granted">✓ Access granted</div>
-                                    )}
-                                </div>
-                            );
-                        })()}
-                    </aside>
-                )}
             </div>
         )}
 
