@@ -158,7 +158,9 @@ begin
         exit when not exists (select 1 from public.profiles where referral_code = v_code);
     end loop;
 
-    insert into public.profiles (id, email, name, phone, country, referral_code, referred_by)
+    -- Every new member starts with $5 free wallet credit (one time, at signup) and is active,
+    -- so they can take signals straight away.
+    insert into public.profiles (id, email, name, phone, country, referral_code, referred_by, wallet_balance, is_active)
     values (
         new.id,
         new.email,
@@ -166,7 +168,9 @@ begin
         new.raw_user_meta_data->>'phone',
         new.raw_user_meta_data->>'country',
         v_code,
-        v_ref
+        v_ref,
+        5,
+        true
     );
 
     if v_ref is not null then
