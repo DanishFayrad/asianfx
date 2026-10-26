@@ -195,12 +195,12 @@ export default function DepositModal({ isOpen, onClose }) {
 
       {isProofViewOpen && screenshotPreview && (
         <div
-          onClick={() => setIsProofViewOpen(false)}
+          onClick={(e) => { e.stopPropagation(); setIsProofViewOpen(false); }}
           style={{ position: 'fixed', inset: 0, background: 'rgba(0, 0, 0, 0.9)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100000, padding: '1rem' }}
         >
           <button
             type="button"
-            onClick={() => setIsProofViewOpen(false)}
+            onClick={(e) => { e.stopPropagation(); setIsProofViewOpen(false); }}
             aria-label="Close image"
             style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'rgba(255, 255, 255, 0.15)', border: 'none', color: '#fff', width: '40px', height: '40px', borderRadius: '50%', cursor: 'pointer', fontSize: '1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >✕</button>
