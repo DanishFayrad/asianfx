@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import transactionService from '../services/transactionService';
 
@@ -10,6 +10,8 @@ export default function DepositModal({ isOpen, onClose }) {
   const [screenshotPreview, setScreenshotPreview] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [isProofViewOpen, setIsProofViewOpen] = useState(false);
+  const proofInputRef = useRef(null);
 
   const walletAddress = "TA199GDmT2ybpMKdHwZkjMgo2awuk1N1fV";
   
@@ -68,7 +70,15 @@ export default function DepositModal({ isOpen, onClose }) {
     setDepositAmount('');
     setScreenshot(null);
     setScreenshotPreview(null);
+    setIsProofViewOpen(false);
     onClose();
+  };
+
+  const clearScreenshot = () => {
+    setScreenshot(null);
+    setScreenshotPreview(null);
+    setIsProofViewOpen(false);
+    if (proofInputRef.current) proofInputRef.current.value = '';
   };
 
 
@@ -139,6 +149,7 @@ export default function DepositModal({ isOpen, onClose }) {
           <div style={{ marginBottom: '2rem' }}>
             <label style={label}>Upload Payment Proof (Screenshot)</label>
             <input
+              ref={proofInputRef}
               type="file"
               accept="image/*"
               required={!screenshot}
@@ -154,6 +165,20 @@ export default function DepositModal({ isOpen, onClose }) {
                   alt="Proof Preview"
                   style={{ height: '140px', width: 'auto', borderRadius: '12px', border: '2px solid var(--t-accent)', padding: '4px', background: 'rgba(0,0,0,0.5)' }}
                 />
+                <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginTop: '0.6rem' }}>
+                  <button
+                    type="button"
+                    onClick={() => setIsProofViewOpen(true)}
+                    style={{ background: 'var(--btn-primary)', color: '#111', border: 'none', padding: '6px 14px', borderRadius: '8px', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer' }}
+                  >View</button>
+                  <button
+                    type="button"
+                    onClick={clearScreenshot}
+                    aria-label="Remove screenshot"
+                    title="Remove screenshot"
+                    style={{ background: 'var(--tw-05)', color: 'var(--t-text)', border: '1px solid var(--tw-10)', width: '32px', height: '32px', borderRadius: '50%', cursor: 'pointer', fontSize: '0.95rem', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  >✕</button>
+                </div>
               </div>
             )}
           </div>
@@ -167,6 +192,27 @@ export default function DepositModal({ isOpen, onClose }) {
           </button>
         </form>
       </div>
+
+      {isProofViewOpen && screenshotPreview && (
+        <div
+          onClick={() => setIsProofViewOpen(false)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0, 0, 0, 0.9)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100000, padding: '1rem' }}
+        >
+          <button
+            type="button"
+            onClick={() => setIsProofViewOpen(false)}
+            aria-label="Close image"
+            style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'rgba(255, 255, 255, 0.15)', border: 'none', color: '#fff', width: '40px', height: '40px', borderRadius: '50%', cursor: 'pointer', fontSize: '1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          >✕</button>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={screenshotPreview}
+            alt="Proof full view"
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: '100%', maxHeight: '90vh', objectFit: 'contain', borderRadius: '12px' }}
+          />
+        </div>
+      )}
     </div>
   );
 }
