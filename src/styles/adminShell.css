@@ -136,6 +136,7 @@
 .asb-avatar { width: 36px; height: 36px; font-size: 0.8rem; }
 
 .asb-user-text {
+  flex: 1 1 0;
   min-width: 0;
   display: flex;
   flex-direction: column;
@@ -145,6 +146,9 @@
 .asb-user-text strong {
   font-size: 0.85rem;
   color: var(--t-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .asb-user-text small {
