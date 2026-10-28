@@ -6,6 +6,8 @@ export const SITE = {
     whatsapp: '',
     email: '',
     telegram: '', // e.g. 'https://t.me/yourchannel'
+    facebook: 'https://www.facebook.com/share/1FG31rJR5R/',
+    instagram: 'https://www.instagram.com/fx_asians',
 };
 
 export const PRICING = {

@@ -3,20 +3,19 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { useAppDispatch, useAppSelector } from '@/redux/store';
+import { useQueryClient } from '@tanstack/react-query';
 import signalService, { getSignalLevelError } from '../../../services/signalService';
-import authService from '../../../services/authService';
-import transactionService from '../../../services/transactionService';
-import { serverTimeOffset, updateServerTimeOffset } from '../../../services/serverTime';
-import { logout } from '../../../redux/slices/authSlice';
+import { serverTimeOffset } from '../../../services/serverTime';
 import { connectRealtime } from '../../../services/realtimeService';
+import { useCurrentUser, useLogout } from '@/hooks/useAuth';
+import { useAdminStats, useSignalsDashboard } from '@/hooks/queries';
 import toast from 'react-hot-toast';
 import ThemeToggle from '@/components/ThemeToggle';
 import AdminSidebar from '../../../components/AdminSidebar';
 import AdminHeader from '@/components/admin/AdminHeader';
 import '../../../styles/adminSignals.css';
 import { errorMessage } from '@/lib/supabaseClient';
-import type { AdminStats, Signal, SignalRequest } from '@/types';
+import type { Signal } from '@/types';
 
 interface Asset {
   id: number;
@@ -25,14 +24,6 @@ interface Asset {
   displaySymbol: string;
   iconColor: string;
   glyph: string;
-}
-
-interface ConfirmModalState {
-  isOpen: boolean;
-  title: string;
-  message: string;
-  type: '' | 'approve_request' | 'clear_timer';
-  data: number | null;
 }
 
 // Asset badge drawn as SVG so each market has its own symbol (₿, Au, Ag).
@@ -46,8 +37,10 @@ const AssetIcon = ({ glyph }: { glyph: string }) => (
 export default function AdminSignals() {
   const router = useRouter();
   const pathname = usePathname();
-  const dispatch = useAppDispatch();
-  const { user } = useAppSelector((state) => state.auth);
+  const { user } = useCurrentUser();
+  const handleLogout = useLogout();
+  const queryClient = useQueryClient();
+  const isAdmin = !!user?.is_admin;
   const [mounted, setMounted] = useState(true); // protected page: AuthGuard renders it client-side only, so no hydration flash guard needed
   useEffect(() => {
     setMounted(true);
@@ -67,42 +60,10 @@ export default function AdminSignals() {
   
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
-  const [recentSignals, setRecentSignals] = useState<Signal[]>([]);
-  const [adminStats, setAdminStats] = useState<AdminStats | null>(null);
+  const recentSignals: Signal[] = useSignalsDashboard(user?.id, isAdmin).data?.active_signals ?? [];
+  const adminStats = useAdminStats(isAdmin).data ?? null;
   const [liveClientsCount, setLiveClientsCount] = useState(0);
-  const [globalTimerMinutes, setGlobalTimerMinutes] = useState('');
-  const [signalRequests, setSignalRequests] = useState<SignalRequest[]>([]);
-  const [activeGlobalTimer, setActiveGlobalTimer] = useState<string | null>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [confirmModal, setConfirmModal] = useState<ConfirmModalState>({
-      isOpen: false,
-      title: '',
-      message: '',
-      type: '', 
-      data: null
-  });
-
-  const closeConfirmModal = () => setConfirmModal({...confirmModal, isOpen: false});
-
-  const executeConfirmAction = async () => {
-    const { type, data } = confirmModal;
-    setLoading(true);
-    try {
-        if (type === 'approve_request' && data !== null) {
-            await signalService.approveSignalRequest(data);
-            toast.success("Request approved");
-        } else if (type === 'clear_timer') {
-            await signalService.clearGlobalTimer();
-            toast.success("Global timer cleared");
-        }
-        closeConfirmModal();
-        fetchAllAdminData();
-    } catch (e) {
-        toast.error(errorMessage(e, "Action failed"));
-    } finally {
-        setLoading(false);
-    }
-  };
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date(Date.now() + serverTimeOffset)), 1000);
@@ -118,27 +79,10 @@ export default function AdminSignals() {
     { id: 3, name: 'Silver', symbol: 'XAGUSD', displaySymbol: 'XAG/USD', iconColor: '#8A9099', glyph: 'Ag' },
   ];
 
-  const fetchAllAdminData = async () => {
-    try {
-        const data = await signalService.getSignalsDashboard();
-        setRecentSignals(data.active_signals || []);
-        
-        if (user?.is_admin) {
-            const stats = await transactionService.getAdminStats();
-            setAdminStats(stats);
-            
-            const timerData = await signalService.getGlobalTimer();
-            if (timerData.server_time) {
-                updateServerTimeOffset(timerData.server_time);
-            }
-            setActiveGlobalTimer(timerData.expires_at);
-
-            const requests = await signalService.getSignalRequests();
-            setSignalRequests(requests);
-        }
-    } catch (e) {
-        console.error("Failed to fetch admin data", e);
-    }
+  // Signals or deposits changed: reload the signal list and the admin stats / badges.
+  const fetchAllAdminData = () => {
+    queryClient.invalidateQueries({ queryKey: ['signals'] });
+    queryClient.invalidateQueries({ queryKey: ['admin'] });
   };
 
   useEffect(() => {
@@ -150,8 +94,6 @@ export default function AdminSignals() {
 
     // Select default asset
     if (assets.length > 0) setSelectedAsset(assets[1]); // Gold default
-    
-    fetchAllAdminData();
 
     // Set up Real-time listener for badges
     if (user?.is_admin) {
@@ -166,37 +108,20 @@ export default function AdminSignals() {
             fetchAllAdminData();
         });
 
-        socket.on('signal_request', () => {
-            fetchAllAdminData();
-        });
-
         socket.on('active_clients_count', (count) => {
             setLiveClientsCount(count);
         });
 
-        socket.on('global_timer_update', (data) => {
-            if (data.server_time) updateServerTimeOffset(data.server_time);
-            setActiveGlobalTimer(data.expires_at);
-        });
-
         return () => socket.disconnect();
     }
-  }, [user]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, user?.is_admin]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
     });
-  };
-
-  const handleLogout = async () => {
-    try {
-      await authService.logout();
-    } catch {} finally {
-      dispatch(logout());
-      router.push('/login');
-    }
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -237,8 +162,7 @@ export default function AdminSignals() {
       });
       
       // Refresh recent list
-      const data = await signalService.getSignalsDashboard();
-      setRecentSignals(data.active_signals || []);
+      queryClient.invalidateQueries({ queryKey: ['signals'] });
 
     } catch (error) {
       console.error("Error creating signal:", error);
@@ -256,41 +180,6 @@ export default function AdminSignals() {
       } catch (e) {
           toast.error("Failed to delete signal");
       }
-  };
-
-  const handleSetGlobalTimer = async () => {
-      if (!globalTimerMinutes) return;
-      try {
-          setLoading(true);
-          await signalService.setGlobalTimer(globalTimerMinutes);
-          toast.success(`Global timer set for ${globalTimerMinutes} minutes`);
-          setGlobalTimerMinutes('');
-          fetchAllAdminData();
-      } catch (e) {
-          toast.error(errorMessage(e, "Failed to set global timer"));
-      } finally {
-          setLoading(false);
-      }
-  };
-
-  const handleClearGlobalTimer = () => {
-      setConfirmModal({
-          isOpen: true,
-          title: 'Clear Global Timer',
-          message: 'Are you sure you want to stop the active countdown timer? This will hide the banner for all users.',
-          type: 'clear_timer',
-          data: null
-      });
-  };
-
-  const handleApproveRequest = (id: number) => {
-      setConfirmModal({
-          isOpen: true,
-          title: 'Approve Signal Access',
-          message: 'Grant this user access to the upcoming signal?',
-          type: 'approve_request',
-          data: id
-      });
   };
 
   return (
@@ -521,36 +410,6 @@ export default function AdminSignals() {
               )}
            </div>
         </section>
-        {/* CUSTOM CONFIRM MODAL */}
-        {confirmModal.isOpen && (
-            <div className="admin-modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(10px)' }}>
-                <div className="admin-modal-content" style={{ background: 'var(--t-surface)', padding: '2.5rem', borderRadius: '24px', color: 'var(--t-text)', width: '400px', border: '1px solid var(--tw-10)', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}>
-                    <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-                        <div style={{ background: confirmModal.type === 'approve_request' ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)', width: '64px', height: '64px', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}>
-                            <span style={{ fontSize: '24px' }}>{confirmModal.type === 'approve_request' ? '✅' : '⚠️'}</span>
-                        </div>
-                        <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '0.5rem' }}>{confirmModal.title}</h2>
-                        <p style={{ color: 'var(--t-text-muted)', fontSize: '0.95rem', lineHeight: '1.5' }}>{confirmModal.message}</p>
-                    </div>
-
-                    <div style={{ display: 'flex', gap: '12px' }}>
-                        <button 
-                            onClick={executeConfirmAction} 
-                            disabled={loading}
-                            style={{ flex: 2, background: confirmModal.type === 'approve_request' ? 'var(--admin-success)' : 'var(--admin-danger)', border: 'none', padding: '14px', borderRadius: '12px', cursor: 'pointer', fontWeight: 700, color: 'var(--t-text)', fontSize: '1rem' }}
-                        >
-                            {loading ? <><span className="btn-spinner"></span>Processing...</> : (confirmModal.type === 'approve_request' ? 'Confirm Approval' : 'Yes, Stop Timer')}
-                        </button>
-                        <button 
-                            className="btn-cancel" onClick={closeConfirmModal} 
-                            style={{ flex: 1, background: 'var(--tw-05)', border: '1px solid var(--tw-10)', color: 'var(--t-text)', padding: '14px', borderRadius: '12px', cursor: 'pointer', fontWeight: 600 }}
-                        >
-                            Cancel
-                        </button>
-                    </div>
-                </div>
-            </div>
-        )}
       </main>
     </div>
   );

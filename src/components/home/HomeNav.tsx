@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useAppDispatch, useAppSelector } from '@/redux/store';
+import { useCurrentUser } from '@/hooks/useAuth';
 import ThemeToggle from '@/components/ThemeToggle';
 import styles from '@/app/home.module.css';
 
@@ -20,7 +20,7 @@ const initials = (name = '') =>
 export default function HomeNav() {
     const [open, setOpen] = useState(false);
     const [mounted, setMounted] = useState(false);
-    const { user } = useAppSelector((state) => state.auth);
+    const { user } = useCurrentUser();
     const close = () => setOpen(false);
 
     // The cached user only exists in the browser — wait for mount to avoid a hydration mismatch.
@@ -32,7 +32,7 @@ export default function HomeNav() {
         <header className={styles.nav}>
             <div className={`${styles.container} ${styles.navInner}`}>
                 <Link href="/" className={styles.brand} onClick={close}>
-                    <img src="/images/logo-mark.svg" alt="" width={34} height={34} />
+                    <img src="/images/logo-mark.png" alt="" width={34} height={34} />
                     <span>Asian<b>FX</b></span>
                 </Link>
 

@@ -23,10 +23,10 @@ export const metadata = {
   title: "AsianFX Signals | Gold, Forex & Crypto Trading Signals",
   description: "Real-time Gold (XAU/USD), Silver, Forex and Crypto trading signals with clear Entry, Take Profit and Stop Loss.",
   keywords: "trading signals, gold signals, xauusd, forex signals, silver signals, crypto signals",
-  // Favicon is provided by the app/icon.svg file convention (the AsianFX logo).
+  // Favicon is provided by the app/icon.png file convention (the AsianFX logo).
 };
 
-import { Providers } from "@/redux/Providers";
+import { QueryProvider } from "@/providers/QueryProvider";
 import { Toaster } from 'react-hot-toast';
 import AuthGuard from './AuthGuard';
 import BlockedScreen from "@/components/BlockedScreen";
@@ -49,7 +49,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <BlockedScreen />
         ) : (
           <>
-            <Providers>
+            <QueryProvider>
               <AuthGuard>
                 {children}
               </AuthGuard>
@@ -65,7 +65,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                   },
                 }}
               />
-            </Providers>
+            </QueryProvider>
           </>
         )}
       </body>

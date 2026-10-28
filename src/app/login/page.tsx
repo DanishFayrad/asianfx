@@ -1,28 +1,30 @@
 'use client';
 
-import React, { useState, useEffect, type FormEvent } from 'react';
+import React, { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAppDispatch, useAppSelector } from '@/redux/store';
-import { loginUser, reset } from '@/redux/slices/authSlice';
+import { useMutation } from '@tanstack/react-query';
 import authService from '@/services/authService';
+import { useSetCurrentUser } from '@/hooks/useAuth';
+import { errorMessage } from '@/lib/supabaseClient';
 import Link from 'next/link';
 import '../../styles/login.css';
 
 export default function Login() {
   const router = useRouter();
-  const dispatch = useAppDispatch();
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
 
-  const { isLoading, isError, isSuccess, message } = useAppSelector(
-    (state) => state.auth
-  );
+  const setCurrentUser = useSetCurrentUser();
 
-  // Redirect after login is handled centrally by AuthGuard (honours ?next=).
-  useEffect(() => {
-    if (isSuccess) dispatch(reset());
-  }, [isSuccess, dispatch]);
+  // Redirect after login is handled centrally by AuthGuard (honours ?next=) once the user is set.
+  const login = useMutation({
+    mutationFn: authService.login,
+    onSuccess: (data) => setCurrentUser(data.user),
+  });
+  const isLoading = login.isPending;
+  const isError = login.isError;
+  const message = errorMessage(login.error, 'Login failed');
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
@@ -30,12 +32,15 @@ export default function Login() {
 
   const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const res = await dispatch(loginUser({ email, password }));
-    // Account exists but email isn't verified yet — send a fresh code and go verify.
-    if (res.meta.requestStatus === 'rejected' && /not confirmed/i.test(String(res.payload || ''))) {
-      try { await authService.resendOTP({ email }); } catch {}
-      dispatch(reset());
-      router.push(`/otp?email=${encodeURIComponent(email)}`);
+    try {
+      await login.mutateAsync({ email, password });
+    } catch (err) {
+      // Account exists but email isn't verified yet — send a fresh code and go verify.
+      if (/not confirmed/i.test(errorMessage(err, ''))) {
+        try { await authService.resendOTP({ email }); } catch {}
+        login.reset();
+        router.push(`/otp?email=${encodeURIComponent(email)}`);
+      }
     }
   };
 
@@ -43,7 +48,7 @@ export default function Login() {
     <div className="login-page">
     <div className="login-container">
       <div className="login-icon">
-        <img src="/images/logo-mark.svg" className="login-logo" alt="AsianFX Signals" width={72} height={72} />
+        <img src="/images/logo-mark.png" className="login-logo" alt="AsianFX Signals" width={72} height={72} />
       </div>
 
       <h1>Welcome Back</h1>

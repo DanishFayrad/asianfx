@@ -44,7 +44,7 @@ export default function AdminSidebar({ active, user, pendingDeposits = 0, onLogo
     return (
         <aside className={`asb ${isOpen ? 'asb--open' : ''}`} aria-label="Admin navigation">
             <Link href="/dashboard" className="asb-brand" onClick={onClose}>
-                <img src="/images/logo-mark.svg" alt="" width={32} height={32} />
+                <img src="/images/logo-mark.png" alt="" width={32} height={32} />
                 <span>Asian<b>FX</b></span>
                 <em>Admin</em>
             </Link>

@@ -2,9 +2,9 @@
 
 import React, { Suspense, useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useAppDispatch, useAppSelector } from '@/redux/store';
-import { reset } from '@/redux/slices/authSlice';
+import { useQueryClient } from '@tanstack/react-query';
 import authService from '@/services/authService';
+import { authKeys } from '@/hooks/useAuth';
 import toast from 'react-hot-toast';
 import '../../styles/otp.css';
 import { errorMessage } from '@/lib/supabaseClient';
@@ -12,7 +12,7 @@ import { errorMessage } from '@/lib/supabaseClient';
 function OtpClient() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const dispatch = useAppDispatch();
+    const queryClient = useQueryClient();
     const email = searchParams.get('email');
     
     const [otp, setOtp] = useState(['', '', '', '', '', '']);
@@ -69,7 +69,8 @@ function OtpClient() {
         try {
             await authService.verifyOTP({ email: email || '', otp: otpString });
             toast.success('Email verified! Welcome to AsianFX.');
-            dispatch(reset());
+            // Verifying signs the member in — load their profile before opening the dashboard.
+            await queryClient.refetchQueries({ queryKey: authKeys.user });
             router.push('/dashboard');
         } catch (error) {
             toast.error(errorMessage(error, 'Verification failed. Incorrect OTP.'));

@@ -3,14 +3,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useAppDispatch, useAppSelector } from '@/redux/store';
+import { useQueryClient } from '@tanstack/react-query';
 import signalService from '../../services/signalService';
-import authService from '../../services/authService';
-import { logout } from '../../redux/slices/authSlice';
 import transactionService from '../../services/transactionService';
-import notificationService from '../../services/notificationService';
-import { setUser } from '../../redux/slices/authSlice';
 import { connectRealtime } from '../../services/realtimeService';
+import { useCurrentUser, useLogout } from '@/hooks/useAuth';
+import {
+  queryKeys, useAdminStats, useAdminUsers, useGlobalTimer, useMyTransactions,
+  usePendingTransactions, useSignalHistory, useSignalsDashboard,
+} from '@/hooks/queries';
 import toast from 'react-hot-toast';
 import { serverTimeOffset, updateServerTimeOffset } from '../../services/serverTime';
 import ThemeToggle from '@/components/ThemeToggle';
@@ -23,12 +24,14 @@ import AdminDashboardStats from '../../components/AdminDashboardStats';
 import AdminUsersTable from '../../components/AdminUsersTable';
 import '../../styles/dashboard.css';
 import { errorMessage } from '@/lib/supabaseClient';
-import type { AdminStats, AdminUser, Notification, Signal, SignalHistoryItem, Transaction } from '@/types';
+import type { GlobalTimer, Notification, Signal } from '@/types';
 
 export default function Dashboard() {
   const router = useRouter();
-  const dispatch = useAppDispatch();
-  const { user } = useAppSelector((state) => state.auth);
+  const queryClient = useQueryClient();
+  const { user, refresh: refreshUserProfile } = useCurrentUser();
+  const handleLogout = useLogout();
+  const isAdmin = !!user?.is_admin;
   const [mounted, setMounted] = useState(true); // protected page: AuthGuard renders it client-side only, so no hydration flash guard needed
   
   useEffect(() => {
@@ -88,11 +91,7 @@ export default function Dashboard() {
   const [adminNotification, setAdminNotification] = useState<string | null>(null);
   const [userNotification, setUserNotification] = useState<Notification | null>(null);
   const [signalBanner, setSignalBanner] = useState<Notification | null>(null);
-  const [activePendingDeposit, setActivePendingDeposit] = useState<Transaction | null>(null);
-  const [transactionCount, setTransactionCount] = useState(0);
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [globalTimer, setGlobalTimer] = useState<string | null>(null);
-  const [requestStatus, setRequestStatus] = useState<string | null>(null);
   const [isSignalAlertOpen, setIsSignalAlertOpen] = useState(false);
   const [incomingSignal, setIncomingSignal] = useState<Partial<Signal> | null>(null);
   const [isGlobalTimerHidden, setIsGlobalTimerHidden] = useState(false);
@@ -133,8 +132,35 @@ export default function Dashboard() {
     if (screenshotPreview) setIsProofViewOpen(true);
   };
   const [currentPage, setCurrentPage] = useState(1);
-  const [signals, setSignals] = useState<Signal[]>([]);
-  const [signalHistory, setSignalHistory] = useState<SignalHistoryItem[]>([]);
+  // ---- Server data (TanStack Query) ----
+  const signalsQuery = useSignalsDashboard(user?.id);
+  const signals: Signal[] = signalsQuery.data?.active_signals ?? [];
+  const loading = signalsQuery.isPending;
+  const signalHistory = useSignalHistory(user?.id, !!user && !isAdmin).data ?? [];
+  const adminStats = useAdminStats(isAdmin).data ?? null;
+  const adminUsersQuery = useAdminUsers(isAdmin);
+  const adminUsers = adminUsersQuery.data ?? [];
+  const usersLoading = adminUsersQuery.isPending;
+  const pendingDepositsQuery = usePendingTransactions(isAdmin);
+  // A member's own deposit that is still waiting for review (shown in the activation notice).
+  const myTransactions = useMyTransactions(user?.id, !!user && !isAdmin).data;
+  const activePendingDeposit = myTransactions?.find((t) => t.type === 'deposit' && t.status === 'pending') ?? null;
+  const globalTimerQuery = useGlobalTimer(user?.id);
+  const globalTimer = globalTimerQuery.data?.expires_at ?? null;
+  const requestStatus = globalTimerQuery.data?.requestStatus ?? null;
+  const updateGlobalTimer = (patch: Partial<GlobalTimer>) =>
+    queryClient.setQueryData<GlobalTimer>(queryKeys.globalTimer(user?.id), (old) => ({ expires_at: null, ...old, ...patch }));
+
+  // Admin banner: a live "new deposit" message, otherwise how many deposits are waiting for approval.
+  const [pendingNoticeDismissed, setPendingNoticeDismissed] = useState(false);
+  const pendingCount = pendingDepositsQuery.data?.length ?? 0;
+  const adminBanner = adminNotification
+    ?? (!pendingNoticeDismissed && pendingCount > 0 ? `🔔 You have ${pendingCount} new deposit request(s) waiting for approval!` : null);
+  const dismissAdminBanner = () => {
+    setAdminNotification(null);
+    setPendingNoticeDismissed(true);
+  };
+
   // Member KPIs come from the signals this user has taken, not the platform-wide broadcast stats.
   const myWins = signalHistory.filter((h) => h.result === 'win').length;
   const myLosses = signalHistory.filter((h) => h.result === 'loss').length;
@@ -143,10 +169,6 @@ export default function Dashboard() {
     active: signalHistory.length - myWins - myLosses,
     rate: myWins + myLosses ? Math.round((100 * myWins) / (myWins + myLosses)) : 0,
   };
-  const [stats, setStats] = useState({ active_signals: 0, success_rate: 0, total_signals: 0, total_users: 0, platform_balance: '0', pending_deposits: 0 });
-  const [adminStats, setAdminStats] = useState<AdminStats | null>(null);
-  const [adminUsers, setAdminUsers] = useState<AdminUser[]>([]);
-  const [usersLoading, setUsersLoading] = useState(false);
   const [addressCopied, setAddressCopied] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
 
@@ -161,21 +183,8 @@ export default function Dashboard() {
       toast.error('Could not copy — please select and copy it manually.');
     }
   };
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const rowsPerPage = 6;
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
-
-  const fetchNotifications = async () => {
-      try {
-          const data = await notificationService.getMyNotifications();
-          setNotifications(data || []);
-          setUnreadCount(data.filter(n => !n.is_read).length);
-      } catch (e) {
-          console.error("Failed to fetch notifications", e);
-      }
-  };
 
   useEffect(() => {
     if (!user) return;
@@ -195,9 +204,7 @@ export default function Dashboard() {
     socket.on('notification', (notif) => {
         
         console.log("New real-time notification:", notif);
-        setNotifications(prev => [notif, ...prev]);
-        setUnreadCount(prev => prev + 1);
-        
+
         // If it's payment approval, refresh profile
         if (notif.type === 'payment_approval') {
             refreshUserProfile();
@@ -243,71 +250,34 @@ export default function Dashboard() {
     socket.on('global_timer_update', (data) => {
         console.log("Global timer update:", data);
         if (data.server_time) updateServerTimeOffset(data.server_time);
-        setGlobalTimer(data.expires_at);
-        if (!data.expires_at) setRequestStatus(null);
+        updateGlobalTimer(data.expires_at
+          ? { expires_at: data.expires_at }
+          : { expires_at: null, requestStatus: null });
     });
 
     socket.on('admin_notification', (notif) => {
         if (user.is_admin) {
             console.log("New admin notification:", notif);
             setAdminNotification(`🔔 New Deposit Request! User #${notif.transaction.user_id} uploaded proof for $${notif.transaction.amount}`);
-            
-            // Instantly update the stats for the banner
-            setAdminStats(prev => ({
-                ...prev,
-                pending_deposits: (prev?.pending_deposits || 0) + 1
-            }));
-            
-            // Also trigger a full refresh to be sure
+
+            // Refresh stats, badges and lists
             fetchAllData();
         }
     });
-
-    fetchNotifications();
 
     return () => {
         socket.disconnect();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+  }, [user?.id, user?.is_admin]);
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [signalIdToDelete, setSignalIdToDelete] = useState<number | null>(null);
 
-  const fetchSignals = async () => {
-    try {
-      setLoading(true);
-      const data = await signalService.getSignalsDashboard();
-      setSignals(data.active_signals || []);
-      setStats(prev => ({ ...prev, ...data.stats }));
-      
-      if (user && !user.is_admin) {
-          try {
-              const historyData = await signalService.getUserSignalHistory(user.id || user.user_id);
-              setSignalHistory(historyData || []);
-          } catch (e) {
-              console.error("Failed to fetch signal history", e);
-          }
-      }
-
-      if (user?.is_admin) {
-        const aStats = await transactionService.getAdminStats();
-        setAdminStats(aStats);
-
-        try {
-          setUsersLoading(true);
-          setAdminUsers(await transactionService.getAllUsersWithSignals());
-        } catch (e) {
-          console.error("Failed to fetch users list", e);
-        } finally {
-          setUsersLoading(false);
-        }
-      }
-    } catch (error) {
-      console.error("Error fetching signals:", error);
-    } finally {
-      setLoading(false);
-    }
+  // Signals changed: reload the signal list, the member's history and the admin stats / members.
+  const fetchSignals = () => {
+    queryClient.invalidateQueries({ queryKey: ['signals'] });
+    queryClient.invalidateQueries({ queryKey: ['admin'] });
   };
 
   const confirmDelete = async () => {
@@ -318,7 +288,7 @@ export default function Dashboard() {
         try {
             await signalService.hideSignal(id);
             setRejectedSignalIds(prev => [...prev, id]);
-            setSignalHistory(prev => prev.filter(h => h.signal_id !== id));
+            fetchSignals(); // the hidden signal also drops out of the history
             toast.success("Signal removed from your list");
             setIsDeleteModalOpen(false);
             setSignalIdToDelete(null);
@@ -343,61 +313,18 @@ export default function Dashboard() {
     setIsDeleteModalOpen(true);
   };
 
-  const fetchAllData = async () => {
-    setLoading(true);
-    await refreshUserProfile();
-    await fetchSignals();
-    await fetchNotifications();
-    await checkPendingDeposit();
-    
-    // Fetch Global Timer
-    try {
-        const timerData = await signalService.getGlobalTimer();
-        if (timerData.server_time) updateServerTimeOffset(timerData.server_time);
-        setGlobalTimer(timerData.expires_at);
-        setRequestStatus(timerData.requestStatus ?? null);
-    } catch (e) { console.error(e); }
-
-    setLoading(false);
-  };
-
-  const refreshUserProfile = async () => {
-    try {
-        const freshUser = await authService.getProfile();
-        dispatch(setUser(freshUser));
-    } catch (e) {
-        console.error("Failed to refresh profile", e);
-    }
-  };
-
-  const checkPendingDeposit = async () => {
-    if (user?.is_admin) {
-        try {
-            const pending = await transactionService.getPendingTransactions();
-            if (pending && pending.length > 0) {
-                setAdminNotification(`🔔 You have ${pending.length} new deposit request(s) waiting for approval!`);
-            } else {
-                setAdminNotification(null);
-            }
-        } catch (e) { console.error(e); }
-    } else {
-        try {
-            const { count } = await transactionService.getGlobalTransactionCount();
-            setTransactionCount(count);
-            
-            const transactions = await transactionService.getUserTransactions();
-            const pending = transactions.find(t => t.type === 'deposit' && t.status === 'pending');
-            if (pending) {
-                setActivePendingDeposit(pending);
-            } else {
-                setActivePendingDeposit(null);
-            }
-        } catch (e) { console.error(e); }
-    }
+  // Reload everything shown on this page (profile, signals, deposits, countdown, admin stats).
+  const fetchAllData = () => {
+    refreshUserProfile();
+    queryClient.invalidateQueries({ queryKey: ['signals'] });
+    queryClient.invalidateQueries({ queryKey: ['transactions'] });
+    queryClient.invalidateQueries({ queryKey: ['globalTimer'] });
+    queryClient.invalidateQueries({ queryKey: ['admin'] });
   };
 
   useEffect(() => {
-    fetchAllData();
+    // The queries load themselves; just make sure the wallet balance is fresh.
+    refreshUserProfile();
     document.body.classList.add('dashboard-body');
 
     // Realtime handles instant updates; this is just a safety-net refresh,
@@ -461,7 +388,7 @@ export default function Dashboard() {
           setIsSubmitting(true);
           const response = await signalService.requestSignalAccess();
           toast.success(response.message);
-          setRequestStatus('pending');
+          updateGlobalTimer({ requestStatus: 'pending' });
       } catch (e) {
           toast.error(errorMessage(e, "Failed to send request"));
       } finally {
@@ -494,17 +421,6 @@ export default function Dashboard() {
   const startIndex = (currentPage - 1) * rowsPerPage;
   const currentSignals = filteredSignals.slice(startIndex, startIndex + rowsPerPage);
 
-  const handleLogout = async () => {
-    try {
-      await authService.logout();
-    } catch (error) {
-      console.error("Logout API failed:", error);
-    } finally {
-      dispatch(logout());
-      router.push('/login');
-    }
-  };
-
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
   // Admins get the unified admin shell (sidebar) instead of the user top-navbar.
@@ -532,12 +448,12 @@ export default function Dashboard() {
           </AdminHeader>
 
           <div className="atx">
-            {adminNotification && (
+            {adminBanner && (
               <div className="adb-alert" role="status">
                 <span className="adb-alert-dot" aria-hidden="true" />
-                <span>{adminNotification}</span>
+                <span>{adminBanner}</span>
                 <button type="button" className="adb-alert-btn" onClick={() => router.push('/transaction')}>Review now</button>
-                <button type="button" className="adb-alert-close" onClick={() => setAdminNotification(null)} aria-label="Dismiss">✕</button>
+                <button type="button" className="adb-alert-close" onClick={dismissAdminBanner} aria-label="Dismiss">✕</button>
               </div>
             )}
 
@@ -554,11 +470,11 @@ export default function Dashboard() {
       <UserNavbar active="signals" user={mounted ? user : null} onLogout={handleLogout} />
 
       {/* NOTIFICATION BARS */}
-      {mounted && user?.is_admin && adminNotification && (
+      {mounted && user?.is_admin && adminBanner && (
         <div style={{ background: 'rgba(239, 68, 68, 0.1)', borderBottom: '1px solid #ef4444', padding: '10px 1rem', color: '#ef4444', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '15px', zIndex: 1000, position: 'relative' }}>
-            <span style={{ fontWeight: 600 }}>{adminNotification}</span>
+            <span style={{ fontWeight: 600 }}>{adminBanner}</span>
             <button onClick={() => router.push('/transaction')} style={{ background: '#ef4444', color: 'white', border: 'none', padding: '4px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}>Review Now</button>
-            <button onClick={() => setAdminNotification(null)} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '1rem' }}>✕</button>
+            <button onClick={dismissAdminBanner} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '1rem' }}>✕</button>
         </div>
       )}
 

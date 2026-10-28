@@ -1,12 +1,10 @@
 'use client';
-import { useEffect, useState, type ReactNode } from 'react';
-import type { Session } from '@supabase/supabase-js';
+import { useEffect, useSyncExternalStore, type ReactNode } from 'react';
 import type { Profile } from '@/types';
-import { useAppDispatch, useAppSelector } from '@/redux/store';
 import { useRouter, usePathname } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabaseClient';
-import authService from '@/services/authService';
-import { setAuth, logout } from '@/redux/slices/authSlice';
+import { authKeys, useCurrentUser } from '@/hooks/useAuth';
 import { trackPresence } from '@/services/realtimeService';
 
 // ---------------------------------------------------------------------
@@ -58,6 +56,8 @@ function decide(path: string, user: Profile | null, checked: boolean): Decision 
     return { allow: true };
 }
 
+const subscribeNoop = () => () => {};
+
 function FullScreenLoader() {
     return (
         <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -70,49 +70,28 @@ function FullScreenLoader() {
 }
 
 export default function AuthGuard({ children }: { children: ReactNode }) {
-    const dispatch = useAppDispatch();
     const router = useRouter();
     const pathname = usePathname();
-    const { user } = useAppSelector((state) => state.auth);
-    const [checked, setChecked] = useState(false);
-    const [mounted, setMounted] = useState(false);
+    const queryClient = useQueryClient();
+    const { user, isChecked } = useCurrentUser();
+    // false while server-rendering and hydrating, true in the browser afterwards.
+    const mounted = useSyncExternalStore(subscribeNoop, () => true, () => false);
 
-    useEffect(() => setMounted(true), []);
-
-    // Keep Redux in sync with the real Supabase session.
+    // Re-read the profile whenever the Supabase session changes (sign in, sign out, token refresh).
     useEffect(() => {
-        const sync = async (session: Session | null) => {
-            if (!session) {
-                dispatch(logout());
-                setChecked(true);
-                return;
-            }
-            try {
-                const profile = await authService.getProfile();
-                dispatch(setAuth({ user: profile, token: session.access_token }));
-            } catch (e) {
-                console.error('Failed to load profile', e);
-                // Session exists but profile can't be read — treat as logged out.
-                dispatch(logout());
-            } finally {
-                setChecked(true);
-            }
-        };
-
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
             // Defer: Supabase recommends not awaiting other calls inside this callback.
-            setTimeout(() => sync(session), 0);
+            setTimeout(() => queryClient.invalidateQueries({ queryKey: authKeys.user }), 0);
         });
-
         return () => subscription.unsubscribe();
-    }, [dispatch]);
+    }, [queryClient]);
 
     // Show the logged-in user as "online" on every page (admins are excluded from the count).
     useEffect(() => {
         trackPresence(user);
     }, [user?.id, user?.is_admin]); // eslint-disable-line react-hooks/exhaustive-deps
 
-    const decision: Decision = mounted ? decide(pathname, user, checked) : { wait: true };
+    const decision: Decision = mounted ? decide(pathname, user, isChecked) : { wait: true };
 
     useEffect(() => {
         if (decision.redirect && decision.redirect !== pathname) router.replace(decision.redirect);

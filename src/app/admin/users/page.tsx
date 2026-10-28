@@ -1,83 +1,26 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAppDispatch, useAppSelector } from '@/redux/store';
-import { setUser, logout } from '../../../redux/slices/authSlice';
-import authService from '../../../services/authService';
-import transactionService from '../../../services/transactionService';
+import { useState } from 'react';
 import ThemeToggle from '@/components/ThemeToggle';
 import AdminSidebar from '../../../components/AdminSidebar';
 import AdminUsersTable from '../../../components/AdminUsersTable';
+import { useCurrentUser, useLogout } from '@/hooks/useAuth';
+import { useAdminStats, useAdminUsers } from '@/hooks/queries';
 import '../../../styles/adminSignals.css';
-import type { AdminUser } from '@/types';
 
 export default function AdminUsersPage() {
-    const router = useRouter();
-    const dispatch = useAppDispatch();
-    const { user, token } = useAppSelector((state) => state.auth);
+    // Access (admins only) is enforced by AuthGuard before this page renders.
+    const { user } = useCurrentUser();
+    const handleLogout = useLogout();
+    const isAdmin = !!user?.is_admin;
 
-    const [mounted, setMounted] = useState(true); // protected page: AuthGuard renders it client-side only, so no hydration flash guard needed
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-    const [users, setUsers] = useState<AdminUser[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [pendingDeposits, setPendingDeposits] = useState(0);
+    const usersQuery = useAdminUsers(isAdmin);
+    const statsQuery = useAdminStats(isAdmin);
+    const users = usersQuery.data ?? [];
+    const pendingDeposits = statsQuery.data?.pending_deposits || 0;
 
-    useEffect(() => { setMounted(true); }, []);
-
-    // Auth guard — admins only.
-    useEffect(() => {
-        const checkAuth = async () => {
-            if (user) {
-                if (!user.is_admin) router.push('/dashboard');
-            } else if (token) {
-                try {
-                    const profile = await authService.getProfile();
-                    dispatch(setUser(profile));
-                } catch (e) {
-                    console.error('Session expired', e);
-                    router.push('/login');
-                }
-            } else {
-                router.push('/login');
-            }
-        };
-        checkAuth();
-    }, [user, token, router, dispatch]);
-
-    // Load users + pending count.
-    useEffect(() => {
-        if (!user?.is_admin) return;
-        const load = async () => {
-            try {
-                setLoading(true);
-                const [usersList, stats] = await Promise.all([
-                    transactionService.getAllUsersWithSignals(),
-                    transactionService.getAdminStats().catch(() => null)
-                ]);
-                setUsers(usersList);
-                if (stats) setPendingDeposits(stats.pending_deposits || 0);
-            } catch (e) {
-                console.error('Failed to load users', e);
-            } finally {
-                setLoading(false);
-            }
-        };
-        load();
-    }, [user]);
-
-    const handleLogout = async () => {
-        try {
-            await authService.logout();
-        } catch (e) {
-            console.error('Logout API failed:', e);
-        } finally {
-            dispatch(logout());
-            router.push('/login');
-        }
-    };
-
-    if (!mounted || !user || !user.is_admin) {
+    if (!user || !user.is_admin) {
         return (
             <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--t-bg)', color: 'var(--t-text)' }}>
                 <div className="loader">Loading Admin Panel...</div>
@@ -111,7 +54,7 @@ export default function AdminUsersPage() {
                 </header>
 
                 <div style={{ padding: '2rem' }}>
-                    <AdminUsersTable users={users} loading={loading} />
+                    <AdminUsersTable users={users} loading={usersQuery.isPending} />
                 </div>
             </main>
         </div>

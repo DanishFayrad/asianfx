@@ -1,12 +1,11 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAppDispatch, useAppSelector } from '@/redux/store';
+import { useQueryClient } from '@tanstack/react-query';
 import transactionService from '../../services/transactionService';
-import authService from '../../services/authService';
-import { setUser, logout } from '../../redux/slices/authSlice';
 import { connectRealtime } from '../../services/realtimeService';
+import { useCurrentUser, useLogout } from '@/hooks/useAuth';
+import { useAllTransactions, usePendingTransactions } from '@/hooks/queries';
 import toast from 'react-hot-toast';
 import AdminSidebar, { initials } from '../../components/AdminSidebar';
 import AdminHeader from '@/components/admin/AdminHeader';
@@ -43,48 +42,26 @@ const statusLabel = (st: string) => ({ approved: 'Approved', pending: 'Pending',
 const formatMethod = (m: string | null) => (!m ? '—' : m.toUpperCase().replace(/_/g, ' '));
 
 export default function Transaction() {
-  const router = useRouter();
-  const dispatch = useAppDispatch();
-  const { user, token } = useAppSelector((state) => state.auth);
-  const [isAuthorizing, setIsAuthorizing] = useState(true);
+  // Access (admins only) is enforced by AuthGuard before this page renders.
+  const { user } = useCurrentUser();
+  const handleLogout = useLogout();
+  const queryClient = useQueryClient();
+  const isAdmin = !!user?.is_admin;
+  const isAuthorizing = !isAdmin;
   const [mounted, setMounted] = useState(true); // protected page: AuthGuard renders it client-side only, so no hydration flash guard needed
   const [isActionLoading, setIsActionLoading] = useState(false);
-  
+
   useEffect(() => {
     setMounted(true);
   }, []);
-  
-  useEffect(() => {
-     const checkAuth = async () => {
-         if (user) {
-             if (!user.is_admin) {
-                 router.push('/dashboard');
-             } else {
-                 setIsAuthorizing(false);
-             }
-         } else if (token) {
-             // Token exists but no Redux user? Fetch it
-             try {
-                const profile = await authService.getProfile();
-                dispatch(setUser(profile));
-             } catch (e) {
-                console.error("Session expired", e);
-                router.push('/login');
-             }
-         } else {
-             // No token? Login
-             router.push('/login');
-         }
-     };
-     
-     checkAuth();
-  }, [user, token, router, dispatch]);
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [pendingDeposits, setPendingDeposits] = useState<Transaction[]>([]);
-  const [userTransactions, setUserTransactions] = useState<Transaction[]>([]);
-  const [loading, setLoading] = useState(false);
-  
+  const pendingQuery = usePendingTransactions(isAdmin);
+  const allQuery = useAllTransactions(isAdmin);
+  const pendingDeposits: Transaction[] = pendingQuery.data ?? [];
+  const userTransactions: Transaction[] = allQuery.data ?? [];
+  const loading = allQuery.isFetching;
+
 
   const [filter, setFilter] = useState<FilterKey>('pending');
   const [search, setSearch] = useState('');
@@ -104,27 +81,13 @@ export default function Transaction() {
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
-  const fetchData = async () => {
-    if (!user) return;
-    
-    setLoading(true);
-    try {
-        if (user?.is_admin) {
-            const data = await transactionService.getPendingTransactions();
-            setPendingDeposits(data || []);
-            const allTxs = await transactionService.getAllTransactions();
-            setUserTransactions(allTxs || []);
-        }
-    } catch (e) {
-        console.error("Failed to fetch data", e);
-    } finally {
-        setLoading(false);
-    }
+  // Deposits changed: reload the lists here and the stats / badges on every admin page.
+  const fetchData = () => {
+    queryClient.invalidateQueries({ queryKey: ['transactions'] });
+    queryClient.invalidateQueries({ queryKey: ['admin'] });
   };
 
   useEffect(() => {
-    fetchData();
-
     if (user?.is_admin) {
         const socket = connectRealtime(user);
 
@@ -138,7 +101,8 @@ export default function Transaction() {
 
         return () => socket.disconnect();
     }
-  }, [user]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, user?.is_admin]);
 
   // "View" on a pending deposit: open the review modal with the payment screenshot.
   const [proof, setProof] = useState({ url: '', loading: false, error: '' });
@@ -218,16 +182,6 @@ export default function Transaction() {
     });
   };
 
-  const handleLogout = async () => {
-    try {
-      await authService.logout();
-    } catch (error) {
-      console.error("Logout API failed:", error);
-    } finally {
-      dispatch(logout());
-      router.push('/login');
-    }
-  };
 
   const deposits = useMemo(() => userTransactions.filter((t) => t.type === 'deposit'), [userTransactions]);
 

@@ -3,16 +3,15 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useAppDispatch, useAppSelector } from '@/redux/store';
 import authService from '../../services/authService';
-import { logout } from '../../redux/slices/authSlice';
+import { useClearSession } from '@/hooks/useAuth';
 import toast from 'react-hot-toast';
 import '../../styles/forgotPassword.css';
 import { errorMessage } from '@/lib/supabaseClient';
 
 export default function ForgotPassword() {
     const router = useRouter();
-    const dispatch = useAppDispatch();
+    const clearSession = useClearSession();
     const [step, setStep] = useState(1); // 1: Email, 2: Reset
     const [loading, setLoading] = useState(false);
     const [email, setEmail] = useState('');
@@ -47,7 +46,7 @@ export default function ForgotPassword() {
         try {
             await authService.resetPassword({ email, otp: otp.trim(), newPassword });
             // Verifying the code briefly signs the user in; clear it so /login doesn't bounce to the dashboard.
-            dispatch(logout());
+            clearSession();
             toast.success('Password reset successfully! Please login with your new password.');
             router.push('/login');
         } catch (error) {
@@ -62,7 +61,7 @@ export default function ForgotPassword() {
             <div className="forgot-password-card">
                 <div className="logo-section">
                     <div className="logo-circle">
-                        <img src="/images/logo-mark.svg" alt="" style={{ width: '34px' }} />
+                        <img src="/images/logo-mark.png" alt="" style={{ width: '34px' }} />
                     </div>
                     <h1 className="title">Reset Password</h1>
                     <div className="step-indicator">

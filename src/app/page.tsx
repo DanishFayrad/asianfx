@@ -31,6 +31,18 @@ const ICONS: Record<string, string> = {
     check: 'M20 6 9 17l-5-5',
 };
 
+// Filled brand marks for the social links (simple single-path versions).
+const SOCIAL_ICONS = {
+    facebook: 'M14 8h3V4h-3a4 4 0 0 0-4 4v2H8v4h2v8h4v-8h3l1-4h-4V8a1 1 0 0 1 1-1z',
+    instagram: 'M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5zm0 2a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3H7zm5 3.5a4.5 4.5 0 1 1 0 9 4.5 4.5 0 0 1 0-9zm0 2a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM17.3 5.4a1.2 1.2 0 1 1 0 2.4 1.2 1.2 0 0 1 0-2.4z',
+};
+
+const SocialIcon = ({ d, size = 16 }: { d: string; size?: number }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d={d} fillRule="evenodd" />
+    </svg>
+);
+
 const MARKETS = [
     { code: 'XAU', name: 'Gold', pair: 'XAU/USD', note: 'Our flagship market — the most actively signalled pair.', color: 'var(--t-accent)' },
     { code: 'XAG', name: 'Silver', pair: 'XAG/USD', note: 'Precious-metal setups with tight, defined risk.', color: '#c0c7d1' },
@@ -277,6 +289,8 @@ export default function Home() {
                             {whatsappUrl && <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className={styles.btnGhost}>WhatsApp us</a>}
                             {SITE.telegram && <a href={SITE.telegram} target="_blank" rel="noopener noreferrer" className={styles.btnGhost}>Telegram channel</a>}
                             {SITE.email && <a href={`mailto:${SITE.email}`} className={styles.btnGhost}>{SITE.email}</a>}
+                            {SITE.facebook && <a href={SITE.facebook} target="_blank" rel="noopener noreferrer" className={styles.btnGhost}><SocialIcon d={SOCIAL_ICONS.facebook} /> Facebook</a>}
+                            {SITE.instagram && <a href={SITE.instagram} target="_blank" rel="noopener noreferrer" className={styles.btnGhost}><SocialIcon d={SOCIAL_ICONS.instagram} /> Instagram</a>}
                         </div>
                     </div>
                     <ContactForm />
@@ -294,7 +308,7 @@ export default function Home() {
                     </div>
                     <div className={styles.footerRow}>
                         <div className={styles.brand}>
-                            <img src="/images/logo-mark.svg" alt="" width={28} height={28} />
+                            <img src="/images/logo-mark.png" alt="" width={28} height={28} />
                             <span>Asian<b>FX</b></span>
                         </div>
                         <nav className={styles.footerLinks}>
@@ -304,6 +318,18 @@ export default function Home() {
                             <a href="#pricing">Pricing</a>
                             <Link href="/login">Log in</Link>
                         </nav>
+                        <div className={styles.footerSocial}>
+                            {SITE.facebook && (
+                                <a href={SITE.facebook} target="_blank" rel="noopener noreferrer" aria-label="AsianFX on Facebook" title="Facebook">
+                                    <SocialIcon d={SOCIAL_ICONS.facebook} size={18} />
+                                </a>
+                            )}
+                            {SITE.instagram && (
+                                <a href={SITE.instagram} target="_blank" rel="noopener noreferrer" aria-label="AsianFX on Instagram" title="Instagram">
+                                    <SocialIcon d={SOCIAL_ICONS.instagram} size={18} />
+                                </a>
+                            )}
+                        </div>
                         <span className={styles.muted}>&copy; {new Date().getFullYear()} AsianFX. All rights reserved.</span>
                     </div>
                 </div>

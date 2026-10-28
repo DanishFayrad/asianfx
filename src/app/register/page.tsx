@@ -2,14 +2,14 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAppDispatch, useAppSelector } from '@/redux/store';
-import { registerUser, reset } from '@/redux/slices/authSlice';
+import { useMutation } from '@tanstack/react-query';
+import authService from '@/services/authService';
+import { errorMessage } from '@/lib/supabaseClient';
 import Link from 'next/link';
 import '../../styles/register.css';
 
 export default function Register() {
   const router = useRouter();
-  const dispatch = useAppDispatch();
   const [showPassword, setShowPassword] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -40,17 +40,14 @@ export default function Register() {
 
   const { name, email, password, phone, country } = formData;
 
-  const { isLoading, isError, isSuccess, message, registrationEmail } = useAppSelector(
-    (state) => state.auth
-  );
-
-  useEffect(() => {
-    if (isSuccess && registrationEmail) {
-      router.push(`/otp?email=${encodeURIComponent(registrationEmail)}`);
-      // We don't reset yet so that /otp page can read the state if needed, 
-      // or we rely on the URL param.
-    }
-  }, [isSuccess, registrationEmail, router]);
+  // After signing up, go verify the email with the code Supabase sent.
+  const register = useMutation({
+    mutationFn: authService.register,
+    onSuccess: (_data, variables) => router.push(`/otp?email=${encodeURIComponent(variables.email)}`),
+  });
+  const isLoading = register.isPending;
+  const isError = register.isError;
+  const message = errorMessage(register.error, 'Registration failed');
 
   const onChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData((prevState) => ({
@@ -65,7 +62,7 @@ export default function Register() {
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    dispatch(registerUser(formData));
+    register.mutate(formData);
   };
 
   return (
@@ -77,7 +74,7 @@ export default function Register() {
 
         <div className="register-header">
           <div className="register-logo-icon">
-            <img src="/images/logo-mark.svg" style={{ width: '100%', height: '100%' }} alt="AsianFX Signals" />
+            <img src="/images/logo-mark.png" style={{ width: '100%', height: '100%' }} alt="AsianFX Signals" />
           </div>
           <h1>Create Account</h1>
           <p>Start your professional trading journey</p>

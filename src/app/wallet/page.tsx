@@ -2,10 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAppDispatch, useAppSelector } from '@/redux/store';
-import { logout, setUser } from '../../redux/slices/authSlice';
-import authService from '../../services/authService';
-import transactionService from '../../services/transactionService';
+import { useCurrentUser, useLogout } from '@/hooks/useAuth';
+import { useAdminStats, useWalletStats } from '@/hooks/queries';
 import DepositModal from '@/components/DepositModal';
 import ThemeToggle from '@/components/ThemeToggle';
 import UserNavbar from '@/components/UserNavbar';
@@ -21,56 +19,28 @@ const money = (n: number | string | null | undefined) => Number(n || 0).toLocale
 
 export default function Wallet() {
   const router = useRouter();
-  const dispatch = useAppDispatch();
-  const { user } = useAppSelector((state) => state.auth);
+  const { user, refresh: refreshUserProfile } = useCurrentUser();
+  const handleLogout = useLogout();
   const [mounted, setMounted] = useState(true); // protected page: AuthGuard renders it client-side only, so no hydration flash guard needed
   const [isDepositOpen, setIsDepositOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  // Admins get platform stats, members their own wallet stats — both shapes are all-optional.
-  const [stats, setStats] = useState<(AdminStats & WalletStats) | null>(null);
 
   useEffect(() => { setMounted(true); }, []);
 
   const isAdmin = mounted && !!user?.is_admin;
 
-  const fetchStats = async () => {
-    try {
-      const data = user?.is_admin
-        ? await transactionService.getAdminStats()
-        : await transactionService.getWalletStats();
-      setStats(data);
-    } catch (e) {
-      console.error("Failed to fetch wallet stats", e);
-    }
-  };
+  // Admins get platform stats, members their own wallet stats — both shapes are all-optional.
+  const adminStatsQuery = useAdminStats(!!user?.is_admin);
+  const walletStatsQuery = useWalletStats(user?.id, !!user && !user.is_admin);
+  const stats: (AdminStats & WalletStats) | null =
+    (user?.is_admin ? adminStatsQuery.data : walletStatsQuery.data) ?? null;
+  const fetchStats = () => (user?.is_admin ? adminStatsQuery.refetch() : walletStatsQuery.refetch());
 
-  const refreshUserProfile = async () => {
-    try {
-      const freshUser = await authService.getProfile();
-      dispatch(setUser(freshUser));
-    } catch (e) {
-      console.error("Failed to refresh profile", e);
-    }
-  };
-
+  // Wallet balance can change elsewhere (deposit approved, signal taken) — reload it on open.
   useEffect(() => {
-    if (user) {
-      fetchStats();
-      refreshUserProfile();
-    }
+    if (user) refreshUserProfile();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
-
-  const handleLogout = async () => {
-    try {
-      await authService.logout();
-    } catch (error) {
-      console.error("Logout API failed:", error);
-    } finally {
-      dispatch(logout());
-      router.push('/login');
-    }
-  };
 
   const profit = Number(stats?.total_profit || 0);
 

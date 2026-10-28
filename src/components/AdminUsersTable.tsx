@@ -2,6 +2,7 @@
 
 import { useState, useEffect, type CSSProperties } from 'react';
 import toast from 'react-hot-toast';
+import { useQueryClient } from '@tanstack/react-query';
 import transactionService from '@/services/transactionService';
 import { displayUserId } from '@/lib/memberId';
 import { errorMessage } from '@/lib/supabaseClient';
@@ -20,6 +21,7 @@ const ROWS_PER_PAGE = 8;
  *  - loading: boolean
  */
 export default function AdminUsersTable({ users: rawUsers = [], loading = false }: { users?: AdminUser[]; loading?: boolean }) {
+    const queryClient = useQueryClient();
     const [query, setQuery] = useState('');
     const [page, setPage] = useState(1);
     const [busyId, setBusyId] = useState<string | null>(null);
@@ -40,6 +42,8 @@ export default function AdminUsersTable({ users: rawUsers = [], loading = false 
             toast.success(message);
             if (action === 'delete') setDeletedIds((ids) => [...ids, u.id]);
             else setStatusOverrides((o) => ({ ...o, [u.id]: action === 'activate' }));
+            // Refresh member lists and platform stats everywhere they are shown.
+            queryClient.invalidateQueries({ queryKey: ['admin'] });
         } catch (e) {
             toast.error(errorMessage(e, 'Could not update the user'));
         } finally {
