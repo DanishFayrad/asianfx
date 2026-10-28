@@ -407,3 +407,124 @@
 @media (max-width: 992px) {
   .db-sidebar-column { width: 100% !important; position: static !important; }
 }
+
+/* ---------- "New signal" alert popup (.nsa-*) ---------- */
+.nsa-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 4000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  animation: nsaFade 0.2s ease-out;
+}
+
+.nsa-card {
+  width: min(420px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 22px;
+  border-radius: 20px;
+  color: var(--t-text);
+  background: var(--t-surface);
+  border: 1px solid var(--tw-10);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.25);
+  animation: nsaRise 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.nsa-head { display: flex; align-items: center; justify-content: space-between; }
+
+.nsa-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 11px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--t-gold);
+  background: rgba(var(--t-accent-rgb), 0.14);
+}
+
+.nsa-badge i { width: 7px; height: 7px; border-radius: 50%; background: currentColor; animation: gtmPulse 1.6s ease-in-out infinite; }
+
+.nsa-close {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  color: var(--t-text-muted);
+  background: var(--tw-05);
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.nsa-close:hover { color: var(--t-text); background: var(--tw-10); }
+
+.nsa-pair { display: flex; align-items: center; gap: 12px; }
+
+.nsa-pair-icon {
+  flex-shrink: 0;
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border-radius: 13px;
+  background: rgba(var(--t-accent-rgb), 0.12);
+}
+.nsa-pair-icon img { width: 24px; height: 24px; object-fit: contain; }
+
+.nsa-pair-text { display: flex; flex-direction: column; min-width: 0; margin-right: auto; }
+.nsa-pair-text h2 { margin: 0; font-size: 1.25rem; font-weight: 700; letter-spacing: -0.01em; color: var(--t-text); }
+.nsa-pair-text small { font-size: 0.8rem; color: var(--t-text-muted); }
+
+.nsa-side { padding: 5px 12px; border-radius: 8px; font-size: 0.8rem; font-weight: 800; letter-spacing: 0.04em; }
+.nsa-side--buy { color: #16a34a; background: rgba(34, 197, 94, 0.13); }
+.nsa-side--sell { color: #dc2626; background: rgba(239, 68, 68, 0.12); }
+
+.nsa-levels { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.nsa-levels > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--tw-03);
+  border: 1px solid var(--tw-08);
+}
+.nsa-levels small { font-size: 0.7rem; font-weight: 600; color: var(--t-text-muted); }
+.nsa-levels b { font-size: 0.95rem; font-weight: 700; color: var(--t-text); font-variant-numeric: tabular-nums; }
+.nsa-levels b.nsa-locked { display: inline-flex; align-items: center; gap: 5px; font-size: 0.82rem; color: var(--t-text-muted); }
+
+.nsa-note { margin: 0; font-size: 0.85rem; line-height: 1.5; color: var(--t-text-muted); }
+.nsa-note b { color: var(--t-gold); font-variant-numeric: tabular-nums; }
+
+.nsa-take {
+  height: 48px;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--t-on-accent);
+  background: var(--btn-primary);
+  box-shadow: 0 8px 20px rgba(var(--t-accent-rgb), 0.25);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.nsa-take:hover { transform: translateY(-1px); box-shadow: 0 10px 24px rgba(var(--t-accent-rgb), 0.32); }
+
+.nsa-foot { margin: -6px 0 0; text-align: center; font-size: 0.75rem; color: var(--t-text-muted); }
+
+@keyframes nsaFade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes nsaRise { from { opacity: 0; transform: translateY(12px) scale(0.98); } to { opacity: 1; transform: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .nsa-overlay, .nsa-card, .nsa-badge i { animation: none; }
+}

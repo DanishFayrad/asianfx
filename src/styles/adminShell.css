@@ -272,66 +272,83 @@
 
 /* ---------- Broadcast Signal → open & recent signal cards (.asg-*) ---------- */
 .admin-recent-grid {
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)) !important;
+  grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)) !important;
+  gap: 12px !important;
 }
 
 .asg-card {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  padding: 18px;
-  border-radius: 16px;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 14px;
   background: var(--t-surface);
   border: 1px solid var(--tw-08);
 }
 
 .asg-card--open { border-color: rgba(var(--t-accent-rgb), 0.45); }
 
-.asg-top { display: flex; align-items: center; gap: 12px; }
+.asg-top { display: flex; align-items: center; gap: 10px; }
 
 .asg-icon {
   flex-shrink: 0;
-  width: 42px;
-  height: 42px;
+  width: 34px;
+  height: 34px;
   display: grid;
   place-items: center;
-  border-radius: 12px;
-  font-size: 0.72rem;
+  border-radius: 10px;
+  font-size: 0.66rem;
   font-weight: 800;
   color: var(--t-gold);
   background: rgba(var(--t-accent-rgb), 0.14);
 }
 
 .asg-title { display: flex; flex-direction: column; min-width: 0; line-height: 1.3; }
-.asg-title strong { font-size: 1rem; color: var(--t-text); }
-.asg-title small { font-size: 0.76rem; color: var(--t-text-dim); }
+.asg-title strong { font-size: 0.9rem; color: var(--t-text); }
+.asg-title small { font-size: 0.7rem; color: var(--t-text-dim); }
 
 .asg-side {
   margin-left: auto;
-  padding: 4px 10px;
-  border-radius: 7px;
-  font-size: 0.72rem;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 0.66rem;
   font-weight: 800;
   letter-spacing: 0.04em;
 }
 
+/* Small trash button in the card header */
+.asg-delete {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--t-text-dim);
+  background: transparent;
+  border: 1px solid var(--tw-10);
+  transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+}
+.asg-delete:hover { color: #dc2626; border-color: rgba(239, 68, 68, 0.5); background: rgba(239, 68, 68, 0.08); }
+
 .asg-side--buy { color: #16a34a; background: rgba(34, 197, 94, 0.12); }
 .asg-side--sell { color: #dc2626; background: rgba(239, 68, 68, 0.1); }
 
-.asg-levels { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.asg-levels { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
 
 .asg-levels > div {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding: 8px 10px;
-  border-radius: 10px;
+  gap: 1px;
+  padding: 6px 8px;
+  border-radius: 8px;
   background: var(--tw-03);
   border: 1px solid var(--tw-08);
 }
 
-.asg-levels small { font-size: 0.68rem; font-weight: 600; color: var(--t-text-dim); }
-.asg-levels b { font-size: 0.92rem; color: var(--t-text); font-variant-numeric: tabular-nums; }
+.asg-levels small { font-size: 0.64rem; font-weight: 600; color: var(--t-text-dim); }
+.asg-levels b { font-size: 0.82rem; color: var(--t-text); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .asg-levels b.asg-win { color: #16a34a; }
 .asg-levels b.asg-loss { color: #dc2626; }
 
@@ -340,7 +357,7 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 6px;
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   color: var(--t-text-muted);
 }
 
@@ -363,19 +380,19 @@
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 8px;
-  padding-top: 12px;
+  gap: 6px;
+  padding-top: 10px;
   border-top: 1px dashed var(--tw-10);
 }
 
-.asg-result-label { font-size: 0.76rem; font-weight: 600; color: var(--t-text-muted); }
+.asg-result-label { font-size: 0.7rem; font-weight: 600; color: var(--t-text-muted); }
 .asg-result-btns { display: flex; gap: 6px; flex-wrap: wrap; }
 
 .asg-result-btn {
-  height: 30px;
-  padding: 0 12px;
-  border-radius: 8px;
-  font-size: 0.75rem;
+  height: 26px;
+  padding: 0 9px;
+  border-radius: 7px;
+  font-size: 0.7rem;
   font-weight: 700;
   cursor: pointer;
   background: transparent;
@@ -390,9 +407,9 @@
 .asg-result-btn--neutral:hover { background: var(--tw-05); }
 
 .asg-status {
-  padding: 4px 10px;
+  padding: 3px 9px;
   border-radius: 999px;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   font-weight: 700;
 }
 

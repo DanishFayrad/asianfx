@@ -8,6 +8,7 @@ import { EMPTY_ROWS, listTableFeatures, searchText } from '@/lib/tables';
 import transactionService from '@/services/transactionService';
 import { displayUserId } from '@/lib/memberId';
 import Skeleton, { SkeletonRows } from '@/components/Skeleton';
+import ConfirmDialog from '@/components/ConfirmDialog';
 import { errorMessage } from '@/lib/supabaseClient';
 import type { UserAction } from '@/services/transactionService';
 import type { AdminUser } from '@/types';
@@ -271,37 +272,15 @@ export default function AdminUsersTable({ users: rawUsers = EMPTY_ROWS, loading 
                 </div>
             )}
 
-            {pendingDelete && (
-                <div
-                    onClick={() => setPendingDelete(null)}
-                    style={{ position: 'fixed', inset: 0, background: 'rgba(0, 0, 0, 0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '1rem' }}
-                >
-                    <div
-                        onClick={(e) => e.stopPropagation()}
-                        role="dialog"
-                        aria-modal="true"
-                        style={{ background: 'var(--admin-bg-card)', border: '1px solid var(--admin-border-color)', borderRadius: '18px', padding: '1.75rem', width: '100%', maxWidth: '380px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)', textAlign: 'center' }}
-                    >
-                        <div style={{ width: '52px', height: '52px', borderRadius: '16px', margin: '0 auto 1rem', display: 'grid', placeItems: 'center', background: 'rgba(239, 68, 68, 0.12)', color: '#dc2626', fontSize: '1.5rem' }}>⚠</div>
-                        <h3 style={{ margin: '0 0 0.5rem', fontSize: '1.1rem', color: 'var(--admin-text-main)' }}>Are you sure you want to delete this user?</h3>
-                        <p style={{ margin: '0 0 1.5rem', fontSize: '0.9rem', color: 'var(--admin-text-muted)', lineHeight: 1.5 }}>
-                            <strong>{pendingDelete.name || pendingDelete.email}</strong> — their account, deposits and signal history will be removed. This cannot be undone.
-                        </p>
-                        <div style={{ display: 'flex', gap: '10px' }}>
-                            <button
-                                type="button"
-                                onClick={() => setPendingDelete(null)}
-                                style={{ flex: 1, padding: '11px', borderRadius: '10px', border: '1px solid var(--admin-border-color)', background: 'var(--admin-bg-main)', color: 'var(--admin-text-main)', fontWeight: 700, cursor: 'pointer' }}
-                            >Cancel</button>
-                            <button
-                                type="button"
-                                onClick={confirmDelete}
-                                style={{ flex: 1, padding: '11px', borderRadius: '10px', border: 'none', background: '#dc2626', color: '#fff', fontWeight: 700, cursor: 'pointer' }}
-                            >Yes, delete</button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <ConfirmDialog
+                open={!!pendingDelete}
+                title="Are you sure you want to delete this user?"
+                message={pendingDelete && (
+                    <><strong>{pendingDelete.name || pendingDelete.email}</strong> — their account, deposits and signal history will be removed. This cannot be undone.</>
+                )}
+                onConfirm={confirmDelete}
+                onCancel={() => setPendingDelete(null)}
+            />
         </div>
     );
 }

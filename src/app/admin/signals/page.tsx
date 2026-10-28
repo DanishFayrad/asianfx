@@ -14,6 +14,8 @@ import ThemeToggle from '@/components/ThemeToggle';
 import AdminSidebar from '../../../components/AdminSidebar';
 import AdminHeader from '@/components/admin/AdminHeader';
 import Skeleton from '@/components/Skeleton';
+import { IconTrash } from '@/components/admin/AdminIcons';
+import ConfirmDialog from '@/components/ConfirmDialog';
 import '../../../styles/adminSignals.css';
 import { errorMessage } from '@/lib/supabaseClient';
 import type { Signal } from '@/types';
@@ -175,13 +177,22 @@ export default function AdminSignals() {
     }
   };
 
-  const handleDeleteSignal = async (sig: Signal) => {
+  // Delete asks for confirmation first: the trash button only opens the popup.
+  const [signalToDelete, setSignalToDelete] = useState<Signal | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const confirmDeleteSignal = async () => {
+      if (!signalToDelete) return;
+      setIsDeleting(true);
       try {
-          await signalService.deleteSignal(sig.id);
-          toast.success(`${sig.symbol} signal deleted`);
+          await signalService.deleteSignal(signalToDelete.id);
+          toast.success(`${signalToDelete.symbol} signal deleted`);
+          setSignalToDelete(null);
           fetchAllAdminData();
       } catch (e) {
           toast.error("Failed to delete signal");
+      } finally {
+          setIsDeleting(false);
       }
   };
 
@@ -336,6 +347,15 @@ export default function AdminSignals() {
                         <small>{new Date(sig.created_at).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}</small>
                       </div>
                       <span className={`asg-side ${isBuy ? 'asg-side--buy' : 'asg-side--sell'}`}>{isBuy ? 'BUY' : 'SELL'}</span>
+                      <button
+                        type="button"
+                        className="asg-delete"
+                        onClick={() => setSignalToDelete(sig)}
+                        aria-label={`Delete ${sig.symbol} signal`}
+                        title="Delete signal"
+                      >
+                        <IconTrash size={15} />
+                      </button>
                     </div>
 
                     <div className="asg-levels">
@@ -398,13 +418,6 @@ export default function AdminSignals() {
                         <span className={`asg-status asg-status--${statusClass}`}>{sig.status}</span>
                       )}
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '10px' }}>
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteSignal(sig)}
-                        style={{ background: 'transparent', border: '1px solid rgba(239, 68, 68, 0.4)', color: '#dc2626', padding: '5px 12px', borderRadius: '8px', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer' }}
-                      >Delete</button>
-                    </div>
                   </div>
                 );
               })}
@@ -429,6 +442,20 @@ export default function AdminSignals() {
            </div>
         </section>
       </main>
+
+      <ConfirmDialog
+        open={!!signalToDelete}
+        title="Delete this signal?"
+        message={signalToDelete && (
+          <>
+            <strong>{signalToDelete.symbol} {String(signalToDelete.type || '').toUpperCase()}</strong> will be removed from the list and
+            from members&apos; dashboards. This cannot be undone.
+          </>
+        )}
+        busy={isDeleting}
+        onConfirm={confirmDeleteSignal}
+        onCancel={() => setSignalToDelete(null)}
+      />
     </div>
   );
 }

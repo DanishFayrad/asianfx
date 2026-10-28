@@ -1122,103 +1122,69 @@ export default function Dashboard() {
 
         {/* PREMIUM SIGNAL ALERT POPUP */}
         {isSignalAlertOpen && incomingSignal && (
-            <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.9)', zIndex: 4000, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(12px)' }}>
-                <div className="signal-alert-card" style={{ 
-                    background: 'linear-gradient(180deg, var(--t-surface-2) 0%, var(--t-surface) 100%)', 
-                    padding: '2.5rem', 
-                    borderRadius: '32px', 
-                    color: 'var(--t-text)', 
-                    width: '450px', 
-                    border: '1px solid rgba(var(--t-accent-rgb), 0.3)', 
-                    boxShadow: '0 0 50px rgba(var(--t-accent-rgb), 0.15)',
-                    position: 'relative',
-                    overflow: 'hidden',
-                    animation: 'slideUp 0.5s cubic-bezier(0.4, 0, 0.2, 1)'
-                }}>
-                    {/* Decorative element */}
-                    <div style={{ position: 'absolute', top: '-50px', right: '-50px', width: '150px', height: '150px', background: 'rgba(var(--t-accent-rgb), 0.05)', borderRadius: '50%', filter: 'blur(40px)' }}></div>
+            <div className="nsa-overlay" onClick={() => setIsSignalAlertOpen(false)}>
+                {(() => {
+                    const side = (incomingSignal.type || '').toLowerCase() === 'sell' ? 'sell' : 'buy';
+                    const lockedUntil = incomingSignal.release_at && new Date(incomingSignal.release_at) > currentTime
+                        ? incomingSignal.release_at : null;
+                    const isFree = !!user && user.free_signals > 0;
+                    const lockIcon = (
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <rect x="4" y="11" width="16" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" />
+                        </svg>
+                    );
+                    return (
+                        <div className="nsa-card" role="dialog" aria-modal="true" aria-labelledby="nsa-title" onClick={(e) => e.stopPropagation()}>
+                            <div className="nsa-head">
+                                <span className="nsa-badge"><i aria-hidden="true" /> New signal</span>
+                                {/* Close without rejecting — the signal stays available on the dashboard */}
+                                <button type="button" className="nsa-close" onClick={() => setIsSignalAlertOpen(false)} aria-label="Close alert" title="Close">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
+                                </button>
+                            </div>
 
-                    {/* Close without rejecting — the signal stays available on the dashboard */}
-                    <button
-                        type="button"
-                        onClick={() => setIsSignalAlertOpen(false)}
-                        aria-label="Close alert"
-                        title="Close"
-                        style={{ position: 'absolute', top: '1rem', right: '1rem', zIndex: 1, background: 'var(--tw-05)', border: 'none', color: 'var(--t-text)', width: '32px', height: '32px', borderRadius: '50%', cursor: 'pointer', fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                    >✕</button>
+                            <div className="nsa-pair">
+                                <span className="nsa-pair-icon">
+                                    <img src={getSymbolIcon(incomingSignal.symbol)} alt="" />
+                                </span>
+                                <div className="nsa-pair-text">
+                                    <h2 id="nsa-title">{incomingSignal.symbol}</h2>
+                                    <small>{getSymbolName(incomingSignal.symbol)}</small>
+                                </div>
+                                <span className={`nsa-side nsa-side--${side}`}>{side.toUpperCase()}</span>
+                            </div>
 
-                    <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-                        <div style={{ 
-                            background: 'rgba(var(--t-accent-rgb), 0.1)', 
-                            width: '80px', 
-                            height: '80px', 
-                            borderRadius: '24px', 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            justifyContent: 'center', 
-                            margin: '0 auto 1.5rem',
-                            border: '1px solid rgba(var(--t-accent-rgb), 0.2)',
-                            boxShadow: '0 10px 20px rgba(0,0,0,0.2)'
-                        }}>
-                            <img src={getSymbolIcon(incomingSignal.symbol)} style={{ width: '40px' }} alt="Symbol" />
+                            <div className="nsa-levels">
+                                {[['Entry', incomingSignal.entry_price], ['Take profit', incomingSignal.target_price], ['Stop loss', incomingSignal.stop_loss]].map(([label, value]) => (
+                                    <div key={String(label)}>
+                                        <small>{label}</small>
+                                        {value != null ? <b>{value}</b> : <b className="nsa-locked">{lockIcon} Locked</b>}
+                                    </div>
+                                ))}
+                            </div>
+
+                            <p className="nsa-note">
+                                {lockedUntil
+                                    ? <>Unlocks in <b>{formatCountdown(lockedUntil)}</b>. Take it now to see the levels the moment it opens.</>
+                                    : <>Take this signal to unlock Entry, Take Profit and Stop Loss, then place the trade in your own broker account.</>}
+                            </p>
+
+                            <button
+                                type="button"
+                                className="nsa-take"
+                                onClick={() => {
+                                    setIsSignalAlertOpen(false);
+                                    setIsGlobalTimerHidden(true); // Hide the global timer banner for this user
+                                    handleTakeSignal(incomingSignal);
+                                }}
+                            >
+                                Take signal · {isFree ? 'FREE' : '$1'}
+                            </button>
+
+                            <p className="nsa-foot">You can still find this signal on your dashboard.</p>
                         </div>
-                        <h2 style={{ fontSize: '1.8rem', fontWeight: 900, marginBottom: '0.5rem', letterSpacing: '-0.5px' }}>New Signal Alert!</h2>
-                        <p style={{ color: 'var(--t-text-muted)', fontSize: '1rem', lineHeight: '1.5' }}>
-                            An exclusive trading opportunity for <strong>{incomingSignal.symbol}</strong> is now live.
-                        </p>
-                    </div>
-
-                    <div style={{ 
-                        background: 'rgba(0, 0, 0, 0.3)', 
-                        padding: '1.5rem', 
-                        borderRadius: '20px', 
-                        marginBottom: '2rem', 
-                        border: '1px solid var(--tw-05)',
-                        display: 'grid',
-                        gridTemplateColumns: '1fr 1fr',
-                        gap: '15px'
-                    }}>
-                        <div style={{ textAlign: 'center', borderRight: '1px solid var(--tw-10)' }}>
-                            <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--t-text-dim)', textTransform: 'uppercase', fontWeight: 700, marginBottom: '5px' }}>Action</span>
-                            <span style={{ fontSize: '1.2rem', fontWeight: 800, color: (incomingSignal.type || '').toLowerCase() === 'buy' ? '#22c55e' : '#ef4444' }}>{(incomingSignal.type || '').toUpperCase()}</span>
-                        </div>
-                        <div style={{ textAlign: 'center' }}>
-                            <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--t-text-dim)', textTransform: 'uppercase', fontWeight: 700, marginBottom: '5px' }}>Entry</span>
-                            <span style={{ fontSize: '1.2rem', fontWeight: 800 }}>{incomingSignal.entry_price ?? '🔒 Locked'}</span>
-                        </div>
-                    </div>
-
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                        <button 
-                            onClick={() => {
-                                setIsSignalAlertOpen(false);
-                                setIsGlobalTimerHidden(true); // Hide the global timer banner for this user
-                                handleTakeSignal(incomingSignal);
-                            }} 
-                            style={{ 
-                                width: '100%', 
-                                background: 'var(--btn-primary)', 
-                                color: 'var(--t-on-accent)', 
-                                border: 'none', 
-                                padding: '16px', 
-                                borderRadius: '16px', 
-                                cursor: 'pointer', 
-                                fontWeight: 800, 
-                                fontSize: '1.1rem',
-                                transition: '0.3s',
-                                boxShadow: '0 10px 20px rgba(var(--t-accent-rgb), 0.2)'
-                            }}
-                            onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
-                            onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
-                        >
-                            YES, I WANT TO TAKE IT
-                        </button>
-                    </div>
-
-                    <p style={{ textAlign: 'center', fontSize: '0.75rem', color: 'var(--tw-30)', marginTop: '1.5rem' }}>
-                        You can still access this signal from your dashboard anytime.
-                    </p>
-                </div>
+                    );
+                })()}
             </div>
         )}
       </div>
