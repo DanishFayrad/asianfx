@@ -1,9 +1,20 @@
 'use client';
 
-import { useEffect, useState, type ReactNode } from 'react';
-import signalService from '@/services/signalService';
+import type { ReactNode } from 'react';
+import { createColumnHelper, useTable } from '@tanstack/react-table';
+import { usePublicStats } from '@/hooks/queries';
+import { basicTableFeatures, EMPTY_ROWS } from '@/lib/tables';
+import Skeleton from '@/components/Skeleton';
 import styles from '@/app/home.module.css';
 import type { PublicStats } from '@/types';
+
+type RecentSignal = PublicStats['recent'][number];
+
+// TanStack Table renders the "Recently closed signals" rows.
+const recentColumnHelper = createColumnHelper<typeof basicTableFeatures, RecentSignal>();
+const recentColumns = recentColumnHelper.columns([
+    recentColumnHelper.accessor('symbol', { id: 'symbol' }),
+]);
 
 const resultClass = (status = '') => {
     const s = status.toLowerCase();
@@ -14,20 +25,23 @@ const resultClass = (status = '') => {
 
 // Real numbers from the database — nothing on this section is hard-coded.
 export default function LivePerformance() {
-    const [stats, setStats] = useState<PublicStats | null>(null);
-    const [failed, setFailed] = useState(false);
+    const statsQuery = usePublicStats();
+    const stats: PublicStats | null = statsQuery.data ?? null;
+    const failed = statsQuery.isError;
 
-    useEffect(() => {
-        signalService.getPublicStats()
-            .then(setStats)
-            .catch(() => setFailed(true));
-    }, []);
+    const recentTable = useTable({
+        features: basicTableFeatures,
+        columns: recentColumns,
+        data: stats?.recent ?? EMPTY_ROWS,
+    });
+    const recentRows = recentTable.getRowModel().rows;
 
     const winRate = stats && stats.closed_signals > 0
         ? Math.round((stats.wins / stats.closed_signals) * 100)
         : null;
 
-    const show = (v: ReactNode) => (stats ? v : '—');
+    // Shimmer while loading, a dash if the numbers could not be loaded.
+    const show = (v: ReactNode) => (stats ? v : failed ? '—' : <Skeleton width={56} height={28} radius={8} />);
 
     return (
         <>
@@ -41,7 +55,7 @@ export default function LivePerformance() {
                     <span className={styles.statLabel}>Signals closed</span>
                 </div>
                 <div className={styles.statCard}>
-                    <span className={styles.statValue}>{stats ? (winRate === null ? 'N/A' : `${winRate}%`) : '—'}</span>
+                    <span className={styles.statValue}>{show(winRate === null ? 'N/A' : `${winRate}%`)}</span>
                     <span className={styles.statLabel}>Hit target (of closed)</span>
                 </div>
                 <div className={styles.statCard}>
@@ -60,12 +74,16 @@ export default function LivePerformance() {
                 </div>
 
                 {failed && <p className={styles.tableEmpty}>Track record is temporarily unavailable.</p>}
-                {!failed && !stats && <p className={styles.tableEmpty}>Loading…</p>}
-                {stats && stats.recent?.length === 0 && (
+                {!failed && !stats && (
+                    <div className={styles.tableEmpty} style={{ display: 'grid', gap: 12 }} aria-busy="true">
+                        {[0, 1, 2].map((i) => <Skeleton key={i} block height={18} />)}
+                    </div>
+                )}
+                {stats && recentRows.length === 0 && (
                     <p className={styles.tableEmpty}>Closed signals will appear here as soon as they settle.</p>
                 )}
 
-                {stats && stats.recent?.length > 0 && (
+                {stats && recentRows.length > 0 && (
                     <div className={styles.tableScroll}>
                         <table className={styles.table}>
                             <thead>
@@ -74,8 +92,8 @@ export default function LivePerformance() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {stats.recent.map((s, i) => (
-                                    <tr key={i}>
+                                {recentRows.map(({ id, original: s }) => (
+                                    <tr key={id}>
                                         <td className={styles.pair}>{s.symbol}</td>
                                         <td className={s.type?.toLowerCase() === 'buy' ? styles.buy : styles.sell}>{s.type?.toUpperCase()}</td>
                                         <td>{s.entry_price ?? '—'}</td>

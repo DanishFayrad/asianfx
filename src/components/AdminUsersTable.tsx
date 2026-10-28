@@ -1,8 +1,10 @@
 'use client';
 
-import { useState, useEffect, type CSSProperties } from 'react';
+import { useMemo, useState, type CSSProperties } from 'react';
 import toast from 'react-hot-toast';
 import { useQueryClient } from '@tanstack/react-query';
+import { createColumnHelper, useTable } from '@tanstack/react-table';
+import { EMPTY_ROWS, listTableFeatures, searchText } from '@/lib/tables';
 import transactionService from '@/services/transactionService';
 import { displayUserId } from '@/lib/memberId';
 import Skeleton, { SkeletonRows } from '@/components/Skeleton';
@@ -11,6 +13,16 @@ import type { UserAction } from '@/services/transactionService';
 import type { AdminUser } from '@/types';
 
 const ROWS_PER_PAGE = 8;
+
+// TanStack Table handles search and paging. The single column is what the search box matches
+// (name, email, phone, country, referral code, member ID); the row markup is rendered below.
+const userColumns = createColumnHelper<typeof listTableFeatures, AdminUser>();
+const columns = userColumns.columns([
+    userColumns.accessor(
+        (u) => searchText(u.name, u.email, u.phone, u.country, u.referral_code, displayUserId(u.user_id)),
+        { id: 'search' },
+    ),
+]);
 
 /**
  * Admin users overview table — every user with their details and total deposits.
@@ -21,19 +33,29 @@ const ROWS_PER_PAGE = 8;
  *                      free_signals, signals_taken, signals_won, signals_lost }
  *  - loading: boolean
  */
-export default function AdminUsersTable({ users: rawUsers = [], loading = false }: { users?: AdminUser[]; loading?: boolean }) {
+export default function AdminUsersTable({ users: rawUsers = EMPTY_ROWS, loading = false }: { users?: AdminUser[]; loading?: boolean }) {
     const queryClient = useQueryClient();
-    const [query, setQuery] = useState('');
-    const [page, setPage] = useState(1);
     const [busyId, setBusyId] = useState<string | null>(null);
     // Local changes made from the Status dropdown, shown right away without a page reload.
     const [statusOverrides, setStatusOverrides] = useState<Record<string, boolean>>({});
     const [deletedIds, setDeletedIds] = useState<string[]>([]);
     const [pendingDelete, setPendingDelete] = useState<AdminUser | null>(null);
 
-    const users = rawUsers
+    // Memoized so the table only re-processes rows when the list really changes.
+    const users = useMemo(() => rawUsers
         .filter((u) => !deletedIds.includes(u.id))
-        .map((u) => (u.id in statusOverrides ? { ...u, is_active: statusOverrides[u.id] } : u));
+        .map((u) => (u.id in statusOverrides ? { ...u, is_active: statusOverrides[u.id] } : u)),
+    [rawUsers, deletedIds, statusOverrides]);
+
+    // Search and paging. The page goes back to 1 when the search or the list changes.
+    const table = useTable({
+        features: listTableFeatures,
+        columns,
+        data: users,
+        getRowId: (u) => u.id,
+        globalFilterFn: 'includesString',
+        initialState: { pagination: { pageIndex: 0, pageSize: ROWS_PER_PAGE } },
+    });
 
     // Runs an activate / deactivate / delete action on the server and updates the table locally.
     const performAction = async (u: AdminUser, action: UserAction) => {
@@ -75,19 +97,11 @@ export default function AdminUsersTable({ users: rawUsers = [], loading = false 
         return isNaN(date.getTime()) ? '—' : date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
     };
 
-    const q = query.trim().toLowerCase();
-    const filtered = q
-        ? users.filter((u) =>
-            [u.name, u.email, u.phone, u.country, u.referral_code, displayUserId(u.user_id)]
-                .some((f) => String(f ?? '').toLowerCase().includes(q)))
-        : users;
-
-    const totalPages = Math.max(1, Math.ceil(filtered.length / ROWS_PER_PAGE));
-    const safePage = Math.min(page, totalPages);
-    const pageRows = filtered.slice((safePage - 1) * ROWS_PER_PAGE, safePage * ROWS_PER_PAGE);
-
-    // Reset to first page whenever the search query or the result count changes.
-    useEffect(() => { setPage(1); }, [q, filtered.length]);
+    const query = String(table.state.globalFilter ?? '');
+    const filtered = table.getFilteredRowModel().rows;
+    const pageRows = table.getRowModel().rows.map((row) => row.original);
+    const totalPages = Math.max(1, table.getPageCount());
+    const safePage = table.state.pagination.pageIndex + 1;
 
     const th: CSSProperties = { textAlign: 'left', padding: '12px 14px', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--admin-text-muted)', borderBottom: '1px solid var(--admin-border-color)', whiteSpace: 'nowrap' };
     const td: CSSProperties = { padding: '12px 14px', fontSize: '0.85rem', borderBottom: '1px solid var(--admin-border-color)', whiteSpace: 'nowrap' };
@@ -103,7 +117,7 @@ export default function AdminUsersTable({ users: rawUsers = [], loading = false 
                 </div>
                 <input
                     value={query}
-                    onChange={(e) => setQuery(e.target.value)}
+                    onChange={(e) => table.setGlobalFilter(e.target.value)}
                     placeholder="Search name, email, phone, ID…"
                     style={{ background: 'var(--admin-bg-main)', border: '1px solid var(--admin-border-color)', color: 'var(--admin-text-main)', padding: '10px 14px', borderRadius: '10px', minWidth: '240px', outline: 'none' }}
                 />
@@ -235,8 +249,8 @@ export default function AdminUsersTable({ users: rawUsers = [], loading = false 
                     </span>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <button
-                            onClick={() => setPage((p) => Math.max(1, p - 1))}
-                            disabled={safePage <= 1}
+                            onClick={() => table.previousPage()}
+                            disabled={!table.getCanPreviousPage()}
                             style={{
                                 background: 'var(--admin-bg-main)', border: '1px solid var(--admin-border-color)',
                                 color: 'var(--admin-text-main)', padding: '7px 14px', borderRadius: '8px',
@@ -245,8 +259,8 @@ export default function AdminUsersTable({ users: rawUsers = [], loading = false 
                         >Prev</button>
                         <span style={{ fontSize: '0.85rem', color: 'var(--admin-text-muted)' }}>Page {safePage} / {totalPages}</span>
                         <button
-                            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                            disabled={safePage >= totalPages}
+                            onClick={() => table.nextPage()}
+                            disabled={!table.getCanNextPage()}
                             style={{
                                 background: 'var(--admin-bg-main)', border: '1px solid var(--admin-border-color)',
                                 color: 'var(--admin-text-main)', padding: '7px 14px', borderRadius: '8px',

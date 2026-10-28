@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
@@ -25,7 +25,19 @@ import AdminUsersTable from '../../components/AdminUsersTable';
 import Skeleton, { SkeletonRows } from '@/components/Skeleton';
 import '../../styles/dashboard.css';
 import { errorMessage } from '@/lib/supabaseClient';
-import type { GlobalTimer, Notification, Signal } from '@/types';
+import type { GlobalTimer, Notification, Signal, SignalHistoryItem } from '@/types';
+import { createColumnHelper, useTable } from '@tanstack/react-table';
+import { basicTableFeatures, EMPTY_ROWS, listTableFeatures } from '@/lib/tables';
+
+// TanStack Table columns. The search box matches the signal symbol; rows render their own markup.
+const signalColumnHelper = createColumnHelper<typeof listTableFeatures, Signal>();
+const signalColumns = signalColumnHelper.columns([
+  signalColumnHelper.accessor('symbol', { id: 'search' }),
+]);
+const historyColumnHelper = createColumnHelper<typeof basicTableFeatures, SignalHistoryItem>();
+const historyColumns = historyColumnHelper.columns([
+  historyColumnHelper.accessor((h) => h.Signal?.symbol ?? '', { id: 'symbol' }),
+]);
 
 export default function Dashboard() {
   const router = useRouter();
@@ -132,13 +144,12 @@ export default function Dashboard() {
   const viewScreenshot = () => {
     if (screenshotPreview) setIsProofViewOpen(true);
   };
-  const [currentPage, setCurrentPage] = useState(1);
   // ---- Server data (TanStack Query) ----
   const signalsQuery = useSignalsDashboard(user?.id);
-  const signals: Signal[] = signalsQuery.data?.active_signals ?? [];
+  const signals: Signal[] = signalsQuery.data?.active_signals ?? EMPTY_ROWS;
   const loading = signalsQuery.isPending;
   const signalHistoryQuery = useSignalHistory(user?.id, !!user && !isAdmin);
-  const signalHistory = signalHistoryQuery.data ?? [];
+  const signalHistory: SignalHistoryItem[] = signalHistoryQuery.data ?? EMPTY_ROWS;
   const historyLoading = signalHistoryQuery.isPending;
   const adminStats = useAdminStats(isAdmin).data ?? null;
   const adminUsersQuery = useAdminUsers(isAdmin);
@@ -415,14 +426,35 @@ export default function Dashboard() {
     return type.toLowerCase() === 'buy' ? '/images/i (11).png' : '/images/svg (18).png';
   };
 
-  const filteredSignals = signals.filter(s => 
-    s.symbol.toLowerCase().includes(searchTerm.toLowerCase()) &&
-    !rejectedSignalIds.includes(s.id)
+  // Live signals table (TanStack Table): hidden signals are left out, the symbol search is the
+  // global filter, and the table pages the rows (rowsPerPage per page).
+  const listedSignals = useMemo(
+    () => signals.filter((s) => !rejectedSignalIds.includes(s.id)),
+    [signals, rejectedSignalIds],
   );
+  const signalsTable = useTable({
+    features: listTableFeatures,
+    columns: signalColumns,
+    data: listedSignals,
+    getRowId: (s) => String(s.id),
+    globalFilterFn: 'includesString',
+    initialState: { pagination: { pageIndex: 0, pageSize: rowsPerPage } },
+    state: { globalFilter: searchTerm },
+  });
+  const filteredSignals = signalsTable.getFilteredRowModel().rows;
+  const currentSignals = signalsTable.getRowModel().rows.map((row) => row.original);
+  const totalPages = signalsTable.getPageCount();
+  const currentPage = signalsTable.state.pagination.pageIndex + 1;
+  const startIndex = signalsTable.state.pagination.pageIndex * rowsPerPage;
 
-  const totalPages = Math.ceil(filteredSignals.length / rowsPerPage);
-  const startIndex = (currentPage - 1) * rowsPerPage;
-  const currentSignals = filteredSignals.slice(startIndex, startIndex + rowsPerPage);
+  // "My Purchased Signals" table — rendered from the table's row model.
+  const historyTable = useTable({
+    features: basicTableFeatures,
+    columns: historyColumns,
+    data: signalHistory,
+    getRowId: (h) => String(h.id),
+  });
+  const historyRows = historyTable.getRowModel().rows.map((row) => row.original);
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
@@ -933,11 +965,11 @@ export default function Dashboard() {
                                     Showing {filteredSignals.length > 0 ? startIndex + 1 : 0}-{Math.min(startIndex + rowsPerPage, filteredSignals.length)} of {filteredSignals.length} signals
                                 </div>
                                 <div className="pagination">
-                                    <button className="page-btn prev" onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}>‹</button>
+                                    <button className="page-btn prev" onClick={() => signalsTable.previousPage()} disabled={!signalsTable.getCanPreviousPage()}>‹</button>
                                     {Array.from({ length: totalPages }, (_, i) => (
-                                        <button key={i + 1} className={`page-number ${currentPage === i + 1 ? 'active' : ''}`} onClick={() => setCurrentPage(i + 1)}>{i + 1}</button>
+                                        <button key={i + 1} className={`page-number ${currentPage === i + 1 ? 'active' : ''}`} onClick={() => signalsTable.setPageIndex(i)}>{i + 1}</button>
                                     ))}
-                                    <button className="page-btn next" onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}>›</button>
+                                    <button className="page-btn next" onClick={() => signalsTable.nextPage()} disabled={!signalsTable.getCanNextPage()}>›</button>
                                 </div>
                             </div>
                         </div>
@@ -961,7 +993,7 @@ export default function Dashboard() {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {signalHistory.map((history, idx) => (
+                                        {historyRows.map((history, idx) => (
                                             <tr key={idx}>
                                                 <td>
                                                     <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>

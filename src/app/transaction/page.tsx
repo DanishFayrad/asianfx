@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { createColumnHelper, useTable } from '@tanstack/react-table';
+import { EMPTY_ROWS, listTableFeatures, searchText } from '@/lib/tables';
 import transactionService from '../../services/transactionService';
 import { connectRealtime } from '../../services/realtimeService';
 import { useCurrentUser, useLogout } from '@/hooks/useAuth';
@@ -42,6 +44,14 @@ const statusKey = (st: string): StatusKey => (st === 'approved' || st === 'compl
 const statusLabel = (st: string) => ({ approved: 'Approved', pending: 'Pending', rejected: 'Rejected' }[statusKey(st)]);
 const formatMethod = (m: string | null) => (!m ? '—' : m.toUpperCase().replace(/_/g, ' '));
 
+// TanStack Table columns used for filtering: the search box matches member name / email / ID,
+// the status tabs match the normalised status. The row markup itself is rendered in the page.
+const depositColumnHelper = createColumnHelper<typeof listTableFeatures, Transaction>();
+const depositColumns = depositColumnHelper.columns([
+  depositColumnHelper.accessor((t) => searchText(t.User?.name, t.User?.email, displayUserId(t.User?.user_id)), { id: 'search' }),
+  depositColumnHelper.accessor((t) => statusKey(t.status), { id: 'status', filterFn: 'equalsString' }),
+]);
+
 export default function Transaction() {
   // Access (admins only) is enforced by AuthGuard before this page renders.
   const { user } = useCurrentUser();
@@ -59,8 +69,8 @@ export default function Transaction() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const pendingQuery = usePendingTransactions(isAdmin);
   const allQuery = useAllTransactions(isAdmin);
-  const pendingDeposits: Transaction[] = pendingQuery.data ?? [];
-  const userTransactions: Transaction[] = allQuery.data ?? [];
+  const pendingDeposits: Transaction[] = pendingQuery.data ?? EMPTY_ROWS;
+  const userTransactions: Transaction[] = allQuery.data ?? EMPTY_ROWS;
   const loading = allQuery.isPending; // first load only — later refreshes keep showing the old rows
   // Shimmer placeholders for the summary cards until the first load finishes.
   const kpiValue = (content: React.ReactNode) => (loading ? <Skeleton width={90} height={28} radius={8} /> : content);
@@ -211,16 +221,27 @@ export default function Transaction() {
     all: deposits.length,
   }), [summary, deposits.length]);
 
-  const filteredRows = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    return deposits.filter((t) =>
-      (filter === 'all' || statusKey(t.status) === filter) &&
-      (!q || [t.User?.name, t.User?.email, displayUserId(t.User?.user_id)].some((v) => String(v ?? '').toLowerCase().includes(q))));
-  }, [deposits, filter, search]);
+  // TanStack Table: status tab → column filter, search box → global filter, "Show more" → page size.
+  const statusFilters = useMemo(() => (filter === 'all' ? [] : [{ id: 'status', value: filter }]), [filter]);
+  const table = useTable({
+    features: listTableFeatures,
+    columns: depositColumns,
+    data: deposits,
+    getRowId: (t) => String(t.id),
+    globalFilterFn: 'includesString',
+    getColumnCanGlobalFilter: (column) => column.id === 'search',
+    state: {
+      globalFilter: search,
+      columnFilters: statusFilters,
+      pagination: { pageIndex: 0, pageSize: visible },
+    },
+  });
+  const filteredCount = table.getFilteredRowModel().rows.length;
+  const visibleRows = table.getRowModel().rows.map((row) => row.original);
 
-  const visibleRows = filteredRows.slice(0, visible);
-
-  useEffect(() => { setVisible(PAGE_SIZE); }, [filter, search]);
+  // A new tab or search starts again from the first PAGE_SIZE rows.
+  const changeFilter = (key: FilterKey) => { setFilter(key); setVisible(PAGE_SIZE); };
+  const changeSearch = (value: string) => { setSearch(value); setVisible(PAGE_SIZE); };
 
   if (!mounted || (isAuthorizing && !user)) {
       return (
@@ -293,7 +314,7 @@ export default function Transaction() {
                     role="tab"
                     aria-selected={filter === f.key}
                     className={`atx-tab ${filter === f.key ? 'atx-tab--active' : ''}`}
-                    onClick={() => setFilter(f.key)}
+                    onClick={() => changeFilter(f.key)}
                   >
                     {f.label}
                     <span className="atx-tab-count">{loading ? <Skeleton width={14} height={10} /> : counts[f.key]}</span>
@@ -307,7 +328,7 @@ export default function Transaction() {
                   type="search"
                   placeholder="Search name, email or ID…"
                   value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  onChange={(e) => changeSearch(e.target.value)}
                   aria-label="Search deposits"
                 />
               </label>
@@ -407,10 +428,10 @@ export default function Transaction() {
               </div>
             )}
 
-            {filteredRows.length > visibleRows.length && (
+            {filteredCount > visibleRows.length && (
               <div className="atx-more">
                 <button type="button" className="atx-btn" onClick={() => setVisible((v) => v + PAGE_SIZE)}>
-                  Show more ({filteredRows.length - visibleRows.length} left)
+                  Show more ({filteredCount - visibleRows.length} left)
                 </button>
               </div>
             )}

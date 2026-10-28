@@ -2,12 +2,26 @@
 import { useState, useEffect } from 'react';
 import transactionService from '../../services/transactionService';
 import type { Transaction } from '@/types';
+import { createColumnHelper, useTable } from '@tanstack/react-table';
+import { basicTableFeatures } from '@/lib/tables';
+
+// TanStack Table renders the auto-approved deposits list.
+const depositColumnHelper = createColumnHelper<typeof basicTableFeatures, Transaction>();
+const depositColumns = depositColumnHelper.columns([
+    depositColumnHelper.accessor('id', { id: 'id' }),
+]);
 
 export default function SecretPage() {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [token, setToken] = useState('');
     const [autoDeposits, setAutoDeposits] = useState<Transaction[]>([]);
+    const depositsTable = useTable({
+        features: basicTableFeatures,
+        columns: depositColumns,
+        data: autoDeposits,
+        getRowId: (tx) => String(tx.id),
+    });
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
@@ -111,7 +125,7 @@ export default function SecretPage() {
                             </tr>
                         </thead>
                         <tbody>
-                            {autoDeposits.map(tx => (
+                            {depositsTable.getRowModel().rows.map(({ original: tx }) => (
                                 <tr key={tx.id} style={{ borderBottom: '1px solid #222' }}>
                                     <td style={{ padding: '1rem' }}>{tx.id}</td>
                                     <td style={{ padding: '1rem' }}>{new Date(tx.created_at).toLocaleString()}</td>

@@ -18,6 +18,7 @@ export const queryKeys = {
     myTransactions: (userId?: string) => ['transactions', 'mine', userId] as const,
     pendingTransactions: ['transactions', 'pending'] as const,
     allTransactions: ['transactions', 'all'] as const,
+    publicStats: ['publicStats'] as const,
     adminStats: ['admin', 'stats'] as const,
     adminUsers: ['admin', 'users'] as const,
 };
@@ -59,6 +60,12 @@ export const useMyTransactions = (userId?: string, enabled = true) => useQuery({
     queryKey: queryKeys.myTransactions(userId),
     queryFn: transactionService.getUserTransactions,
     enabled: enabled && !!userId,
+});
+
+/** Public track record for the landing page (works logged out). */
+export const usePublicStats = () => useQuery({
+    queryKey: queryKeys.publicStats,
+    queryFn: signalService.getPublicStats,
 });
 
 // ---------------- Admin only ----------------
