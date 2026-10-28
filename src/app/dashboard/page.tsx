@@ -22,6 +22,7 @@ import AdminSidebar from '../../components/AdminSidebar';
 import AdminHeader from '@/components/admin/AdminHeader';
 import AdminDashboardStats from '../../components/AdminDashboardStats';
 import AdminUsersTable from '../../components/AdminUsersTable';
+import Skeleton, { SkeletonRows } from '@/components/Skeleton';
 import '../../styles/dashboard.css';
 import { errorMessage } from '@/lib/supabaseClient';
 import type { GlobalTimer, Notification, Signal } from '@/types';
@@ -136,7 +137,9 @@ export default function Dashboard() {
   const signalsQuery = useSignalsDashboard(user?.id);
   const signals: Signal[] = signalsQuery.data?.active_signals ?? [];
   const loading = signalsQuery.isPending;
-  const signalHistory = useSignalHistory(user?.id, !!user && !isAdmin).data ?? [];
+  const signalHistoryQuery = useSignalHistory(user?.id, !!user && !isAdmin);
+  const signalHistory = signalHistoryQuery.data ?? [];
+  const historyLoading = signalHistoryQuery.isPending;
   const adminStats = useAdminStats(isAdmin).data ?? null;
   const adminUsersQuery = useAdminUsers(isAdmin);
   const adminUsers = adminUsersQuery.data ?? [];
@@ -721,21 +724,21 @@ export default function Dashboard() {
                             <span className="mdb-kpi-icon"><IconBroadcast size={18} /></span>
                             <div>
                                 <span className="mdb-kpi-label">Total signals</span>
-                                <strong>{myKpi.total}</strong>
+                                <strong>{historyLoading ? <Skeleton width={44} height={24} radius={8} /> : myKpi.total}</strong>
                             </div>
                         </div>
                         <div className="mdb-kpi">
                             <span className="mdb-kpi-icon mdb-kpi-icon--green"><IconTrend size={18} /></span>
                             <div>
                                 <span className="mdb-kpi-label">Hit target</span>
-                                <strong>{myKpi.rate}%</strong>
+                                <strong>{historyLoading ? <Skeleton width={56} height={24} radius={8} /> : `${myKpi.rate}%`}</strong>
                             </div>
                         </div>
                         <div className="mdb-kpi">
                             <span className="mdb-kpi-icon mdb-kpi-icon--live"><IconClock size={18} /></span>
                             <div>
                                 <span className="mdb-kpi-label">Active now</span>
-                                <strong>{myKpi.active}</strong>
+                                <strong>{historyLoading ? <Skeleton width={44} height={24} radius={8} /> : myKpi.active}</strong>
                             </div>
                         </div>
                         <button type="button" className="mdb-kpi mdb-kpi--wallet" onClick={() => router.push('/wallet')}>
@@ -826,7 +829,7 @@ export default function Dashboard() {
                                     </thead>
                                     <tbody>
                                         {loading ? (
-                                            <tr><td colSpan={8} style={{ textAlign: 'center', padding: '40px' }}>Loading signals...</td></tr>
+                                            <SkeletonRows rows={4} cols={8} />
                                         ) : currentSignals.length === 0 ? (
                                             <tr><td colSpan={8} style={{ textAlign: 'center', padding: '40px' }}>
                                                 {user?.is_active && (Number(user?.wallet_balance || 0) >= 1 || Number(user?.free_signals || 0) > 0)

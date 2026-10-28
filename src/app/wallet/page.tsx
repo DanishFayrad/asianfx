@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, type ReactNode } from 'react';
+import Skeleton from '@/components/Skeleton';
 import { useRouter } from 'next/navigation';
 import { useCurrentUser, useLogout } from '@/hooks/useAuth';
 import { useAdminStats, useWalletStats } from '@/hooks/queries';
@@ -44,6 +45,12 @@ export default function Wallet() {
 
   const profit = Number(stats?.total_profit || 0);
 
+  // Shimmer placeholders until the stats arrive (instead of showing $0.00).
+  const statsLoading = !stats;
+  const sv = (content: ReactNode, width = 100, height = 28) =>
+    (statsLoading ? <Skeleton width={width} height={height} radius={8} /> : content);
+  const sn = (content: ReactNode, width = 110) => (statsLoading ? <Skeleton width={width} height={12} /> : content);
+
   // Admins: same admin shell as every other admin page.
   if (isAdmin) {
     return (
@@ -70,42 +77,42 @@ export default function Wallet() {
             <section className="awl-hero">
               <div className="awl-hero-main">
                 <span className="awl-hero-label"><IconWallet size={16} /> Total platform balance</span>
-                <strong className="awl-hero-value">${money(stats?.platform_balance)}</strong>
+                <strong className="awl-hero-value">{sv(`$${money(stats?.platform_balance)}`, 200, 44)}</strong>
                 <span className="awl-hero-note">Held in member wallets right now</span>
               </div>
               <div className="awl-hero-side">
                 <div>
                   <span><IconUsers size={14} /> Members</span>
-                  <strong>{stats?.total_users ?? 0}</strong>
+                  <strong>{sv(stats?.total_users ?? 0, 40, 20)}</strong>
                 </div>
                 <div>
                   <span>Avg. balance</span>
-                  <strong>${money(stats?.total_users ? Number(stats.platform_balance || 0) / stats.total_users : 0)}</strong>
+                  <strong>{sv(`$${money(stats?.total_users ? Number(stats.platform_balance || 0) / stats.total_users : 0)}`, 70, 20)}</strong>
                 </div>
               </div>
             </section>
 
             {/* KPI ROW */}
-            <section className="atx-kpis" aria-label="Platform totals">
+            <section className="atx-kpis" aria-label="Platform totals" aria-busy={statsLoading}>
               <div className="atx-kpi">
                 <span className="atx-kpi-label awl-in"><IconArrowDown size={15} /> Deposits received</span>
-                <strong>${money(stats?.total_deposit)}</strong>
-                <small>{stats?.deposit_count || 0} approved</small>
+                <strong>{sv(`$${money(stats?.total_deposit)}`)}</strong>
+                <small>{sn(`${stats?.deposit_count || 0} approved`)}</small>
               </div>
               <div className="atx-kpi">
                 <span className="atx-kpi-label awl-out"><IconArrowUp size={15} /> Withdrawals paid</span>
-                <strong>${money(stats?.total_withdrawal)}</strong>
-                <small>{stats?.withdrawal_count || 0} processed</small>
+                <strong>{sv(`$${money(stats?.total_withdrawal)}`)}</strong>
+                <small>{sn(`${stats?.withdrawal_count || 0} processed`)}</small>
               </div>
               <div className="atx-kpi atx-kpi--ok">
                 <span className="atx-kpi-label"><IconTrend size={15} /> Signal fee revenue</span>
-                <strong>${money(stats?.total_profit)}</strong>
-                <small>Earned from signal purchases</small>
+                <strong>{sv(`$${money(stats?.total_profit)}`)}</strong>
+                <small>{sn('Earned from signal purchases', 150)}</small>
               </div>
               <button type="button" className={`atx-kpi awl-link ${(stats?.pending_deposits || 0) > 0 ? 'atx-kpi--warn' : ''}`} onClick={() => router.push('/transaction')}>
                 <span className="atx-kpi-label"><IconClock size={15} /> Awaiting review</span>
-                <strong>{stats?.pending_deposits || 0}</strong>
-                <small>{(stats?.pending_deposits || 0) > 0 ? 'Review deposits →' : 'All caught up'}</small>
+                <strong>{sv(stats?.pending_deposits || 0, 40)}</strong>
+                <small>{sn((stats?.pending_deposits || 0) > 0 ? 'Review deposits →' : 'All caught up')}</small>
               </button>
             </section>
           </div>
@@ -159,23 +166,23 @@ export default function Wallet() {
             <span className="mdb-kpi-icon"><IconArrowDown size={18} /></span>
             <div>
               <span className="mdb-kpi-label">Total deposited</span>
-              <strong>${money(stats?.total_deposit)}</strong>
-              <small className="mwl-muted">{stats?.deposit_count || 0} approved</small>
+              <strong>{sv(`$${money(stats?.total_deposit)}`, 90, 24)}</strong>
+              <small className="mwl-muted">{sn(`${stats?.deposit_count || 0} approved`, 80)}</small>
             </div>
           </div>
           <div className="mdb-kpi">
             <span className="mdb-kpi-icon mwl-icon-purple"><IconArrowUp size={18} /></span>
             <div>
               <span className="mdb-kpi-label">Total withdrawn</span>
-              <strong>${money(stats?.total_withdrawal)}</strong>
-              <small className="mwl-muted">{stats?.withdrawal_count || 0} processed</small>
+              <strong>{sv(`$${money(stats?.total_withdrawal)}`, 90, 24)}</strong>
+              <small className="mwl-muted">{sn(`${stats?.withdrawal_count || 0} processed`, 80)}</small>
             </div>
           </div>
           <div className="mdb-kpi">
             <span className="mdb-kpi-icon mdb-kpi-icon--green"><IconTrend size={18} /></span>
             <div>
               <span className="mdb-kpi-label">Signal profit</span>
-              <strong style={{ color: profit < 0 ? '#ef4444' : '#16a34a' }}>{profit < 0 ? '-' : ''}${money(Math.abs(profit))}</strong>
+              <strong style={{ color: profit < 0 ? '#ef4444' : '#16a34a' }}>{sv(`${profit < 0 ? '-' : ''}$${money(Math.abs(profit))}`, 90, 24)}</strong>
               <small className="mwl-muted">Updated live</small>
             </div>
           </div>
@@ -183,7 +190,7 @@ export default function Wallet() {
             <span className="mdb-kpi-icon mdb-kpi-icon--gold"><IconBroadcast size={18} /></span>
             <div>
               <span className="mdb-kpi-label">Spent on signals</span>
-              <strong>${money(stats?.total_signal_fees)}</strong>
+              <strong>{sv(`$${money(stats?.total_signal_fees)}`, 90, 24)}</strong>
               <small className="mwl-muted">Free after a Stop Loss</small>
             </div>
           </div>

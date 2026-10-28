@@ -11,6 +11,7 @@ import AdminSidebar, { initials } from '../../components/AdminSidebar';
 import AdminHeader from '@/components/admin/AdminHeader';
 import { IconCheck, IconX, IconClock, IconImage, IconTrash, IconSearch, IconInbox, IconTransactions } from '@/components/admin/AdminIcons';
 import { displayUserId } from '@/lib/memberId';
+import Skeleton, { SkeletonRows } from '@/components/Skeleton';
 import '../../styles/adminSignals.css';
 import '../../styles/adminTransactions.css';
 import { errorMessage } from '@/lib/supabaseClient';
@@ -60,7 +61,10 @@ export default function Transaction() {
   const allQuery = useAllTransactions(isAdmin);
   const pendingDeposits: Transaction[] = pendingQuery.data ?? [];
   const userTransactions: Transaction[] = allQuery.data ?? [];
-  const loading = allQuery.isFetching;
+  const loading = allQuery.isPending; // first load only — later refreshes keep showing the old rows
+  // Shimmer placeholders for the summary cards until the first load finishes.
+  const kpiValue = (content: React.ReactNode) => (loading ? <Skeleton width={90} height={28} radius={8} /> : content);
+  const kpiNote = (content: React.ReactNode) => (loading ? <Skeleton width={110} height={12} /> : content);
 
 
   const [filter, setFilter] = useState<FilterKey>('pending');
@@ -258,23 +262,23 @@ export default function Transaction() {
           <section className="atx-kpis" aria-label="Deposit summary">
             <div className="atx-kpi atx-kpi--warn">
               <span className="atx-kpi-label"><IconClock size={15} /> Awaiting review</span>
-              <strong>{summary.pendingCount}</strong>
-              <small>${money(summary.pendingAmount)} requested</small>
+              <strong>{kpiValue(summary.pendingCount)}</strong>
+              <small>{kpiNote(`$${money(summary.pendingAmount)} requested`)}</small>
             </div>
             <div className="atx-kpi atx-kpi--ok">
               <span className="atx-kpi-label"><IconCheck size={15} /> Approved</span>
-              <strong>${money(summary.approvedAmount)}</strong>
-              <small>{summary.approvedCount} deposit{summary.approvedCount === 1 ? '' : 's'}</small>
+              <strong>{kpiValue(`$${money(summary.approvedAmount)}`)}</strong>
+              <small>{kpiNote(`${summary.approvedCount} deposit${summary.approvedCount === 1 ? '' : 's'}`)}</small>
             </div>
             <div className="atx-kpi">
               <span className="atx-kpi-label"><IconX size={15} /> Rejected</span>
-              <strong>{summary.rejectedCount}</strong>
-              <small>requests</small>
+              <strong>{kpiValue(summary.rejectedCount)}</strong>
+              <small>{kpiNote('requests')}</small>
             </div>
             <div className="atx-kpi">
               <span className="atx-kpi-label"><IconTransactions size={15} /> Today</span>
-              <strong>{summary.todayCount}</strong>
-              <small>new request{summary.todayCount === 1 ? '' : 's'}</small>
+              <strong>{kpiValue(summary.todayCount)}</strong>
+              <small>{kpiNote(`new request${summary.todayCount === 1 ? '' : 's'}`)}</small>
             </div>
           </section>
 
@@ -292,7 +296,7 @@ export default function Transaction() {
                     onClick={() => setFilter(f.key)}
                   >
                     {f.label}
-                    <span className="atx-tab-count">{counts[f.key]}</span>
+                    <span className="atx-tab-count">{loading ? <Skeleton width={14} height={10} /> : counts[f.key]}</span>
                   </button>
                 ))}
               </div>
@@ -309,8 +313,24 @@ export default function Transaction() {
               </label>
             </div>
 
-            {loading && deposits.length === 0 ? (
-              <div className="atx-empty"><span className="btn-spinner dark" /> Loading deposits…</div>
+            {loading ? (
+              <div className="atx-table-wrap" aria-busy="true">
+                <table className="atx-table">
+                  <thead>
+                    <tr>
+                      <th>Member</th>
+                      <th>Requested</th>
+                      <th>Method</th>
+                      <th className="atx-right">Amount</th>
+                      <th>Status</th>
+                      <th className="atx-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <SkeletonRows rows={6} cols={6} />
+                  </tbody>
+                </table>
+              </div>
             ) : visibleRows.length === 0 ? (
               <div className="atx-empty">
                 <IconInbox size={34} />

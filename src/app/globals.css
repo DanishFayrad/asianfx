@@ -295,3 +295,26 @@ a {
   10% { width: 35%; }
   100% { width: 90%; }
 }
+
+/* Skeleton shimmer — placeholder shown while data is loading (see components/Skeleton.tsx).
+   Uses the theme's tint tokens, so it works in light and dark mode. */
+.skeleton {
+  display: inline-block;
+  max-width: 100%;
+  vertical-align: middle;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--tw-08) 0%, var(--tw-10) 20%, var(--tw-03) 40%, var(--tw-08) 60%);
+  background-size: 300% 100%;
+  animation: skeletonShimmer 1.4s ease-in-out infinite;
+}
+
+.skeleton--block { display: block; }
+
+@keyframes skeletonShimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: 0 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton { animation: none; }
+}

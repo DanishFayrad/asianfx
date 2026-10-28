@@ -13,6 +13,7 @@ import toast from 'react-hot-toast';
 import ThemeToggle from '@/components/ThemeToggle';
 import AdminSidebar from '../../../components/AdminSidebar';
 import AdminHeader from '@/components/admin/AdminHeader';
+import Skeleton from '@/components/Skeleton';
 import '../../../styles/adminSignals.css';
 import { errorMessage } from '@/lib/supabaseClient';
 import type { Signal } from '@/types';
@@ -60,7 +61,9 @@ export default function AdminSignals() {
   
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
-  const recentSignals: Signal[] = useSignalsDashboard(user?.id, isAdmin).data?.active_signals ?? [];
+  const signalsQuery = useSignalsDashboard(user?.id, isAdmin);
+  const recentSignals: Signal[] = signalsQuery.data?.active_signals ?? [];
+  const signalsLoading = signalsQuery.isPending;
   const adminStats = useAdminStats(isAdmin).data ?? null;
   const [liveClientsCount, setLiveClientsCount] = useState(0);
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -405,7 +408,22 @@ export default function AdminSignals() {
                   </div>
                 );
               })}
-              {recentSignals.length === 0 && (
+              {signalsLoading && [0, 1].map((i) => (
+                <div key={i} className="asg-card" aria-hidden="true">
+                  <div className="asg-top">
+                    <Skeleton width={44} height={44} radius={12} />
+                    <div className="asg-title" style={{ flex: 1, display: 'grid', gap: 6 }}>
+                      <Skeleton width="45%" height={16} />
+                      <Skeleton width="65%" height={12} />
+                    </div>
+                  </div>
+                  <div className="asg-levels">
+                    {[0, 1, 2].map((j) => <div key={j}><Skeleton width="70%" height={20} radius={8} /></div>)}
+                  </div>
+                  <Skeleton width="40%" height={12} />
+                </div>
+              ))}
+              {!signalsLoading && recentSignals.length === 0 && (
                 <p style={{ color: 'var(--admin-text-muted)' }}>No recent broadcasts found.</p>
               )}
            </div>

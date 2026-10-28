@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import { useQueryClient } from '@tanstack/react-query';
 import transactionService from '@/services/transactionService';
 import { displayUserId } from '@/lib/memberId';
+import Skeleton, { SkeletonRows } from '@/components/Skeleton';
 import { errorMessage } from '@/lib/supabaseClient';
 import type { UserAction } from '@/services/transactionService';
 import type { AdminUser } from '@/types';
@@ -97,7 +98,7 @@ export default function AdminUsersTable({ users: rawUsers = [], loading = false 
                 <div>
                     <h3 style={{ margin: 0, fontSize: '1.15rem', display: 'flex', alignItems: 'center', gap: '8px' }}>👥 Users</h3>
                     <p style={{ margin: '2px 0 0', fontSize: '0.8rem', color: 'var(--admin-text-muted)' }}>
-                        {loading ? 'Loading…' : `${filtered.length} of ${users.length} member${users.length === 1 ? '' : 's'}`}
+                        {loading ? <Skeleton width={90} height={12} /> : `${filtered.length} of ${users.length} member${users.length === 1 ? '' : 's'}`}
                     </p>
                 </div>
                 <input
@@ -125,7 +126,8 @@ export default function AdminUsersTable({ users: rawUsers = [], loading = false 
                             <th style={th}>Joined</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody aria-busy={loading}>
+                        {loading && <SkeletonRows rows={5} cols={11} cellStyle={td} />}
                         {!loading && filtered.length === 0 && (
                             <tr><td style={{ ...td, textAlign: 'center', color: 'var(--admin-text-muted)' }} colSpan={11}>No users found.</td></tr>
                         )}
