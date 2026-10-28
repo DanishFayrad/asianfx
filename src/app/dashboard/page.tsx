@@ -1178,28 +1178,6 @@ export default function Dashboard() {
                         >
                             YES, I WANT TO TAKE IT
                         </button>
-                        <button 
-                            onClick={() => {
-                                if (incomingSignal?.id != null) {
-                                    const rejectedId = incomingSignal.id;
-                                    setRejectedSignalIds(prev => [...prev, rejectedId]);
-                                }
-                                setIsSignalAlertOpen(false);
-                            }} 
-                            style={{ 
-                                width: '100%', 
-                                background: 'transparent', 
-                                border: '1px solid var(--tw-10)', 
-                                color: 'var(--t-text-muted)', 
-                                padding: '14px', 
-                                borderRadius: '16px', 
-                                cursor: 'pointer', 
-                                fontWeight: 600,
-                                fontSize: '1rem'
-                            }}
-                        >
-                            Reject Signal
-                        </button>
                     </div>
 
                     <p style={{ textAlign: 'center', fontSize: '0.75rem', color: 'var(--tw-30)', marginTop: '1.5rem' }}>
