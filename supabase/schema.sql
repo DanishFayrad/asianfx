@@ -192,7 +192,7 @@ begin
     values (
         new.id,
         new.email,
-        new.raw_user_meta_data->>'name',
+        coalesce(new.raw_user_meta_data->>'name', new.raw_user_meta_data->>'full_name'),
         new.raw_user_meta_data->>'phone',
         new.raw_user_meta_data->>'country',
         v_code,
