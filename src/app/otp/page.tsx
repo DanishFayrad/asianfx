@@ -10,6 +10,8 @@ import toast from 'react-hot-toast';
 import '../../styles/otp.css';
 import { errorMessage } from '@/lib/supabaseClient';
 
+const OTP_LIFETIME_MS = 2 * 60 * 1000;
+
 function OtpClient() {
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -19,6 +21,19 @@ function OtpClient() {
     const [otp, setOtp] = useState(['', '', '', '', '', '']);
     const [loading, setLoading] = useState(false);
     const inputRefs = useRef<Array<HTMLInputElement | null>>([]);
+
+    // The code is valid for 2 minutes; the timer restarts whenever a new code is sent.
+    const [expiresAt, setExpiresAt] = useState(() => Date.now() + OTP_LIFETIME_MS);
+    const [now, setNow] = useState(() => Date.now());
+    const secondsLeft = Math.max(0, Math.ceil((expiresAt - now) / 1000));
+    const expired = secondsLeft === 0;
+    const [resending, setResending] = useState(false);
+
+    useEffect(() => {
+        if (expired) return;
+        const id = setInterval(() => setNow(Date.now()), 1000);
+        return () => clearInterval(id);
+    }, [expired, expiresAt]);
 
     useEffect(() => {
         if (!email) {
@@ -65,6 +80,10 @@ function OtpClient() {
             toast.error('Please enter the full 6-digit code');
             return;
         }
+        if (expired) {
+            toast.error('This code has expired. Please request a new one.');
+            return;
+        }
 
         setLoading(true);
         try {
@@ -81,13 +100,24 @@ function OtpClient() {
     };
 
     const handleResend = async () => {
+        if (resending) return;
+        setResending(true);
         try {
             await authService.resendOTP({ email: email || '' });
             toast.success('New verification code sent to your email!');
+            setOtp(['', '', '', '', '', '']);
+            const t = Date.now();
+            setNow(t);
+            setExpiresAt(t + OTP_LIFETIME_MS);
+            inputRefs.current[0]?.focus();
         } catch (error) {
             toast.error(errorMessage(error, 'Failed to resend code'));
+        } finally {
+            setResending(false);
         }
     };
+
+    const timerText = `${Math.floor(secondsLeft / 60)}:${String(secondsLeft % 60).padStart(2, '0')}`;
 
     return (
         <div className="otp-container">
@@ -125,17 +155,25 @@ function OtpClient() {
                     ))}
                 </div>
 
+                <p className={`otp-timer${expired ? ' expired' : secondsLeft <= 30 ? ' warn' : ''}`} aria-live="polite">
+                    {expired
+                        ? 'Code expired. Please request a new one.'
+                        : <>Code expires in <span className="num">{timerText}</span></>}
+                </p>
+
                 <button
                     className="verify-btn"
                     onClick={handleVerify}
-                    disabled={loading || otp.join('').length !== 6}
+                    disabled={loading || expired || otp.join('').length !== 6}
                 >
                     {loading ? <><span className="btn-spinner dark"></span>Verifying…</> : 'Verify Code'}
                 </button>
 
                 <p className="otp-resend">
                     Didn&apos;t get the code?{' '}
-                    <button type="button" onClick={handleResend}>Resend code</button>
+                    <button type="button" onClick={handleResend} disabled={resending}>
+                        {resending ? 'Sending…' : 'Resend code'}
+                    </button>
                 </p>
 
                 <div className="otp-footer">

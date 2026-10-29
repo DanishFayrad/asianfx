@@ -75,6 +75,12 @@
   cursor: pointer;
 }
 .otp-resend button:hover { text-decoration: underline; }
+.otp-resend button:disabled { opacity: 0.6; cursor: default; text-decoration: none; }
+
+.otp-timer { margin: -8px 0 16px; font-size: var(--fs-helper); color: var(--t-text-muted); }
+.otp-timer .num { font-weight: 700; color: var(--t-gold); }
+.otp-timer.warn .num { color: #f59e0b; }
+.otp-timer.expired { color: #ef4444; font-weight: 600; }
 
 .otp-footer {
   display: flex;
