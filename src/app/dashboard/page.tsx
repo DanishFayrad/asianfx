@@ -550,12 +550,29 @@ export default function Dashboard() {
         </div>
       )}
 
-      {mounted && !user?.is_admin && userNotification && (
-        <div style={{ background: 'rgba(34, 197, 94, 0.1)', borderBottom: '1px solid #22c55e', padding: '10px 1rem', color: '#22c55e', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', zIndex: 1, position: 'relative' }}>
-            <span style={{ fontWeight: 600 }}>{userNotification.message || (typeof userNotification === 'string' ? userNotification : 'New Update Available!')}</span>
-            <button onClick={() => setUserNotification(null)} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#22c55e', cursor: 'pointer', fontSize: '1rem' }}>✕</button>
-        </div>
-      )}
+      {/* General update for the member — hidden when it just repeats the new-signal card below. */}
+      {mounted && !user?.is_admin && userNotification && (() => {
+        const text = userNotification.message || (typeof userNotification === 'string' ? userNotification : 'New update available');
+        if (signalBanner && text === signalBanner.message) return null;
+        return (
+          <div className="sig-banner-wrap">
+            <div className="sig-banner sig-banner--info" role="status">
+              <span className="sig-banner-icon" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></svg>
+              </span>
+              <div className="sig-banner-text">
+                <strong>Update</strong>
+                <span>{text}</span>
+              </div>
+              <div className="sig-banner-actions">
+                <button type="button" className="sig-banner-close" onClick={() => setUserNotification(null)} aria-label="Dismiss">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {mounted && !user?.is_admin && signalBanner && (
         <div className="sig-banner-wrap">

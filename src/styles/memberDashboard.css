@@ -767,17 +767,22 @@
 .sig-banner-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 .sig-banner-btn {
   height: 36px;
-  padding: 0 16px;
+  padding: 0 18px;
   border: none;
   border-radius: 10px;
-  background: var(--btn-primary);
-  color: var(--t-on-accent);
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.28);
   font: inherit;
   font-size: var(--fs-helper);
   font-weight: 600;
   cursor: pointer;
 }
-.sig-banner-btn:hover { filter: brightness(0.97); }
+.sig-banner-btn:hover { filter: brightness(1.05); box-shadow: 0 6px 16px rgba(22, 163, 74, 0.35); }
+.sig-banner { border-left-color: #22c55e; }
+.sig-banner--info { border-color: rgba(59, 130, 246, 0.3); border-left-color: #3b82f6; }
+.sig-banner--info .sig-banner-icon { background: rgba(59, 130, 246, 0.12); color: #2563eb; }
+.sig-banner-wrap + .sig-banner-wrap { padding-top: 10px; }
 .sig-banner-close {
   display: grid;
   place-items: center;

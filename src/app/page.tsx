@@ -67,7 +67,7 @@ const STEPS = [
 ];
 
 const FAQ = [
-    ['What markets do you cover?', 'Mainly Gold (XAU/USD), plus Silver (XAG/USD), major Forex pairs and Bitcoin.'],
+    ['What markets do you cover?', 'Mainly Gold (XAU/USD) & Silver (XAG/USD), major Forex pairs and Bitcoin.'],
     ['How much does a signal cost?', `Each signal costs $${PRICING.signalFee}, deducted from your AsianFX wallet when you choose to take it. You only pay for the signals you take.`],
     ['Is there a free trial?', `Yes. Every new member gets $${PRICING.signupBonus} free wallet credit when they first register, so you can take signals right away before making any deposit.`],
     ['What happens if a signal hits Stop Loss?', 'Every member who took that signal automatically receives a free signal credit — your next signal costs nothing.'],

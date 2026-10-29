@@ -44,7 +44,7 @@ export default function AdminUsersTable({ users: rawUsers = EMPTY_ROWS, loading 
 
     // Memoized so the table only re-processes rows when the list really changes.
     const users = useMemo(() => rawUsers
-        .filter((u) => !deletedIds.includes(u.id))
+        .filter((u) => !u.is_admin && !deletedIds.includes(u.id)) // admins are not members — keep them out of the list
         .map((u) => (u.id in statusOverrides ? { ...u, is_active: statusOverrides[u.id] } : u)),
     [rawUsers, deletedIds, statusOverrides]);
 
