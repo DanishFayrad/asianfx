@@ -690,12 +690,47 @@
   padding: 10px 12px;
   border-radius: 12px;
   font-size: var(--fs-card);
-  color: var(--t-text-muted);
+  color: var(--t-text);
   background: rgba(var(--t-accent-rgb), 0.08);
   border: 1px solid rgba(var(--t-accent-rgb), 0.25);
 }
-.tsc-fee strong { font-family: var(--font-num); font-size: 1rem; color: var(--t-gold); }
+.tsc-fee strong { font-family: var(--font-num); font-size: 1rem; color: var(--t-text); }
 .nsa-note strong { color: var(--t-text); }
 .tsc-actions { display: grid; grid-template-columns: 1fr 2fr; gap: 10px; }
 .tsc-actions button { height: 48px; border-radius: 12px; font: inherit; font-size: var(--fs-btn); font-weight: 600; cursor: pointer; }
 .tsc-actions button:disabled { opacity: 0.7; cursor: not-allowed; }
+
+/* Refer & Earn locked for non-influencers: blurred content + centred apply button */
+.mdb-refer--locked { position: relative; overflow: hidden; }
+.mdb-refer--locked .mdb-refer-main,
+.mdb-refer--locked .mdb-refer-stats { filter: blur(12px); opacity: 0.35; pointer-events: none; user-select: none; }
+.mdb-refer-gate {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 20px;
+  text-align: center;
+  background: rgba(var(--t-accent-rgb), 0.04);
+}
+.mdb-refer-gate h3 { margin: 4px 0 0; font-size: var(--fs-h5); font-weight: 700; color: var(--t-text); }
+.mdb-refer-gate p { margin: 0 0 6px; max-width: 460px; font-size: var(--fs-card); color: var(--t-text-muted); }
+.mdb-refer-gate-btn {
+  height: 44px;
+  padding: 0 24px;
+  border: none;
+  border-radius: 12px;
+  background: var(--btn-primary);
+  color: var(--t-on-accent);
+  font: inherit;
+  font-size: var(--fs-btn);
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(var(--t-accent-rgb), 0.3);
+  transition: transform 0.15s ease;
+}
+.mdb-refer-gate-btn:hover { transform: translateY(-1px); }

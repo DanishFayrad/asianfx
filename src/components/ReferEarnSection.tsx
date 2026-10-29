@@ -86,7 +86,7 @@ export default function ReferEarnSection({ user }: { user: Profile | null }) {
 
     return (
         <section className={`mdb-refer ${isInfluencer ? '' : 'mdb-refer--locked'}`}>
-            <div className="mdb-refer-main">
+            <div className="mdb-refer-main" inert={!isInfluencer} aria-hidden={!isInfluencer}>
                 <div className="mdb-refer-head">
                     <span className="mdb-kpi-icon mdb-kpi-icon--gold"><IconUsers size={18} /></span>
                     <div>
@@ -115,7 +115,7 @@ export default function ReferEarnSection({ user }: { user: Profile | null }) {
                 </div>
             </div>
 
-            <div className="mdb-refer-stats">
+            <div className="mdb-refer-stats" inert={!isInfluencer} aria-hidden={!isInfluencer}>
                 <div>
                     <span>Referrals</span>
                     <strong>{user?.referral_count || 0}</strong>
@@ -138,6 +138,22 @@ export default function ReferEarnSection({ user }: { user: Profile | null }) {
                     )}
                 </div>
             </div>
+
+            {/* Not an influencer yet: the section is blurred, with one centred call to action. */}
+            {!isInfluencer && (
+                <div className="mdb-refer-gate">
+                    <span className="mdb-kpi-icon mdb-kpi-icon--gold"><IconUsers size={20} /></span>
+                    <h3>Refer &amp; Earn</h3>
+                    <p>Are you an influencer? Apply to unlock your referral link and earn commission on every deposit your followers make.</p>
+                    {isPending ? (
+                        <span className="mdb-refer-status" title="We are reviewing your application">⏳ Application under review</span>
+                    ) : (
+                        <button type="button" className="mdb-refer-gate-btn" onClick={() => setIsFormOpen(true)}>
+                            {wasRejected ? 'Apply again' : 'Apply as influencer'}
+                        </button>
+                    )}
+                </div>
+            )}
 
             {isFormOpen && (
                 <div className="ifl-overlay" onClick={() => { if (!apply.isPending) setIsFormOpen(false); }}>

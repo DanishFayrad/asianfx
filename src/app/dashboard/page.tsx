@@ -887,9 +887,15 @@ export default function Dashboard() {
                                                     )}
                                                     <td className="sig-cell-status">
                                                         {/* Members only need to know if a signal can still be traded: open = Active, closed (TP / SL / Closed) = Expired */}
-                                                        <span className={`db-badge status ${isSignalOpen(signal) ? 'active' : 'close'}`}>
-                                                            {isSignalOpen(signal) ? 'Active' : 'Expired'}
-                                                        </span>
+                                                        {(() => {
+                                                            // Open → Active. Closed → its result: TP Hit = Profit, Stop Loss = Loss, otherwise Expired.
+                                                            const st = String(signal.status || '').toLowerCase();
+                                                            const [cls, label] = isSignalOpen(signal) ? ['active', 'Active']
+                                                                : st.includes('hit') ? ['hit', 'Profit']
+                                                                : st.includes('stop') ? ['loss', 'Loss']
+                                                                : ['close', 'Expired'];
+                                                            return <span className={`db-badge status ${cls}`}>{label}</span>;
+                                                        })()}
                                                     </td>
                                                     <td className="time sig-cell-time">
                                                         {/* A closed/expired signal never counts down — show its time instead. */}

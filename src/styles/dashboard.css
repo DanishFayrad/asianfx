@@ -1341,7 +1341,6 @@
 }
 
 .close-modal:hover {
-    background: var(--danger);
     transform: rotate(90deg);
 }
 
