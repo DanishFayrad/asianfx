@@ -28,6 +28,7 @@ import AuthGuard from './AuthGuard';
 import BlockedScreen from "@/components/BlockedScreen";
 import ThemeToggle from "@/components/ThemeToggle";
 import RouteProgress from "@/components/RouteProgress";
+import InspectGuard from "@/components/InspectGuard";
 
 // Runs before first paint: saved choice (or ?theme=light|dark) wins, otherwise light.
 const themeInitScript = `(function(){try{var q=new URLSearchParams(location.search).get('theme');if(q==='light'||q==='dark'){localStorage.setItem('theme',q);}var t=localStorage.getItem('theme');if(t!=='light'&&t!=='dark'){t='light';}document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','light');}})();`;
@@ -41,6 +42,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
       <body>
+        <InspectGuard />
         {isBlocked ? (
           <BlockedScreen />
         ) : (

@@ -184,6 +184,12 @@ const updateSignalStatus = async (id: number, status: string): Promise<MessageRe
     return { message: 'Signal updated' };
 };
 
+// Admin: remove a signal's auto-close time (it then stays open until closed by hand).
+const removeCloseTimer = async (id: number): Promise<MessageResponse> => {
+    unwrap(await supabase.from('signals').update({ close_at: null }).eq('id', id));
+    return { message: 'Auto-close removed' };
+};
+
 // Public track record for the landing page (works logged out).
 const getPublicStats = async (): Promise<PublicStats> => {
     return unwrap<PublicStats>(await supabase.rpc('get_public_stats'));
@@ -204,6 +210,7 @@ const signalService = {
     approveSignalRequest,
     extendSignalTimer,
     updateSignalStatus,
+    removeCloseTimer,
     getPublicStats
 };
 

@@ -863,3 +863,6 @@ end $$;
 -- MAKE YOURSELF ADMIN (run after you have registered your account):
 --   update public.profiles set is_admin = true, is_active = true where email = 'you@example.com';
 -- ---------------------------------------------------------------------
+
+-- Referral commission is 10%: move every current influencer to 10%.
+update public.profiles set commission_percent = 10 where is_influencer;

@@ -673,14 +673,16 @@
 .footerSocial a {
   display: grid;
   place-items: center;
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
-  color: var(--muted);
-  border: 1px solid var(--border);
-  transition: color 0.15s ease, border-color 0.15s ease;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
-.footerSocial a:hover { color: var(--gold); border-color: var(--gold); }
+.footerSocial a:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0, 0, 0, 0.22); }
+.socialFacebook { background: #1877f2; }
+.socialInstagram { background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fd5949 45%, #d6249f 60%, #285aeb 90%); }
 
 .contactLinks a { display: inline-flex; align-items: center; gap: 8px; }
 

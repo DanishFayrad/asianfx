@@ -305,7 +305,7 @@ export default function AdminSignals() {
             <div className="bsg-row2">
               <label className="bsg-field" style={{ gridColumn: '1 / -1', flex: '1 1 100%', width: '100%' }}>
                 <span className="bsg-label">Release after (minutes)</span>
-                <input type="number" min="0" name="timer_minutes" className="bsg-input" value={formData.timer_minutes} onChange={handleChange} placeholder="Enter Time" />
+                <input type="number" min="0" name="timer_minutes" autoComplete="off" onWheel={(e) => e.currentTarget.blur()} className="bsg-input" value={formData.timer_minutes} onChange={handleChange} placeholder="Enter Time" />
               </label>
             </div>
 
@@ -361,7 +361,7 @@ export default function AdminSignals() {
                 <input
                   type="number"
                   min="0"
-                  name="close_minutes"
+                  name="close_minutes" autoComplete="off" onWheel={(e) => e.currentTarget.blur()}
                   className="bsg-input"
                   value={formData.close_minutes}
                   onChange={handleChange}
@@ -398,7 +398,7 @@ export default function AdminSignals() {
                 const isBuy = String(sig.type || '').toLowerCase() === 'buy';
                 const isOpen = isSignalOpen(sig);
                 const closesSoon = isOpen && !!sig.close_at;
-                const locked = sig.release_at && new Date(sig.release_at) > currentTime;
+                const locked = isOpen && sig.release_at && new Date(sig.release_at) > currentTime; // closed signals stop counting down
                 const statusClass = String(sig.status).includes('Hit') ? 'win' : String(sig.status).includes('Stop') ? 'loss' : 'neutral';
                 return (
                   <div key={sig.id || idx} className={`asg-card ${isOpen ? 'asg-card--open' : ''}`}>
@@ -434,6 +434,18 @@ export default function AdminSignals() {
                         <>
                           <span className="asg-dot" aria-hidden="true">•</span>
                           <span className="asg-timer" title="This signal closes automatically">⏱ Closes in {countdown(sig.close_at, currentTime)}</span>
+                          <button
+                            type="button"
+                            className="asg-extend"
+                            title="Remove the auto-close timer"
+                            onClick={async () => {
+                              try {
+                                await signalService.removeCloseTimer(sig.id);
+                                fetchAllAdminData();
+                                toast.success('Auto-close removed');
+                              } catch (e) { toast.error(errorMessage(e, 'Failed to remove auto-close')); }
+                            }}
+                          >✕ Remove</button>
                         </>
                       )}
                       {locked && (
@@ -474,7 +486,7 @@ export default function AdminSignals() {
                                 onClick={async () => {
                                   try {
                                     await signalService.updateSignalStatus(sig.id, label);
-                                    toast.success(`${sig.symbol} marked as ${label}`);
+                                    toast.success(`${sig.symbol} marked as ${label} — find it under Show: Recent`);
                                     fetchAllAdminData();
                                   } catch (e) { toast.error("Failed to update signal"); }
                                 }}

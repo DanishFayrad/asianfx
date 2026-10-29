@@ -13,10 +13,11 @@ import influencerService from '@/services/influencerService';
 import { displayUserId } from '@/lib/memberId';
 import { errorMessage } from '@/lib/supabaseClient';
 import type { InfluencerApplication, Profile } from '@/types';
+import { PRICING } from '@/config/site';
 import '@/styles/adminSignals.css';
 import '@/styles/adminShell.css';
 
-const DEFAULT_PERCENT = 10;
+const DEFAULT_PERCENT = PRICING.referralPercent;
 const money = (n: number | string | null | undefined) =>
     Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const fmtDate = (d: string) => new Date(d).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });

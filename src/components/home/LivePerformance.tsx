@@ -23,6 +23,14 @@ const resultClass = (status = '') => {
     return styles.neutral;
 };
 
+// Friendly result names for visitors: TP Hit → Profit, Stop Loss → Loss, Closed → Expired.
+const resultLabel = (status = '') => {
+    const s = status.toLowerCase();
+    if (s.includes('hit')) return 'Profit';
+    if (s.includes('stop')) return 'Loss';
+    return 'Expired';
+};
+
 // Real numbers from the database — nothing on this section is hard-coded.
 export default function LivePerformance() {
     const statsQuery = usePublicStats();
@@ -79,7 +87,7 @@ export default function LivePerformance() {
                                         <td>{s.entry_price ?? '—'}</td>
                                         <td>{s.target_price ?? '—'}</td>
                                         <td>{s.stop_loss ?? '—'}</td>
-                                        <td><span className={`${styles.pill} ${resultClass(s.status)}`}>{s.status}</span></td>
+                                        <td><span className={`${styles.pill} ${resultClass(s.status)}`}>{resultLabel(s.status)}</span></td>
                                         <td className={styles.muted}>{new Date(s.created_at).toLocaleDateString()}</td>
                                     </tr>
                                 ))}

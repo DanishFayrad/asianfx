@@ -89,12 +89,12 @@ export default function Home() {
                 <div className={`${styles.container} ${styles.heroGrid}`}>
                     <div>
                         <h1 className={styles.heroTitle}>
-                            Gold, Forex &amp; Crypto signals — <span className={styles.gold}>delivered live.</span>
+                            Gold, Forex &amp; Crypto Signals — <span className={styles.gold}>Delivered Live.</span>
                         </h1>
                         <p className={styles.heroText}>
-                            Clear Entry, Take Profit and Stop Loss on every signal, pushed to your dashboard the moment
-                            our analysts publish it. Just <strong>${PRICING.signalFee} per signal</strong> — and if a signal
-                            hits Stop Loss, your next one is <strong>free</strong>.
+                            Get real-time trading signals with clear entry, take-profit and stop-loss levels, delivered
+                            straight to your dashboard. Pay just <strong>${PRICING.signalFee} per signal</strong> — and if a
+                            signal hits its stop-loss level, your next signal is <strong>free</strong>.
                         </p>
                         <div className={styles.heroCtas}>
                             <Link href="/register" className={`${styles.btnGold} ${styles.btnLg}`}>Start receiving signals</Link>
@@ -320,12 +320,12 @@ export default function Home() {
                         </nav>
                         <div className={styles.footerSocial}>
                             {SITE.facebook && (
-                                <a href={SITE.facebook} target="_blank" rel="noopener noreferrer" aria-label="AsianFX on Facebook" title="Facebook">
+                                <a href={SITE.facebook} target="_blank" rel="noopener noreferrer" aria-label="AsianFX on Facebook" title="Facebook" className={styles.socialFacebook}>
                                     <SocialIcon d={SOCIAL_ICONS.facebook} size={18} />
                                 </a>
                             )}
                             {SITE.instagram && (
-                                <a href={SITE.instagram} target="_blank" rel="noopener noreferrer" aria-label="AsianFX on Instagram" title="Instagram">
+                                <a href={SITE.instagram} target="_blank" rel="noopener noreferrer" aria-label="AsianFX on Instagram" title="Instagram" className={styles.socialInstagram}>
                                     <SocialIcon d={SOCIAL_ICONS.instagram} size={18} />
                                 </a>
                             )}

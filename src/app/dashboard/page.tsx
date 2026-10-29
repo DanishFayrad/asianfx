@@ -595,14 +595,6 @@ export default function Dashboard() {
           </div>
 
           <div className="right-actions">
-            {/* Countdown of the newest signal (from the banner) until it unlocks, next to Deposit */}
-            {mounted && !user?.is_admin && signalBanner?.signal?.release_at
-              && new Date(signalBanner.signal.release_at).getTime() > currentTime.getTime() && (
-              <div className="gtm-chip" title="The new signal unlocks when this countdown ends">
-                <span>⏳ {signalBanner.signal.symbol || 'Signal'} unlocks in</span>
-                <b>{formatCountdown(signalBanner.signal.release_at)}</b>
-              </div>
-            )}
             {mounted && !user?.is_admin && globalTimer && !isGlobalTimerHidden && (
               <div className="gtm-chip">
                 <span>Next signal in</span>
@@ -900,7 +892,8 @@ export default function Dashboard() {
                                                         </span>
                                                     </td>
                                                     <td className="time sig-cell-time">
-                                                        {signal.release_at && new Date(signal.release_at).getTime() > currentTime.getTime() 
+                                                        {/* A closed/expired signal never counts down — show its time instead. */}
+                                                        {isSignalOpen(signal) && signal.release_at && new Date(signal.release_at).getTime() > currentTime.getTime()
                                                             ? (
                                                                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                                                                     <span style={{ color: 'var(--t-text)', fontWeight: 700, fontSize: '0.8rem' }}>Release In</span>

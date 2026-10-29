@@ -14,5 +14,5 @@ export const PRICING = {
     minDeposit: 5,
     signupBonus: 5, // free wallet credit for every new member at signup
     signalFee: 1,
-    referralPercent: 30,
+    referralPercent: 10, // commission the referrer earns on each approved deposit
 };
