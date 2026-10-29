@@ -186,3 +186,51 @@
         font-size: 24px;
     }
 }
+
+/* Phone field with country picker (react-international-phone), matching the other fields */
+.reg-phone {
+    --react-international-phone-height: 42px;
+    --react-international-phone-border-radius: 12px;
+    --react-international-phone-font-size: 14px;
+    --react-international-phone-background-color: var(--t-field-2);
+    --react-international-phone-border-color: var(--tw-10);
+    --react-international-phone-text-color: var(--t-text);
+    --react-international-phone-country-selector-background-color: var(--t-field-2);
+    --react-international-phone-country-selector-background-color-hover: var(--tw-08);
+    --react-international-phone-country-selector-arrow-color: var(--t-text-muted);
+    --react-international-phone-dropdown-item-background-color: var(--t-surface);
+    --react-international-phone-dropdown-item-text-color: var(--t-text);
+    --react-international-phone-dropdown-item-dial-code-color: var(--t-text-muted);
+    --react-international-phone-selected-dropdown-item-background-color: rgba(var(--t-accent-rgb), 0.16);
+    --react-international-phone-selected-dropdown-item-text-color: var(--t-text);
+    --react-international-phone-dropdown-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
+    width: 100%;
+}
+.input-field-container .reg-phone input { flex: 1; min-width: 0; width: auto; border-radius: 0 12px 12px 0; }
+.reg-phone .react-international-phone-country-selector-dropdown { max-height: 240px; z-index: 20; }
+.reg-phone-error { display: block; margin-top: 6px; font-size: 12px; color: #dc2626; }
+/* Same box as the other inputs (12px padding, 42px tall) */
+.input-field-container .reg-phone input { height: 42px; padding: 0 16px; box-sizing: border-box; }
+.reg-phone .react-international-phone-country-selector-button { height: 42px; box-sizing: border-box; }
+
+/* Country dropdown: same look and height as the text inputs */
+.input-field-container .reg-country {
+    width: 100%;
+    height: 42px;
+    padding: 0 36px 0 16px;
+    border-radius: 12px;
+    font: inherit;
+    font-size: 14px;
+    color: var(--t-text);
+    background-color: var(--t-field-2);
+    border: 1px solid var(--tw-10);
+    outline: none;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+}
+.input-field-container .reg-country:focus { border-color: var(--t-accent); box-shadow: 0 0 0 4px rgba(var(--t-accent-rgb), 0.1); }
+.input-field-container .reg-country option { color: var(--t-text); background: var(--t-surface); }

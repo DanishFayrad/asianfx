@@ -2,7 +2,6 @@
 
 import { useState, type FormEvent } from 'react';
 import toast from 'react-hot-toast';
-import { supabase, unwrap, errorMessage } from '@/lib/supabaseClient';
 import styles from '@/app/home.module.css';
 
 export default function ContactForm() {
@@ -23,11 +22,18 @@ export default function ContactForm() {
 
         try {
             setSubmitting(true);
-            unwrap(await supabase.from('contact_messages').insert({ full_name: fullName, email, message }));
+            // The server saves the message and emails it to the AsianFX inbox.
+            const res = await fetch('/api/contact', {
+                method: 'POST',
+                headers: { 'content-type': 'application/json' },
+                body: JSON.stringify({ fullName, email, message, website: fields.get('website') || '' }),
+            });
+            const body = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(body.message || 'Could not send your message. Please try again.');
             toast.success('Thank you! We will get back to you shortly.');
             form.reset();
         } catch (err) {
-            toast.error(errorMessage(err, 'Could not send your message. Please try again.'));
+            toast.error(err instanceof Error ? err.message : 'Could not send your message. Please try again.');
         } finally {
             setSubmitting(false);
         }
@@ -36,17 +42,19 @@ export default function ContactForm() {
     return (
         <form className={styles.form} onSubmit={handleSubmit}>
             <label>
-                Full name <em>*</em>
-                <input name="fullName" type="text" placeholder="Your name" autoComplete="name" required />
+                <span>Full name <em>*</em></span>
+                <input name="fullName" type="text" placeholder="Your name" autoComplete="name" maxLength={100} required />
             </label>
             <label>
-                Email <em>*</em>
-                <input name="email" type="email" placeholder="you@example.com" autoComplete="email" required />
+                <span>Email <em>*</em></span>
+                <input name="email" type="email" placeholder="you@example.com" autoComplete="email" maxLength={200} required />
             </label>
             <label>
-                Message
-                <textarea name="message" rows={4} placeholder="Ask us anything about our signals…" />
+                <span>Message</span>
+                <textarea name="message" rows={4} placeholder="Ask us anything about our signals…" maxLength={5000} />
             </label>
+            {/* Hidden from people; spam bots fill it in and get ignored. */}
+            <input name="website" type="text" tabIndex={-1} autoComplete="off" aria-hidden="true" style={{ position: 'absolute', left: '-9999px', width: 1, height: 1, opacity: 0 }} />
             <button type="submit" className={styles.btnGold} disabled={submitting}>
                 {submitting ? 'Sending…' : 'Send message'}
             </button>

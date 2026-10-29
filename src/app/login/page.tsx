@@ -7,6 +7,7 @@ import authService from '@/services/authService';
 import { useSetCurrentUser } from '@/hooks/useAuth';
 import { errorMessage } from '@/lib/supabaseClient';
 import Link from 'next/link';
+import PasswordEye from '@/components/PasswordEye';
 import '../../styles/login.css';
 
 export default function Login() {
@@ -48,7 +49,7 @@ export default function Login() {
     <div className="login-page">
     <div className="login-container">
       <div className="login-icon">
-        <img src="/images/logo-mark.png" className="login-logo" alt="AsianFX Signals" width={72} height={72} />
+        <Link href="/" aria-label="AsianFX home" title="Home"><img src="/images/logo-mark.png" className="login-logo" alt="AsianFX Signals" width={72} height={72} /></Link>
       </div>
 
       <h1>Welcome Back</h1>
@@ -90,14 +91,17 @@ export default function Login() {
             />
 
             {/*  RIGHT ICON (EYE TOGGLE)  */}
-            <img
-              src="/images/eye icon.png"
+            <button
+              type="button"
               id="togglePassword"
               className="input-icon-right"
-              style={{ cursor: 'pointer' }}
               onClick={togglePasswordVisibility}
-              alt="Toggle Password Visibility"
-            />
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+              title={showPassword ? 'Hide password' : 'Show password'}
+              style={{ cursor: 'pointer', background: 'none', border: 'none', padding: 0, display: 'grid', placeItems: 'center', color: showPassword ? 'var(--t-gold)' : 'var(--t-text-muted)' }}
+            >
+              <PasswordEye visible={showPassword} />
+            </button>
           </div>
         </div>
 

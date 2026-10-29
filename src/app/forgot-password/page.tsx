@@ -61,7 +61,7 @@ export default function ForgotPassword() {
             <div className="forgot-password-card">
                 <div className="logo-section">
                     <div className="logo-circle">
-                        <img src="/images/logo-mark.png" alt="" style={{ width: '34px' }} />
+                        <Link href="/" aria-label="AsianFX home" title="Home" style={{ display: 'grid', placeItems: 'center' }}><img src="/images/logo-mark.png" alt="" style={{ width: '34px' }} /></Link>
                     </div>
                     <h1 className="title">Reset Password</h1>
                     <div className="step-indicator">

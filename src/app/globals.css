@@ -183,12 +183,18 @@ button { color: #111; font-family: inherit; }
   --btn-disabled-border: #d9cfba;
 }
 
+/* Cancel buttons in popups: neutral grey at rest, the pink cancel colour on hover. */
 .btn-cancel {
+  background: rgba(128, 128, 128, 0.16) !important;
+  color: var(--t-text) !important;
+  border: 1px solid rgba(128, 128, 128, 0.28) !important;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.btn-cancel:hover {
   background: var(--btn-cancel) !important;
   color: #fff !important;
   border-color: transparent !important;
 }
-.btn-cancel:hover { filter: brightness(0.95); }
 
 /* Disabled buttons, and submit buttons of forms whose required fields are still empty/invalid */
 button:disabled,

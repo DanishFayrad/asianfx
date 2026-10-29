@@ -16,13 +16,16 @@ import toast from 'react-hot-toast';
 import { serverTimeOffset, updateServerTimeOffset } from '../../services/serverTime';
 import ThemeToggle from '@/components/ThemeToggle';
 import UserNavbar from '@/components/UserNavbar';
-import { IconBroadcast, IconTrend, IconClock, IconWallet, IconUsers } from '@/components/admin/AdminIcons';
+import { IconBroadcast, IconTrend, IconWallet } from '@/components/admin/AdminIcons';
 import '../../styles/memberDashboard.css';
 import AdminSidebar from '../../components/AdminSidebar';
 import AdminHeader from '@/components/admin/AdminHeader';
 import AdminDashboardStats from '../../components/AdminDashboardStats';
 import AdminUsersTable from '../../components/AdminUsersTable';
 import Skeleton, { SkeletonRows } from '@/components/Skeleton';
+import AssetBadge from '@/components/AssetBadge';
+import ReferEarnSection from '@/components/ReferEarnSection';
+import { assetFor } from '@/config/assets';
 import '../../styles/dashboard.css';
 import { errorMessage } from '@/lib/supabaseClient';
 import type { GlobalTimer, Notification, Signal, SignalHistoryItem } from '@/types';
@@ -122,6 +125,21 @@ export default function Dashboard() {
     localStorage.setItem('rejectedSignalIds', JSON.stringify(rejectedSignalIds));
   }, [rejectedSignalIds]);
 
+  // Purchases of signals the admin deleted can't be hidden on the server (the signal is gone),
+  // so the member's "remove" for those rows is remembered in this browser.
+  const [hiddenHistoryIds, setHiddenHistoryIds] = useState<number[]>(() => {
+    if (typeof window === 'undefined') return [];
+    try { return JSON.parse(localStorage.getItem('hiddenHistoryIds') || '[]'); } catch { return []; }
+  });
+  const hideHistoryRow = (id: number) => {
+    setHiddenHistoryIds((prev) => {
+      const next = [...prev, id];
+      try { localStorage.setItem('hiddenHistoryIds', JSON.stringify(next)); } catch {}
+      return next;
+    });
+    toast.success('Removed from your list');
+  };
+
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date(Date.now() + serverTimeOffset)), 1000); // Tick every 1s for real-time countdown
     return () => clearInterval(timer);
@@ -180,11 +198,12 @@ export default function Dashboard() {
   const myLosses = signalHistory.filter((h) => h.result === 'loss').length;
   const myKpi = {
     total: signalHistory.length,
-    active: signalHistory.length - myWins - myLosses,
+    // Signals taken that are still open. A signal closed as "Closed" (no TP/SL) or deleted by the
+    // admin keeps a "pending" result, so count by the signal's own status instead.
+    active: signalHistory.filter((h) => h.Signal?.status === 'Active').length,
     rate: myWins + myLosses ? Math.round((100 * myWins) / (myWins + myLosses)) : 0,
   };
   const [addressCopied, setAddressCopied] = useState(false);
-  const [linkCopied, setLinkCopied] = useState(false);
 
   const DEPOSIT_ADDRESS = 'TA199GDmT2ybpMKdHwZkjMgo2awuk1N1fV';
   const copyDepositAddress = async () => {
@@ -357,11 +376,34 @@ export default function Dashboard() {
   const [signalToTake, setSignalToTake] = useState<Partial<Signal> | null>(null);
   const [isTakeSignalModalOpen, setIsTakeSignalModalOpen] = useState(false);
 
+  // Open = not closed by the admin and its "Close after" timer (if any) hasn't run out.
+  const isSignalOpen = (s: Partial<Signal>) =>
+    s.status === 'Active' && !(s.close_at && new Date(s.close_at).getTime() <= currentTime.getTime());
+
   const formatCountdown = (releaseAt: string | null | undefined) => {
     const totalSeconds = Math.max(0, Math.floor((new Date(releaseAt || 0).getTime() - currentTime.getTime()) / 1000));
-    const minutes = Math.floor(totalSeconds / 60);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
     const seconds = totalSeconds % 60;
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    const mmss = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    return hours > 0 ? `${hours}:${mmss.padStart(5, '0')}` : mmss;
+  };
+
+  // When the signal was released, in the viewer's own time zone (their device's country setting),
+  // e.g. "4:56 PM" over "28 Oct 2026".
+  const formatReleaseTime = (iso: string | null | undefined) => {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '—';
+    const date = d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+    // Local time of the viewer's device (Pakistan time for members in Pakistan), always as AM/PM.
+    const time = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+    return (
+      <span style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.3 }}>
+        <span>{time}</span>
+        <span style={{ fontSize: '0.75rem', color: 'var(--t-text-muted)' }}>{date}</span>
+      </span>
+    );
   };
 
   const handleTakeSignal = async (signal: Partial<Signal>) => {
@@ -410,17 +452,8 @@ export default function Dashboard() {
       }
   };
 
-  const getSymbolIcon = (symbol: string = '') => {
-    if (symbol.includes('XAU')) return '/images/div (13).png';
-    if (symbol.includes('XAG')) return '/images/div (14).png';
-    return '/images/div (15).png';
-  };
-
-  const getSymbolName = (symbol: string = '') => {
-    if (symbol.includes('XAU')) return 'Gold';
-    if (symbol.includes('XAG')) return 'Silver';
-    return 'Forex';
-  };
+  // Market name for a symbol (Bitcoin / Gold / Silver …), same list as the admin Broadcast form.
+  const getSymbolName = (symbol: string = '') => assetFor(symbol).name;
 
   const getTypeIcon = (type: string = '') => {
     return type.toLowerCase() === 'buy' ? '/images/i (11).png' : '/images/svg (18).png';
@@ -448,10 +481,14 @@ export default function Dashboard() {
   const startIndex = signalsTable.state.pagination.pageIndex * rowsPerPage;
 
   // "My Purchased Signals" table — rendered from the table's row model.
+  const visibleHistory = useMemo(
+    () => signalHistory.filter((h) => !hiddenHistoryIds.includes(h.id)),
+    [signalHistory, hiddenHistoryIds],
+  );
   const historyTable = useTable({
     features: basicTableFeatures,
     columns: historyColumns,
-    data: signalHistory,
+    data: visibleHistory,
     getRowId: (h) => String(h.id),
   });
   const historyRows = historyTable.getRowModel().rows.map((row) => row.original);
@@ -506,7 +543,7 @@ export default function Dashboard() {
 
       {/* NOTIFICATION BARS */}
       {mounted && user?.is_admin && adminBanner && (
-        <div style={{ background: 'rgba(239, 68, 68, 0.1)', borderBottom: '1px solid #ef4444', padding: '10px 1rem', color: '#ef4444', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '15px', zIndex: 1000, position: 'relative' }}>
+        <div style={{ background: 'rgba(239, 68, 68, 0.1)', borderBottom: '1px solid #ef4444', padding: '10px 1rem', color: '#ef4444', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '15px', zIndex: 1, position: 'relative' }}>
             <span style={{ fontWeight: 600 }}>{adminBanner}</span>
             <button onClick={() => router.push('/transaction')} style={{ background: '#ef4444', color: 'white', border: 'none', padding: '4px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}>Review Now</button>
             <button onClick={dismissAdminBanner} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '1rem' }}>✕</button>
@@ -514,14 +551,14 @@ export default function Dashboard() {
       )}
 
       {mounted && !user?.is_admin && userNotification && (
-        <div style={{ background: 'rgba(34, 197, 94, 0.1)', borderBottom: '1px solid #22c55e', padding: '10px 1rem', color: '#22c55e', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', zIndex: 1000, position: 'relative' }}>
+        <div style={{ background: 'rgba(34, 197, 94, 0.1)', borderBottom: '1px solid #22c55e', padding: '10px 1rem', color: '#22c55e', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', zIndex: 1, position: 'relative' }}>
             <span style={{ fontWeight: 600 }}>{userNotification.message || (typeof userNotification === 'string' ? userNotification : 'New Update Available!')}</span>
             <button onClick={() => setUserNotification(null)} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#22c55e', cursor: 'pointer', fontSize: '1rem' }}>✕</button>
         </div>
       )}
 
       {mounted && !user?.is_admin && signalBanner && (
-        <div style={{ background: 'rgba(var(--t-accent-rgb), 0.15)', borderBottom: '2px solid var(--t-accent)', padding: '12px 1rem', color: 'var(--t-gold)', fontSize: '0.9rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '15px', zIndex: 1100, position: 'relative' }}>
+        <div style={{ background: 'rgba(var(--t-accent-rgb), 0.15)', borderBottom: '2px solid var(--t-accent)', padding: '12px 1rem', color: 'var(--t-gold)', fontSize: '0.9rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '15px', zIndex: 1, position: 'relative' }}>
             <span style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span style={{ fontSize: '1.2rem' }}>📈</span> 
                 {signalBanner.title}: {signalBanner.message}
@@ -718,7 +755,7 @@ export default function Dashboard() {
               </button>
 
               <p style={{ color: 'var(--text-muted)', fontSize: '0.7rem', textAlign: 'center', marginTop: '1.5rem' }}>
-                ⭐ Super Admin will verify and credit your wallet shortly.
+                ⭐ Your deposit will be verified and credited to your wallet within 2 hours.
               </p>
             </div>
           </div>
@@ -767,7 +804,11 @@ export default function Dashboard() {
                             </div>
                         </div>
                         <div className="mdb-kpi">
-                            <span className="mdb-kpi-icon mdb-kpi-icon--live"><IconClock size={18} /></span>
+                            <span className="mdb-kpi-icon mdb-kpi-icon--live">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F07800" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                    <path d="M2 12h4l3-8 5 16 3-8h5" />
+                                </svg>
+                            </span>
                             <div>
                                 <span className="mdb-kpi-label">Active now</span>
                                 <strong>{historyLoading ? <Skeleton width={44} height={24} radius={8} /> : myKpi.active}</strong>
@@ -785,57 +826,8 @@ export default function Dashboard() {
                         </button>
                     </section>
 
-                    {/* REFER & EARN */}
-                    <section className="mdb-refer">
-                        <div className="mdb-refer-main">
-                            <div className="mdb-refer-head">
-                                <span className="mdb-kpi-icon mdb-kpi-icon--gold"><IconUsers size={18} /></span>
-                                <div>
-                                    <h3>Refer &amp; Earn</h3>
-                                    <p>Earn <strong>30%</strong> commission on every deposit your friends make.</p>
-                                </div>
-                            </div>
-                            <div className="mdb-refer-link">
-                                <input
-                                    readOnly
-                                    aria-label="Your referral link"
-                                    value={mounted ? `${window.location.origin.includes('localhost') ? 'https://www.asianfxsignals.com' : window.location.origin}/register?ref=${user?.referral_code || ''}` : ''}
-                                    onFocus={(e) => e.target.select()}
-                                />
-                                <button
-                                    type="button"
-                                    onClick={async () => {
-                                        const baseUrl = window.location.origin.includes('localhost') ? 'https://www.asianfxsignals.com' : window.location.origin;
-                                        try {
-                                            await navigator.clipboard.writeText(`${baseUrl}/register?ref=${user?.referral_code}`);
-                                            setLinkCopied(true);
-                                            toast.success('Link copied!');
-                                            setTimeout(() => setLinkCopied(false), 2000);
-                                        } catch {
-                                            toast.error('Could not copy — please select and copy it manually.');
-                                        }
-                                    }}
-                                    style={linkCopied ? { background: '#22c55e', color: '#fff' } : undefined}
-                                >{linkCopied ? 'Copied ✓' : 'Copy link'}</button>
-                            </div>
-                        </div>
-
-                        <div className="mdb-refer-stats">
-                            <div>
-                                <span>Referrals</span>
-                                <strong>{mounted ? (user?.referral_count || 0) : 0}</strong>
-                            </div>
-                            <div>
-                                <span>Their deposits</span>
-                                <strong>${mounted ? Number(user?.total_referral_deposits || 0).toFixed(2) : '0.00'}</strong>
-                            </div>
-                            <div className="mdb-refer-commission">
-                                <span>Your commission</span>
-                                <strong>${mounted ? Number(user?.affiliate_balance || 0).toFixed(2) : '0.00'}</strong>
-                                <button type="button" onClick={() => toast.error('Minimum withdrawal is $10')}>Withdraw</button>
-                            </div>
-                        </div>
-                    </section>
+                    {/* REFER & EARN — locked until the member is an approved influencer */}
+                    <ReferEarnSection user={mounted ? user : null} />
 
                     <div className="mdb-section-head">
                         <h2>Live signals</h2>
@@ -875,7 +867,7 @@ export default function Dashboard() {
                                                 <tr key={signal.id || index} className="sig-row">
                                                     <td className="sig-cell-symbol">
                                                         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                                                            <img src={getSymbolIcon(signal.symbol)} style={{ width: "42px", height: "42px" }} alt={signal.symbol} />
+                                                            <AssetBadge symbol={signal.symbol} size={42} />
                                                             <div>
                                                                 <div style={{ fontWeight: "600" }}>{signal.symbol}</div>
                                                                 <div style={{ fontSize: "12px", color: "var(--t-text-muted)", marginTop: "2px" }}>{getSymbolName(signal.symbol)}</div>
@@ -900,8 +892,9 @@ export default function Dashboard() {
                                                         </>
                                                     )}
                                                     <td className="sig-cell-status">
-                                                        <span className={`db-badge status ${signal.status.toLowerCase().includes('hit') ? 'hit' : signal.status.toLowerCase().includes('stop') ? 'loss' : signal.status.toLowerCase().includes('closed') ? 'close' : 'active'}`}>
-                                                            {signal.status}
+                                                        {/* Members only need to know if a signal can still be traded: open = Active, closed (TP / SL / Closed) = Expired */}
+                                                        <span className={`db-badge status ${isSignalOpen(signal) ? 'active' : 'close'}`}>
+                                                            {isSignalOpen(signal) ? 'Active' : 'Expired'}
                                                         </span>
                                                     </td>
                                                     <td className="time sig-cell-time">
@@ -912,18 +905,28 @@ export default function Dashboard() {
                                                                     <span style={{ color: '#f59e0b', fontSize: '0.75rem' }}>{formatCountdown(signal.release_at)}</span>
                                                                 </div>
                                                             )
-                                                            : new Date(signal.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                                                            : formatReleaseTime(signal.release_at || signal.created_at)
                                                         }
                                                     </td>
                                                     <td className="Action">
                                                         {(() => {
                                                             const owned = signal.purchased || signalHistory.some(h => h.signal_id === signal.id);
                                                             const locked = signal.release_at && new Date(signal.release_at).getTime() > currentTime.getTime();
+                                                            const expired = !isSignalOpen(signal); // closed (TP / SL / Closed, or its close timer ran out) — can't be taken any more
+                                                            const closesAt = !expired && signal.close_at ? signal.close_at : null;
                                                             const canHide = true; // admin: delete · member: remove from own list
                                                             return (
                                                                 <div className="sig-actions">
                                                                     {owned ? (
-                                                                        <span className="sig-owned">✓ Purchased</span>
+                                                                        // Still green while the signal is open; greyed out once it has closed.
+                                                                        <span
+                                                                            className={`sig-owned${expired ? ' sig-owned--expired' : ''}`}
+                                                                            title={expired ? 'You took this signal — it has now closed' : 'You took this signal'}
+                                                                        >
+                                                                            ✓ Purchased
+                                                                        </span>
+                                                                    ) : expired ? (
+                                                                        <span className="sig-expired" title="This signal has closed and can no longer be taken">Expired</span>
                                                                     ) : locked ? (
                                                                         <button
                                                                             type="button"
@@ -948,6 +951,9 @@ export default function Dashboard() {
                                                                         >
                                                                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
                                                                         </button>
+                                                                    )}
+                                                                    {closesAt && (
+                                                                        <span className="sig-closes" title="This signal closes automatically">⏱ Closes in {formatCountdown(closesAt)}</span>
                                                                     )}
                                                                 </div>
                                                             );
@@ -976,7 +982,7 @@ export default function Dashboard() {
                     )}
 
                     {/* MY PURCHASED SIGNALS SECTION */}
-                    {!user?.is_admin && signalHistory.length > 0 && (
+                    {!user?.is_admin && visibleHistory.length > 0 && (
                         <div className="table-box" style={{ marginTop: '2.5rem' }}>
                             <h3 style={{ padding: '1.5rem', margin: 0, color: 'var(--t-text)', borderBottom: '1px solid var(--tw-05)' }}>My Purchased Signals</h3>
                             <div className="table-wrapper">
@@ -993,33 +999,51 @@ export default function Dashboard() {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {historyRows.map((history, idx) => (
+                                        {historyRows.map((history, idx) => {
+                                            // The admin deleted this signal: the purchase record stays, but the signal itself is gone.
+                                            const deleted = !history.Signal?.symbol;
+                                            const result = history.result === 'win' ? { label: 'Profit', cls: 'hit' }
+                                                : history.result === 'loss' ? { label: 'Loss', cls: 'loss' }
+                                                : deleted ? { label: 'Deleted', cls: 'close' }
+                                                : history.Signal?.status === 'Active' ? { label: 'Open', cls: 'active' }
+                                                : { label: 'Closed', cls: 'close' };
+                                            return (
                                             <tr key={idx}>
                                                 <td>
-                                                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                                                        <img src={getSymbolIcon(history.Signal?.symbol || '')} style={{ width: "32px", height: "32px" }} alt={history.Signal?.symbol ?? ''} />
-                                                        <div style={{ fontWeight: "600" }}>{history.Signal?.symbol}</div>
-                                                    </div>
+                                                    {deleted ? (
+                                                        <div style={{ display: "flex", alignItems: "center", gap: "10px" }} title="This signal was deleted by the admin">
+                                                            <span style={{ width: 32, height: 32, borderRadius: 9, display: 'grid', placeItems: 'center', flexShrink: 0, fontWeight: 700, color: 'var(--t-text-muted)', background: 'var(--tw-05)', border: '1px solid var(--tw-10)' }}>?</span>
+                                                            <div style={{ fontWeight: 600, color: 'var(--t-text-muted)' }}>Deleted signal</div>
+                                                        </div>
+                                                    ) : (
+                                                        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                                                            <AssetBadge symbol={history.Signal?.symbol} size={32} />
+                                                            <div style={{ fontWeight: "600" }}>{history.Signal?.symbol}</div>
+                                                        </div>
+                                                    )}
                                                 </td>
                                                 <td>
-                                                    <span className={history.Signal?.type?.toLowerCase() || ''}>
-                                                        {history.Signal?.type}
-                                                    </span>
+                                                    {deleted ? <span style={{ color: 'var(--t-text-muted)' }}>—</span> : (
+                                                        <span className={history.Signal?.type?.toLowerCase() || ''}>
+                                                            {history.Signal?.type}
+                                                        </span>
+                                                    )}
                                                 </td>
                                                 <td>{history.taken_price}</td>
                                                 <td>${history.invested_amount}</td>
                                                 <td>
-                                                    <span className={`db-badge status ${history.result === 'win' ? 'hit' : history.result === 'loss' ? 'loss' : 'active'}`}>
-                                                        {history.result === 'win' ? 'Profit' : history.result === 'loss' ? 'Loss' : history.result}
-                                                    </span>
+                                                    <span className={`db-badge status ${result.cls}`}>{result.label}</span>
                                                 </td>
                                                 <td className="time">{new Date(history.taken_at).toLocaleDateString()}</td>
                                                 <td style={{ textAlign: 'right' }}>
-                                                    {history.signal_id && (
+                                                    {(history.signal_id || deleted) && (
                                                         <button
                                                             type="button"
                                                             className="sig-hide"
-                                                            onClick={() => { if (history.signal_id != null) handleDeleteSignal(history.signal_id); }}
+                                                            onClick={() => {
+                                                                if (history.signal_id != null) handleDeleteSignal(history.signal_id);
+                                                                else hideHistoryRow(history.id);
+                                                            }}
                                                             title="Remove from my list"
                                                             aria-label="Remove from my list"
                                                         >
@@ -1028,7 +1052,8 @@ export default function Dashboard() {
                                                     )}
                                                 </td>
                                             </tr>
-                                        ))}
+                                            );
+                                        })}
                                     </tbody>
                                 </table>
                             </div>
@@ -1044,8 +1069,8 @@ export default function Dashboard() {
             <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(10px)' }}>
                 <div className="modal-content" style={{ background: 'var(--t-surface)', padding: '2.5rem', borderRadius: '24px', color: 'var(--t-text)', width: '400px', border: '1px solid var(--tw-10)', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}>
                     <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-                        <div style={{ background: 'rgba(var(--t-accent-rgb), 0.1)', width: '64px', height: '64px', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}>
-                            <img src={getSymbolIcon(signalToTake.symbol)} style={{ width: '32px' }} alt="Symbol" />
+                        <div style={{ display: 'flex', justifyContent: 'center', margin: '0 auto 1.5rem' }}>
+                            <AssetBadge symbol={signalToTake.symbol} size={64} />
                         </div>
                         <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '0.5rem' }}>Confirm Signal</h2>
                         <p style={{ color: 'var(--t-text-muted)', fontSize: '0.95rem', lineHeight: '1.5' }}>
@@ -1144,9 +1169,7 @@ export default function Dashboard() {
                             </div>
 
                             <div className="nsa-pair">
-                                <span className="nsa-pair-icon">
-                                    <img src={getSymbolIcon(incomingSignal.symbol)} alt="" />
-                                </span>
+                                <AssetBadge symbol={incomingSignal.symbol} size={46} />
                                 <div className="nsa-pair-text">
                                     <h2 id="nsa-title">{incomingSignal.symbol}</h2>
                                     <small>{getSymbolName(incomingSignal.symbol)}</small>

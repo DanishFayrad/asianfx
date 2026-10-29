@@ -19,23 +19,30 @@ import ConfirmDialog from '@/components/ConfirmDialog';
 import '../../../styles/adminSignals.css';
 import { errorMessage } from '@/lib/supabaseClient';
 import type { Signal } from '@/types';
+import { ASSETS as assets, type Asset } from '@/config/assets';
+import AssetBadge, { AssetGlyph as AssetIcon } from '@/components/AssetBadge';
 
-interface Asset {
-  id: number;
-  name: string;
-  symbol: string;
-  displaySymbol: string;
-  iconColor: string;
-  glyph: string;
-}
+/** Cards shown at first in the signals list, and how many more each "Show more" adds. */
+const SIGNALS_PAGE = 9;
 
-// Asset badge drawn as SVG so each market has its own symbol (₿, Au, Ag).
-const AssetIcon = ({ glyph }: { glyph: string }) => (
-  <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true">
-    <circle cx="14" cy="14" r="13" fill="rgba(0,0,0,0.12)" stroke="#fff" strokeOpacity="0.85" strokeWidth="1.5" />
-    <text x="14" y="14.5" textAnchor="middle" dominantBaseline="central" fontSize={glyph.length > 1 ? 11 : 16} fontWeight="700" fill="#fff" fontFamily="Arial, sans-serif">{glyph}</text>
-  </svg>
-);
+/** Filter tabs for the signals list. */
+const SIGNAL_FILTERS = [
+  { key: 'active', label: 'Active', hint: 'Open signals you still need to close' },
+  { key: 'recent', label: 'Recent', hint: 'Signals sent in the last 24 hours' },
+  { key: 'weekly', label: 'Weekly', hint: 'Signals sent in the last 7 days' },
+] as const;
+type SignalFilter = typeof SIGNAL_FILTERS[number]['key'];
+const DAY_MS = 24 * 60 * 60 * 1000;
+const WEEK_MS = 7 * DAY_MS;
+
+/** "1:05:09" / "12:30" style countdown until `iso`, from `now`. */
+const countdown = (iso: string | null | undefined, now: Date) => {
+  const total = Math.max(0, Math.floor((new Date(iso || 0).getTime() - now.getTime()) / 1000));
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const sec = String(total % 60).padStart(2, '0');
+  return h > 0 ? `${h}:${String(m).padStart(2, '0')}:${sec}` : `${m}:${sec}`;
+};
 
 export default function AdminSignals() {
   const router = useRouter();
@@ -59,6 +66,7 @@ export default function AdminSignals() {
     stop_loss: '',
     signal_type: 'free',
     timer_minutes: '', // New field
+    close_minutes: '', // auto-close this many minutes after release
   });
   
   const [loading, setLoading] = useState(false);
@@ -77,12 +85,23 @@ export default function AdminSignals() {
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
-  // Mock Assets data to match screenshot
-  const assets: Asset[] = [
-    { id: 1, name: 'Bitcoin', symbol: 'BTCUSDT', displaySymbol: 'BTC/USDT', iconColor: '#F7931A', glyph: '₿' },
-    { id: 2, name: 'Gold', symbol: 'XAUUSD', displaySymbol: 'XAU/USD', iconColor: '#C9A227', glyph: 'Au' },
-    { id: 3, name: 'Silver', symbol: 'XAGUSD', displaySymbol: 'XAG/USD', iconColor: '#8A9099', glyph: 'Ag' },
-  ];
+  // Signals list: Active / Recent / Weekly tabs, a page of cards at a time ("Show more" adds the next page).
+  const [signalFilter, setSignalFilter] = useState<SignalFilter>('recent');
+  const [signalsShown, setSignalsShown] = useState(SIGNALS_PAGE);
+  // A signal past its "Close after" time counts as closed even before the database catches up.
+  const isSignalOpen = (s: Signal) =>
+    s.status === 'Active' && !(s.close_at && new Date(s.close_at).getTime() <= currentTime.getTime());
+  const openSignals = recentSignals.filter(isSignalOpen);
+  const closedSignals = recentSignals.filter((s) => !isSignalOpen(s));
+  const sentSince = (ms: number) => [...openSignals, ...closedSignals]
+    .filter((s) => new Date(s.created_at).getTime() >= currentTime.getTime() - ms);
+  const signalLists: Record<SignalFilter, Signal[]> = {
+    active: openSignals,
+    recent: sentSince(DAY_MS),
+    weekly: sentSince(WEEK_MS),
+  };
+  const filteredSignals = signalLists[signalFilter];
+  const changeSignalFilter = (key: SignalFilter) => { setSignalFilter(key); setSignalsShown(SIGNALS_PAGE); };
 
   // Signals or deposits changed: reload the signal list and the admin stats / badges.
   const fetchAllAdminData = () => {
@@ -149,6 +168,7 @@ export default function AdminSignals() {
         stop_loss: parseFloat(formData.stop_loss),
         signal_type: formData.signal_type,
         timer_minutes: formData.timer_minutes,
+        close_minutes: formData.close_minutes,
         description: `Signal for ${selectedAsset.name}`,
       };
 
@@ -164,6 +184,7 @@ export default function AdminSignals() {
         stop_loss: '',
         signal_type: 'free',
         timer_minutes: '',
+        close_minutes: '',
       });
       
       // Refresh recent list
@@ -284,7 +305,7 @@ export default function AdminSignals() {
             <div className="bsg-row2">
               <label className="bsg-field" style={{ gridColumn: '1 / -1', flex: '1 1 100%', width: '100%' }}>
                 <span className="bsg-label">Release after (minutes)</span>
-                <input type="number" min="0" name="timer_minutes" className="bsg-input" value={formData.timer_minutes} onChange={handleChange} placeholder="Blank = instant" />
+                <input type="number" min="0" name="timer_minutes" className="bsg-input" value={formData.timer_minutes} onChange={handleChange} placeholder="Enter Time" />
               </label>
             </div>
 
@@ -324,6 +345,29 @@ export default function AdminSignals() {
               <p className="bsg-preview-foot">
                 {formData.timer_minutes ? `⏳ Locked for ${formData.timer_minutes} min after broadcast` : '⚡ Available instantly after broadcast'}
               </p>
+              {Number(formData.close_minutes) > 0 && (
+                <p className="bsg-preview-foot">⏱ Closes automatically {formData.close_minutes} min after release</p>
+              )}
+            </section>
+
+            {/* Auto-close timer for the signal being sent */}
+            <section className="bsg-card" aria-label="Auto close">
+              <div className="bsg-card-head">
+                <h2>Close After</h2>
+                <p>Automatically close this signal after the specified number of minutes from its release. Members will see a countdown.</p>
+              </div>
+              <label className="bsg-field">
+                <span className="bsg-label">Close after (minutes)</span>
+                <input
+                  type="number"
+                  min="0"
+                  name="close_minutes"
+                  className="bsg-input"
+                  value={formData.close_minutes}
+                  onChange={handleChange}
+                  placeholder="Enter Time"
+                />
+              </label>
             </section>
 
           </div>
@@ -331,17 +375,35 @@ export default function AdminSignals() {
 
         {/* RECENT BROADCASTS SECTION */}
         <section className="admin-recent-section">
-           <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1.5rem' }}>Open &amp; Recent Signals <span style={{ fontSize: '0.8rem', fontWeight: 500, color: 'var(--admin-text-muted)' }}>— close every open signal with its result</span></h3>
+           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
+             <h3 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0 }}>Open &amp; Recent Signals <span style={{ fontSize: '0.8rem', fontWeight: 500, color: 'var(--admin-text-muted)' }}>— close every open signal with its result</span></h3>
+             <label className="asg-filter">
+               <span>Show</span>
+               <select
+                 value={signalFilter}
+                 onChange={(e) => changeSignalFilter(e.target.value as SignalFilter)}
+                 aria-label="Filter signals"
+                 title={SIGNAL_FILTERS.find((f) => f.key === signalFilter)?.hint}
+               >
+                 {SIGNAL_FILTERS.map((f) => (
+                   <option key={f.key} value={f.key}>
+                     {f.label}
+                   </option>
+                 ))}
+               </select>
+             </label>
+           </div>
            <div className="admin-recent-grid">
-              {[...recentSignals.filter(s => s.status === 'Active'), ...recentSignals.filter(s => s.status !== 'Active').slice(0, 3)].map((sig, idx) => {
+              {filteredSignals.slice(0, signalsShown).map((sig, idx) => {
                 const isBuy = String(sig.type || '').toLowerCase() === 'buy';
-                const isOpen = sig.status === 'Active';
+                const isOpen = isSignalOpen(sig);
+                const closesSoon = isOpen && !!sig.close_at;
                 const locked = sig.release_at && new Date(sig.release_at) > currentTime;
                 const statusClass = String(sig.status).includes('Hit') ? 'win' : String(sig.status).includes('Stop') ? 'loss' : 'neutral';
                 return (
                   <div key={sig.id || idx} className={`asg-card ${isOpen ? 'asg-card--open' : ''}`}>
                     <div className="asg-top">
-                      <span className="asg-icon">{sig.symbol.includes('XAU') ? 'XAU' : sig.symbol.includes('XAG') ? 'XAG' : sig.symbol.includes('BTC') ? '₿' : 'FX'}</span>
+                      <AssetBadge symbol={sig.symbol} size={34} />
                       <div className="asg-title">
                         <strong>{sig.symbol}</strong>
                         <small>{new Date(sig.created_at).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}</small>
@@ -368,6 +430,12 @@ export default function AdminSignals() {
                       <span>{sig.total_taken || 0} purchased</span>
                       <span className="asg-dot" aria-hidden="true">•</span>
                       <span>{sig.target_user_id ? 'Private' : 'Broadcast'}</span>
+                      {closesSoon && (
+                        <>
+                          <span className="asg-dot" aria-hidden="true">•</span>
+                          <span className="asg-timer" title="This signal closes automatically">⏱ Closes in {countdown(sig.close_at, currentTime)}</span>
+                        </>
+                      )}
                       {locked && (
                         <>
                           <span className="asg-dot" aria-hidden="true">•</span>
@@ -415,7 +483,7 @@ export default function AdminSignals() {
                           </div>
                         </>
                       ) : (
-                        <span className={`asg-status asg-status--${statusClass}`}>{sig.status}</span>
+                        <span className={`asg-status asg-status--${statusClass}`}>{sig.status === 'Active' ? 'Closed' : sig.status}</span>
                       )}
                     </div>
                   </div>
@@ -436,10 +504,25 @@ export default function AdminSignals() {
                   <Skeleton width="40%" height={12} />
                 </div>
               ))}
-              {!signalsLoading && recentSignals.length === 0 && (
-                <p style={{ color: 'var(--admin-text-muted)' }}>No recent broadcasts found.</p>
+              {!signalsLoading && filteredSignals.length === 0 && (
+                <p style={{ color: 'var(--admin-text-muted)' }}>
+                  {signalFilter === 'active' ? 'No open signals — every signal has been closed.'
+                    : signalFilter === 'weekly' ? 'No signals in the last 7 days.'
+                    : 'No recent broadcasts found.'}
+                </p>
               )}
            </div>
+           {filteredSignals.length > signalsShown && (
+             <div style={{ display: 'flex', justifyContent: 'center', marginTop: '1.25rem' }}>
+               <button
+                 type="button"
+                 className="bsg-btn-ghost"
+                 onClick={() => setSignalsShown((n) => n + SIGNALS_PAGE)}
+               >
+                 Show more ({filteredSignals.length - signalsShown} more)
+               </button>
+             </div>
+           )}
         </section>
       </main>
 

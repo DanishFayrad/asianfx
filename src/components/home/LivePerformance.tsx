@@ -45,27 +45,7 @@ export default function LivePerformance() {
 
     return (
         <>
-            <div className={styles.statGrid}>
-                <div className={styles.statCard}>
-                    <span className={styles.statValue}>{show(stats?.total_signals ?? 0)}</span>
-                    <span className={styles.statLabel}>Signals published</span>
-                </div>
-                <div className={styles.statCard}>
-                    <span className={styles.statValue}>{show(stats?.closed_signals ?? 0)}</span>
-                    <span className={styles.statLabel}>Signals closed</span>
-                </div>
-                <div className={styles.statCard}>
-                    <span className={styles.statValue}>{show(winRate === null ? 'N/A' : `${winRate}%`)}</span>
-                    <span className={styles.statLabel}>Hit target (of closed)</span>
-                </div>
-                <div className={styles.statCard}>
-                    <span className={`${styles.statValue} ${styles.liveValue}`}>
-                        <i className={styles.liveDot} aria-hidden="true" />
-                        {show(stats?.active_signals ?? 0)}
-                    </span>
-                    <span className={styles.statLabel}>Active right now</span>
-                </div>
-            </div>
+            
 
             <div className={styles.tableCard}>
                 <div className={styles.tableHead}>

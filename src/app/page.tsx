@@ -61,7 +61,7 @@ const FEATURES = [
 
 const STEPS = [
     ['Create your account', `Sign up with your email and verify it with a 6-digit code. Takes under a minute — and you get $${PRICING.signupBonus} free wallet credit to take your first signals.`],
-    ['Fund your wallet', `Deposit USDT (TRC20) — minimum $${PRICING.minDeposit}. Upload your payment proof and we credit your wallet after verification.`],
+    ['Fund your wallet', `Deposit USDT (TRC20) — minimum $${PRICING.minDeposit}. Upload your payment proof and we credit your wallet within 2 hours after verification.`],
     ['Get live signals', 'Signals appear on your dashboard in real time with Entry, Target and Stop Loss.'],
     ['Take the trade', `Unlock a signal for $${PRICING.signalFee} and place it with your own broker. Your account, your control.`],
 ];
@@ -71,7 +71,7 @@ const FAQ = [
     ['How much does a signal cost?', `Each signal costs $${PRICING.signalFee}, deducted from your AsianFX wallet when you choose to take it. You only pay for the signals you take.`],
     ['Is there a free trial?', `Yes. Every new member gets $${PRICING.signupBonus} free wallet credit when they first register, so you can take signals right away before making any deposit.`],
     ['What happens if a signal hits Stop Loss?', 'Every member who took that signal automatically receives a free signal credit — your next signal costs nothing.'],
-    ['How do I deposit?', `Send USDT on the TRC20 network to the address shown in the deposit window (minimum $${PRICING.minDeposit}), then upload a screenshot of the transfer. An admin verifies it and credits your wallet.`],
+    ['How do I deposit?', `Send USDT on the TRC20 network to the address shown in the deposit window (minimum $${PRICING.minDeposit}), then upload a screenshot of the transfer. An admin verifies it and your deposit is approved and credited to your wallet within 2 hours.`],
     ['Do you trade on my behalf?', 'No. We provide signals only. You take every trade yourself, on your own behalf, in your own brokerage account — we never trade for you, and you stay in full control of your funds.'],
     ['Is profit guaranteed?', 'No. Trading carries real risk and no signal provider can guarantee profits. Only trade with money you can afford to lose.'],
 ];
@@ -228,7 +228,7 @@ export default function Home() {
                     <div className={styles.sectionHead}>
                         <span className={styles.kicker}>Pricing</span>
                         <h2>Simple, pay-per-signal pricing</h2>
-                        <p>No subscriptions. No lock-in. Pay only for the signals you decide to take.</p>
+                        <p>No subscriptions. Pay only for the signals you decide to take.</p>
                     </div>
                     <div className={styles.pricingGrid}>
                         <div className={`${styles.priceCard} ${styles.priceMain}`}>
@@ -264,8 +264,8 @@ export default function Home() {
             <section id="faq" className={`${styles.section} ${styles.sectionAlt}`}>
                 <div className={`${styles.container} ${styles.narrow}`}>
                     <div className={styles.sectionHead}>
-                        <span className={styles.kicker}>FAQ</span>
-                        <h2>Questions, answered</h2>
+                        {/* <span className={styles.kicker}>FAQ</span> */}
+                        <h2>Frequently Asked Questions</h2>
                     </div>
                     <div className={styles.faq}>
                         {FAQ.map(([q, a]) => (
@@ -307,10 +307,10 @@ export default function Home() {
                         Past performance does not guarantee future results. Never trade with money you cannot afford to lose.
                     </div>
                     <div className={styles.footerRow}>
-                        <div className={styles.brand}>
+                        <Link href="/" className={styles.brand} aria-label="AsianFX home">
                             <img src="/images/logo-mark.png" alt="" width={28} height={28} />
                             <span>Asian<b>FX</b></span>
-                        </div>
+                        </Link>
                         <nav className={styles.footerLinks}>
                             <a href="#markets">Markets</a>
                             <a href="#how">How it works</a>

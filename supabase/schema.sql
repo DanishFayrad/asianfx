@@ -113,6 +113,34 @@ create table if not exists public.hidden_signals (
 -- Free signal credits: one is granted for every taken signal that closes at Stop Loss.
 alter table public.profiles add column if not exists free_signals integer not null default 0;
 
+-- Optional auto-close time set by the admin ("Close after N minutes").
+alter table public.signals add column if not exists close_at timestamptz;
+
+-- Influencer programme: only approved influencers get a referral commission, at their own rate.
+alter table public.profiles add column if not exists is_influencer boolean not null default false;
+alter table public.profiles add column if not exists commission_percent numeric(5,2) not null default 0;
+
+create table if not exists public.influencer_applications (
+    id            bigint generated always as identity primary key,
+    user_id       uuid not null references public.profiles(id) on delete cascade,
+    full_name     text not null,
+    platform      text not null,              -- Instagram / YouTube / TikTok / Facebook / Telegram / Other
+    profile_url   text not null,
+    followers     integer,
+    phone         text,
+    message       text,
+    status        text not null default 'pending',  -- pending / approved / rejected
+    commission_percent numeric(5,2),             -- set by the admin on approval
+    created_at    timestamptz not null default now(),
+    reviewed_at   timestamptz
+);
+create index if not exists idx_influencer_apps_user on public.influencer_applications(user_id, created_at desc);
+alter table public.influencer_applications enable row level security;
+
+drop policy if exists influencer_apps_select on public.influencer_applications;
+create policy influencer_apps_select on public.influencer_applications for select to authenticated
+    using (user_id = auth.uid() or public.is_admin());
+
 create index if not exists idx_transactions_user   on public.transactions(user_id);
 create index if not exists idx_transactions_status on public.transactions(type, status);
 create index if not exists idx_notifications_user  on public.notifications(user_id, created_at desc);
@@ -345,6 +373,10 @@ begin
     if v_s.release_at is not null and v_s.release_at > now() then
         raise exception 'This signal is still locked. Please wait for the countdown.';
     end if;
+    -- A closed signal (TP Hit / Stop Loss / Closed, or past its close time) can no longer be taken or charged for.
+    if v_s.status <> 'Active' or (v_s.close_at is not null and v_s.close_at <= now()) then
+        raise exception 'This signal has already closed and can no longer be taken.';
+    end if;
     if exists (select 1 from public.user_signals where user_id = v_p.id and signal_id = p_signal_id) then
         raise exception 'You have already taken this signal';
     end if;
@@ -379,6 +411,7 @@ declare
     v_tx  public.transactions;
     v_ref uuid;
     v_commission numeric;
+    v_percent numeric;
 begin
     if not public.is_admin() then raise exception 'Admin only'; end if;
     if p_amount is null or p_amount <= 0 then raise exception 'Invalid amount'; end if;
@@ -396,15 +429,21 @@ begin
         where id = v_tx.user_id
         returning referred_by into v_ref;
 
-    -- 30% referral commission
+    -- Referral commission: only approved influencers earn it, at the percentage the admin set for them.
     if v_ref is not null then
-        v_commission := round(p_amount * 0.30, 2);
+        select case when is_influencer then commission_percent else 0 end
+            into v_percent from public.profiles where id = v_ref;
         update public.profiles
-            set affiliate_balance = affiliate_balance + v_commission,
-                total_referral_deposits = total_referral_deposits + p_amount
+            set total_referral_deposits = total_referral_deposits + p_amount
             where id = v_ref;
-        insert into public.transactions (user_id, type, amount, status, processed_at)
-            values (v_ref, 'commission', v_commission, 'approved', now());
+        if coalesce(v_percent, 0) > 0 then
+            v_commission := round(p_amount * v_percent / 100, 2);
+            update public.profiles
+                set affiliate_balance = affiliate_balance + v_commission
+                where id = v_ref;
+            insert into public.transactions (user_id, type, amount, status, processed_at)
+                values (v_ref, 'commission', v_commission, 'approved', now());
+        end if;
     end if;
 
     insert into public.notifications (user_id, type, title, message)
@@ -527,7 +566,7 @@ returns json language sql stable security definer set search_path = public as $$
     select coalesce(json_agg(x order by x.created_at desc), '[]'::json)
     from (
         select s.id, s.symbol, s.type, s.signal_type, s.description, s.status,
-               s.target_user_id, s.release_at, s.total_taken, s.created_at,
+               s.target_user_id, s.release_at, s.close_at, s.total_taken, s.created_at,
                (us.id is not null) as purchased,
                case when public.is_admin() or us.id is not null or s.status <> 'Active' then s.entry_price  end as entry_price,
                case when public.is_admin() or us.id is not null or s.status <> 'Active' then s.target_price end as target_price,
@@ -681,6 +720,99 @@ drop trigger if exists on_signal_status_change on public.signals;
 create trigger on_signal_status_change
     after update of status on public.signals
     for each row execute function public.settle_signal_results();
+
+-- Close every signal whose "Close after" time has passed. Safe for anyone to call (it only
+-- closes what is already due); the app calls it whenever signals load, and pg_cron runs it every minute.
+create or replace function public.close_expired_signals()
+returns integer language plpgsql security definer set search_path = public as $$
+declare v_count integer;
+begin
+    update public.signals set status = 'Closed'
+        where status = 'Active' and close_at is not null and close_at <= now();
+    get diagnostics v_count = row_count;
+    return v_count;
+end $$;
+
+grant execute on function public.close_expired_signals() to authenticated;
+
+-- Run it every minute when pg_cron is available (skipped quietly if it isn't).
+do $$
+begin
+    create extension if not exists pg_cron;
+    perform cron.schedule('close-expired-signals', '* * * * *', 'select public.close_expired_signals()');
+exception when others then
+    raise notice 'pg_cron not available, signals close when the app loads them: %', sqlerrm;
+end $$;
+
+-- ---------------- Influencer programme ----------------
+
+-- Member applies to become an influencer (one open application at a time).
+create or replace function public.apply_influencer(
+    p_full_name text, p_platform text, p_profile_url text,
+    p_followers integer default null, p_phone text default null, p_message text default null)
+returns json language plpgsql security definer set search_path = public as $$
+begin
+    if auth.uid() is null then raise exception 'Not authenticated'; end if;
+    if exists (select 1 from public.profiles where id = auth.uid() and is_influencer) then
+        raise exception 'You are already an approved influencer.';
+    end if;
+    if exists (select 1 from public.influencer_applications where user_id = auth.uid() and status = 'pending') then
+        raise exception 'Your application is already under review.';
+    end if;
+    if coalesce(trim(p_full_name), '') = '' or coalesce(trim(p_platform), '') = '' or coalesce(trim(p_profile_url), '') = '' then
+        raise exception 'Please fill in your name, platform and profile link.';
+    end if;
+    insert into public.influencer_applications (user_id, full_name, platform, profile_url, followers, phone, message)
+        values (auth.uid(), left(trim(p_full_name), 100), left(trim(p_platform), 40), left(trim(p_profile_url), 300),
+                p_followers, left(trim(p_phone), 40), left(trim(p_message), 1000));
+    return json_build_object('message', 'Application submitted! We will review it shortly.');
+end $$;
+
+-- Admin approves an application and sets that influencer's commission percentage.
+create or replace function public.approve_influencer(p_application_id bigint, p_percent numeric)
+returns json language plpgsql security definer set search_path = public as $$
+declare v_user uuid;
+begin
+    if not public.is_admin() then raise exception 'Admin only'; end if;
+    if p_percent is null or p_percent <= 0 or p_percent > 100 then raise exception 'Commission must be more than 0 and at most 100'; end if;
+    update public.influencer_applications
+        set status = 'approved', commission_percent = p_percent, reviewed_at = now()
+        where id = p_application_id and status = 'pending'
+        returning user_id into v_user;
+    if v_user is null then raise exception 'Application not found or already reviewed'; end if;
+    update public.profiles set is_influencer = true, commission_percent = p_percent where id = v_user;
+    insert into public.notifications (user_id, type, title, message)
+        values (v_user, 'info', 'Influencer application approved',
+                'You are now an AsianFX influencer. You earn ' || p_percent || ' percent commission on every deposit your referrals make.');
+    return json_build_object('message', 'Influencer approved');
+end $$;
+
+create or replace function public.reject_influencer(p_application_id bigint)
+returns json language plpgsql security definer set search_path = public as $$
+declare v_user uuid;
+begin
+    if not public.is_admin() then raise exception 'Admin only'; end if;
+    update public.influencer_applications set status = 'rejected', reviewed_at = now()
+        where id = p_application_id and status = 'pending'
+        returning user_id into v_user;
+    if v_user is null then raise exception 'Application not found or already reviewed'; end if;
+    insert into public.notifications (user_id, type, title, message)
+        values (v_user, 'info', 'Influencer application not approved',
+                'Your influencer application was not approved this time. Contact support for details.');
+    return json_build_object('message', 'Application rejected');
+end $$;
+
+-- Admin changes an influencer's percentage later, or removes them (p_percent = 0).
+create or replace function public.set_influencer_commission(p_user_id uuid, p_percent numeric)
+returns json language plpgsql security definer set search_path = public as $$
+begin
+    if not public.is_admin() then raise exception 'Admin only'; end if;
+    if p_percent is null or p_percent < 0 or p_percent > 100 then raise exception 'Commission must be between 0 and 100'; end if;
+    update public.profiles
+        set commission_percent = p_percent, is_influencer = p_percent > 0
+        where id = p_user_id;
+    return json_build_object('message', case when p_percent > 0 then 'Commission updated' else 'Influencer removed' end);
+end $$;
 
 create or replace function public.get_global_transaction_count()
 returns integer language sql stable security definer set search_path = public as $$

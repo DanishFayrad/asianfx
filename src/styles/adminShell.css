@@ -657,3 +657,141 @@
   .bsg-levels, .bsg-row2 { grid-template-columns: 1fr; }
   .bsg-online { padding: 0 9px; font-size: 0.72rem; }
 }
+
+/* Signals list filter (Active / Recent / Weekly) */
+.asg-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--t-text-muted);
+}
+
+.asg-filter select {
+  height: 38px;
+  padding: 0 34px 0 12px;
+  border-radius: 10px;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  color: var(--t-text);
+  background-color: var(--t-surface);
+  border: 1px solid var(--tw-10);
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  transition: border-color 0.15s ease;
+}
+
+.asg-filter select:hover,
+.asg-filter select:focus { border-color: rgba(var(--t-accent-rgb), 0.6); outline: none; }
+
+/* =====================================================================
+   Influencers page (.ifa-*)
+   ===================================================================== */
+.ifa { display: flex; flex-direction: column; gap: 18px; padding: 1.5rem; }
+
+.ifa-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px;
+  border-radius: 16px;
+  background: var(--t-surface);
+  border: 1px solid var(--tw-08);
+}
+
+.ifa-head { display: flex; align-items: center; gap: 10px; }
+.ifa-head h2 { margin: 0; font-size: 1.05rem; font-weight: 700; color: var(--t-text); }
+.ifa-count {
+  min-width: 24px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--t-gold);
+  background: rgba(var(--t-accent-rgb), 0.14);
+}
+
+.ifa-empty { margin: 0; font-size: 0.85rem; color: var(--t-text-muted); }
+.ifa-list { display: flex; flex-direction: column; gap: 10px; }
+
+.ifa-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 14px;
+  border-radius: 12px;
+  background: var(--tw-03);
+  border: 1px solid var(--tw-08);
+}
+
+.ifa-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1 1 280px; }
+.ifa-info strong { font-size: 0.95rem; color: var(--t-text); }
+.ifa-info small { font-size: 0.75rem; color: var(--t-text-muted); }
+
+.ifa-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.ifa-tags span,
+.ifa-tags a {
+  padding: 3px 9px;
+  border-radius: 7px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--t-text-muted);
+  background: var(--tw-05);
+  text-decoration: none;
+}
+.ifa-tags a { color: var(--t-gold); background: rgba(var(--t-accent-rgb), 0.12); }
+
+.ifa-msg { margin: 6px 0 0; font-size: 0.8rem; line-height: 1.5; color: var(--t-text); white-space: pre-wrap; }
+
+.ifa-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+.ifa-percent {
+  display: inline-flex;
+  align-items: center;
+  height: 34px;
+  padding: 0 10px;
+  border-radius: 9px;
+  background: var(--t-surface);
+  border: 1px solid var(--tw-10);
+}
+.ifa-percent input {
+  width: 58px;
+  border: none;
+  outline: none;
+  background: transparent;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-align: right;
+  color: var(--t-text);
+}
+.ifa-percent span { margin-left: 3px; font-size: 0.8rem; font-weight: 700; color: var(--t-text-muted); }
+
+.ifa-btn {
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 9px;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  background: transparent;
+}
+.ifa-btn:disabled { opacity: 0.6; cursor: wait; }
+.ifa-btn--ok { color: var(--t-on-accent); background: var(--btn-primary); border: none; }
+.ifa-btn--no { color: #dc2626; border: 1px solid rgba(239, 68, 68, 0.45); }
+.ifa-btn--no:hover { background: rgba(239, 68, 68, 0.08); }
+
+.ifa-item--done { padding: 10px 14px; }
+.ifa-status { padding: 3px 10px; border-radius: 999px; font-size: 0.72rem; font-weight: 700; }
+.ifa-status--approved { color: #16a34a; background: rgba(34, 197, 94, 0.12); }
+.ifa-status--rejected { color: var(--t-text-muted); background: var(--tw-05); }

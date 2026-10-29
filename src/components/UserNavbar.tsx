@@ -67,7 +67,7 @@ export default function UserNavbar({ active, user, onLogout }: UserNavbarProps) 
     return (
         <header className="db-navbar">
             <div className="db-nav-left">
-                <Link href="/dashboard" className="db-logo">
+                <Link href="/" className="db-logo" title="Home">
                     <div className="logo-box">
                         <img src="/images/logo-mark.png" alt="AsianFX Signals" />
                     </div>

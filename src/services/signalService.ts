@@ -26,6 +26,8 @@ export interface NewSignalInput {
     stop_loss: PriceInput;
     signal_type?: string;
     timer_minutes?: string | number;
+    /** Close the signal automatically this many minutes after it is released (blank = never). */
+    close_minutes?: string | number;
     description?: string | null;
     target_user_id?: string | null;
 }
@@ -42,6 +44,9 @@ export interface TakeSignalResult extends MessageResponse {
 
 // Entry / TP / SL come back only for signals the member has paid for (admins see all).
 const getSignalsDashboard = async (): Promise<{ active_signals: Signal[]; stats: SignalStats }> => {
+    // Close any signal whose "Close after" time has passed, so every viewer sees the same status.
+    // Ignored if the database function isn't installed yet.
+    await supabase.rpc('close_expired_signals').then(() => undefined, () => undefined);
     const [signals, stats] = await Promise.all([
         supabase.rpc('get_member_signals').then((r) => unwrap<Signal[]>(r)),
         supabase.rpc('get_signal_stats').then((r) => unwrap<SignalStats>(r)),
@@ -83,6 +88,8 @@ export const getSignalLevelError = ({ type, entry_price, target_price, stop_loss
 
 const createSignal = async (signalData: NewSignalInput): Promise<Signal> => {
     const minutes = parseFloat(String(signalData.timer_minutes ?? ''));
+    const closeMinutes = parseFloat(String(signalData.close_minutes ?? ''));
+    const releaseMs = Date.now() + serverTimeOffset + (minutes > 0 ? minutes * 60000 : 0);
     const row = {
         symbol: String(signalData.symbol || '').trim().toUpperCase(),
         type: signalData.type,
@@ -95,6 +102,8 @@ const createSignal = async (signalData: NewSignalInput): Promise<Signal> => {
         release_at: minutes > 0
             ? new Date(Date.now() + serverTimeOffset + minutes * 60000).toISOString()
             : null,
+        // Counted from the release time, so a delayed signal still gets its full open window.
+        close_at: closeMinutes > 0 ? new Date(releaseMs + closeMinutes * 60000).toISOString() : null,
     };
     validateSignal(row);
     const signal = unwrap<Signal>(await supabase.from('signals').insert(row).select().single());

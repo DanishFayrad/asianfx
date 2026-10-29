@@ -1,12 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { IconDashboard, IconUsers, IconBroadcast, IconTransactions, IconWallet, IconLogout } from './admin/AdminIcons';
+import { IconDashboard, IconUsers, IconBroadcast, IconTransactions, IconWallet, IconLogout, IconTrend } from './admin/AdminIcons';
 import '../styles/adminSignals.css';
 import '../styles/adminShell.css';
 import type { Profile } from '@/types';
 
-export type AdminNavKey = 'dashboard' | 'signals' | 'transactions' | 'users' | 'wallet';
+export type AdminNavKey = 'dashboard' | 'signals' | 'transactions' | 'users' | 'influencers' | 'wallet';
 
 interface AdminSidebarProps {
     active: AdminNavKey;
@@ -22,6 +22,7 @@ const NAV = [
     { key: 'signals', href: '/admin/signals', label: 'Broadcast Signal', Icon: IconBroadcast },
     { key: 'transactions', href: '/transaction', label: 'Deposits', Icon: IconTransactions, badge: true },
     { key: 'users', href: '/admin/users', label: 'Members', Icon: IconUsers },
+    { key: 'influencers', href: '/admin/influencers', label: 'Influencers', Icon: IconTrend },
     { key: 'wallet', href: '/wallet', label: 'Platform Wallet', Icon: IconWallet },
 ];
 
@@ -43,7 +44,7 @@ export default function AdminSidebar({ active, user, pendingDeposits = 0, onLogo
 
     return (
         <aside className={`asb ${isOpen ? 'asb--open' : ''}`} aria-label="Admin navigation">
-            <Link href="/dashboard" className="asb-brand" onClick={onClose}>
+            <Link href="/" className="asb-brand" onClick={onClose} title="Home">
                 <img src="/images/logo-mark.png" alt="" width={32} height={32} />
                 <span>Asian<b>FX</b></span>
                 <em>Admin</em>

@@ -1,12 +1,18 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMutation } from '@tanstack/react-query';
 import authService from '@/services/authService';
 import { errorMessage } from '@/lib/supabaseClient';
 import Link from 'next/link';
+import { PhoneInput, defaultCountries, parseCountry, type PhoneInputRefType } from 'react-international-phone';
+import PasswordEye from '@/components/PasswordEye';
+import 'react-international-phone/style.css';
 import '../../styles/register.css';
+
+/** Every country (same list as the phone field), sorted by name, for the Country dropdown. */
+const COUNTRIES = defaultCountries.map((c) => parseCountry(c)).sort((a, b) => a.name.localeCompare(b.name));
 
 export default function Register() {
   const router = useRouter();
@@ -60,8 +66,29 @@ export default function Register() {
     setShowPassword(!showPassword);
   };
 
+  // Phone (react-international-phone): stored with its country code, e.g. "+923001234567".
+  // The country field follows the chosen phone country until the member edits it themselves.
+  const [phoneHasNumber, setPhoneHasNumber] = useState(false);
+  const [phoneError, setPhoneError] = useState('');
+  const [countryTouched, setCountryTouched] = useState(false);
+  const phoneRef = useRef<PhoneInputRefType>(null);
+
+  const onPhoneChange = (value: string, meta: { country: { name: string; dialCode: string }; inputValue: string }) => {
+    setPhoneHasNumber(meta.inputValue.replace(/\D/g, '').length > meta.country.dialCode.length);
+    setPhoneError('');
+    setFormData((prev) => ({
+      ...prev,
+      phone: value,
+      country: countryTouched ? prev.country : meta.country.name,
+    }));
+  };
+
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!phoneHasNumber) {
+      setPhoneError('Please enter your phone number.');
+      return;
+    }
     register.mutate(formData);
   };
 
@@ -74,7 +101,7 @@ export default function Register() {
 
         <div className="register-header">
           <div className="register-logo-icon">
-            <img src="/images/logo-mark.png" style={{ width: '100%', height: '100%' }} alt="AsianFX Signals" />
+            <Link href="/" aria-label="AsianFX home" title="Home" style={{ display: 'block', width: '100%', height: '100%' }}><img src="/images/logo-mark.png" style={{ width: '100%', height: '100%' }} alt="AsianFX Signals" /></Link>
           </div>
           <h1>Create Account</h1>
           <p>Start your professional trading journey</p>
@@ -128,28 +155,37 @@ export default function Register() {
             <div className="input-field-group">
               <label>Phone Number</label>
               <div className="input-field-container">
-                <input 
-                  type="tel" 
-                  name="phone"
-                  placeholder="+1 (555) 000-0000" 
+                <PhoneInput
+                  ref={phoneRef}
+                  className="reg-phone"
+                  defaultCountry="pk"
                   value={phone}
-                  onChange={onChange}
-                  required 
+                  onChange={onPhoneChange}
+                  inputProps={{ 'aria-label': 'Phone number', autoComplete: 'tel' }}
                 />
+                {phoneError && <small className="reg-phone-error">{phoneError}</small>}
               </div>
             </div>
 
             <div className="input-field-group">
               <label>Country</label>
               <div className="input-field-container">
-                <input 
-                  type="text" 
+                <select
                   name="country"
-                  placeholder="e.g. United States" 
+                  className="reg-country"
                   value={country}
-                  onChange={onChange}
-                  required 
-                />
+                  onChange={(e) => {
+                    setCountryTouched(true);
+                    onChange(e);
+                    // No number typed yet → switch the phone field to the same country's code.
+                    const picked = COUNTRIES.find((c) => c.name === e.target.value);
+                    if (picked && !phoneHasNumber) phoneRef.current?.setCountry(picked.iso2);
+                  }}
+                  required
+                >
+                  <option value="" disabled>Select country</option>
+                  {COUNTRIES.map((c) => <option key={c.iso2} value={c.name}>{c.name}</option>)}
+                </select>
               </div>
             </div>
           </div>
@@ -169,12 +205,11 @@ export default function Register() {
                 type="button" 
                 className="password-toggle-btn"
                 onClick={togglePasswordVisibility}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                title={showPassword ? 'Hide password' : 'Show password'}
+                style={{ color: showPassword ? 'var(--t-gold)' : 'var(--t-text-muted)' }}
               >
-                <img
-                  src="/images/eye icon.png"
-                  style={{ width: '18px', filter: 'invert(1)' }}
-                  alt="Toggle"
-                />
+                <PasswordEye visible={showPassword} />
               </button>
             </div>
           </div>

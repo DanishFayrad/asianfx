@@ -247,7 +247,8 @@
   tr.sig-row > td.Action { grid-column: 1 / -1; }
   tr.sig-row .sig-actions { justify-content: stretch; }
   tr.sig-row .sig-btn,
-  tr.sig-row .sig-owned { flex: 1; justify-content: center; height: 42px; }
+  tr.sig-row .sig-owned,
+  tr.sig-row .sig-expired { flex: 1; justify-content: center; height: 42px; }
 }
 
 /* ---------- "Next signal" countdown box (sticky sidebar) ---------- */
@@ -528,3 +529,124 @@
 @media (prefers-reduced-motion: reduce) {
   .nsa-overlay, .nsa-card, .nsa-badge i { animation: none; }
 }
+
+/* ---------- Refer & Earn: locked until the member is an approved influencer ---------- */
+.mdb-refer--locked .mdb-refer-link { opacity: 0.55; }
+.mdb-refer--locked .mdb-refer-link input { cursor: not-allowed; font-style: italic; }
+.mdb-refer--locked .mdb-refer-link button:disabled { cursor: not-allowed; filter: grayscale(0.6); }
+
+.mdb-refer-commission .mdb-refer-apply {
+  color: var(--t-on-accent);
+  background: var(--btn-primary);
+  border-color: transparent;
+}
+
+.mdb-refer-status {
+  width: auto !important;
+  padding: 6px 12px;
+  border-radius: 9px;
+  font-size: 0.8rem !important;
+  font-weight: 700;
+  color: #d97706 !important;
+  background: rgba(245, 158, 11, 0.12);
+}
+
+/* ---------- Influencer application popup (.ifl-*) ---------- */
+.ifl-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 4000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.ifl-card {
+  width: min(480px, 100%);
+  max-height: 92vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 22px;
+  border-radius: 20px;
+  color: var(--t-text);
+  background: var(--t-surface);
+  border: 1px solid var(--tw-10);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.25);
+}
+
+.ifl-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.ifl-head h2 { margin: 0 0 4px; font-size: 1.15rem; font-weight: 700; color: var(--t-text); }
+.ifl-head p { margin: 0; font-size: 0.82rem; line-height: 1.5; color: var(--t-text-muted); }
+
+.ifl-close {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  color: var(--t-text-muted);
+  background: var(--tw-05);
+}
+
+.ifl-card label { display: flex; flex-direction: column; gap: 6px; font-size: 0.8rem; font-weight: 600; color: var(--t-text-muted); }
+.ifl-card label em { color: var(--t-gold); font-style: normal; }
+.ifl-card input,
+.ifl-card select,
+.ifl-card textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--t-text);
+  background: var(--tw-03);
+  border: 1px solid var(--tw-10);
+  outline: none;
+}
+.ifl-card input:focus,
+.ifl-card select:focus,
+.ifl-card textarea:focus { border-color: rgba(var(--t-accent-rgb), 0.6); }
+.ifl-card textarea { resize: vertical; }
+
+.ifl-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.ifl-actions { display: flex; gap: 10px; margin-top: 4px; }
+.ifl-actions button { flex: 1; height: 44px; border-radius: 12px; font: inherit; font-weight: 700; cursor: pointer; }
+.ifl-submit { border: none; color: var(--t-on-accent); background: var(--btn-primary); }
+
+@media (max-width: 480px) {
+  .ifl-row { grid-template-columns: 1fr; }
+}
+
+/* Phone field with country picker (react-international-phone), themed to match the form */
+.ifl-card .ifl-field { display: flex; flex-direction: column; gap: 6px; font-size: 0.8rem; font-weight: 600; color: var(--t-text-muted); }
+.ifl-phone {
+  --react-international-phone-height: 42px;
+  --react-international-phone-border-radius: 10px;
+  --react-international-phone-font-size: 0.9rem;
+  --react-international-phone-background-color: var(--tw-03);
+  --react-international-phone-border-color: var(--tw-10);
+  --react-international-phone-text-color: var(--t-text);
+  --react-international-phone-country-selector-background-color: var(--tw-03);
+  --react-international-phone-country-selector-background-color-hover: var(--tw-08);
+  --react-international-phone-country-selector-arrow-color: var(--t-text-muted);
+  --react-international-phone-dropdown-item-background-color: var(--t-surface);
+  --react-international-phone-dropdown-item-text-color: var(--t-text);
+  --react-international-phone-dropdown-item-dial-code-color: var(--t-text-muted);
+  --react-international-phone-selected-dropdown-item-background-color: rgba(var(--t-accent-rgb), 0.16);
+  --react-international-phone-selected-dropdown-item-text-color: var(--t-text);
+  --react-international-phone-dropdown-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
+  width: 100%;
+}
+.ifl-card .ifl-phone input { width: auto; flex: 1; min-width: 0; border-radius: 0 10px 10px 0; padding: 0 12px; }
+.ifl-card .ifl-phone .react-international-phone-country-selector-dropdown { max-height: 220px; z-index: 10; }

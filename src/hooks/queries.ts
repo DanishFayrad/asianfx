@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import signalService from '@/services/signalService';
 import transactionService from '@/services/transactionService';
 import { updateServerTimeOffset } from '@/services/serverTime';
+import influencerService from '@/services/influencerService';
 
 /**
  * Query keys for all server data. The first part is a group, so a whole group can be
@@ -21,6 +22,9 @@ export const queryKeys = {
     publicStats: ['publicStats'] as const,
     adminStats: ['admin', 'stats'] as const,
     adminUsers: ['admin', 'users'] as const,
+    myInfluencerApplication: (userId?: string) => ['influencer', 'mine', userId] as const,
+    influencerApplications: ['admin', 'influencers', 'applications'] as const,
+    influencers: ['admin', 'influencers', 'list'] as const,
 };
 
 /** Signals the caller can see, plus the signal stats. */
@@ -91,5 +95,26 @@ export const usePendingTransactions = (enabled = true) => useQuery({
 export const useAllTransactions = (enabled = true) => useQuery({
     queryKey: queryKeys.allTransactions,
     queryFn: transactionService.getAllTransactions,
+    enabled,
+});
+
+// ---------------- Influencer programme ----------------
+
+/** The member's latest influencer application (null if they never applied). */
+export const useMyInfluencerApplication = (userId?: string, enabled = true) => useQuery({
+    queryKey: queryKeys.myInfluencerApplication(userId),
+    queryFn: influencerService.getMyApplication,
+    enabled: enabled && !!userId,
+});
+
+export const useInfluencerApplications = (enabled = true) => useQuery({
+    queryKey: queryKeys.influencerApplications,
+    queryFn: influencerService.getAllApplications,
+    enabled,
+});
+
+export const useInfluencers = (enabled = true) => useQuery({
+    queryKey: queryKeys.influencers,
+    queryFn: influencerService.getInfluencers,
     enabled,
 });

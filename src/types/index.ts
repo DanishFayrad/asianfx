@@ -17,6 +17,10 @@ export interface Profile {
     is_active: boolean;
     profile_image: string | null;
     free_signals: number;
+    /** Approved for the influencer programme (earns referral commission). */
+    is_influencer?: boolean;
+    /** The influencer's commission, in percent of each referred deposit. */
+    commission_percent?: number;
     created_at: string;
 }
 
@@ -43,6 +47,8 @@ export interface Signal {
     status: string;
     target_user_id: string | null;
     release_at: string | null;
+    /** When the signal closes on its own (admin's "Close after" timer); null = closed by hand. */
+    close_at?: string | null;
     total_taken: number;
     created_at: string;
     /** Only on get_member_signals(): whether the caller already took this signal. */
@@ -155,6 +161,22 @@ export interface PublicStats {
     closed_signals: number;
     wins: number;
     recent: Array<Pick<Signal, 'symbol' | 'type' | 'status' | 'entry_price' | 'target_price' | 'stop_loss' | 'created_at'>>;
+}
+
+export interface InfluencerApplication {
+    id: number;
+    user_id: string;
+    full_name: string;
+    platform: string;
+    profile_url: string;
+    followers: number | null;
+    phone: string | null;
+    message: string | null;
+    status: 'pending' | 'approved' | 'rejected' | string;
+    commission_percent: number | null;
+    created_at: string;
+    reviewed_at: string | null;
+    User?: { user_id: number | null; name: string | null; email: string | null; referral_count: number; total_referral_deposits: number } | null;
 }
 
 export interface MessageResponse {

@@ -57,7 +57,7 @@ export default function DepositModal({ isOpen, onClose }: { isOpen: boolean; onC
       formData.append('proof_image', screenshot);
 
       await transactionService.requestDeposit(formData);
-      toast.success('Deposit request submitted! Admin will verify and credit your wallet.');
+      toast.success('Deposit request submitted! It will be approved and credited to your wallet within 2 hours.');
       handleClose();
     } catch (err) {
       console.error("Deposit submit failed:", err);
