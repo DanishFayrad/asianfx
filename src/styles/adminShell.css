@@ -824,3 +824,8 @@
   .ahd-title,
   .admin-page-title { font-size: var(--fs-page-title); }
 }
+
+/* Release after + Close after side by side (stack on phones) */
+.bsg-timers { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.bsg-timers + .bsg-hint { margin-top: -4px; }
+@media (max-width: 600px) { .bsg-timers { grid-template-columns: 1fr; } }

@@ -31,6 +31,8 @@ export interface AdminUser extends Profile {
     signals_taken: number;
     signals_won: number;
     signals_lost: number;
+    /** Taken signals still active (no result yet). Expired/deleted ones are not counted. */
+    signals_open?: number;
 }
 
 export type SignalSide = 'Buy' | 'Sell';

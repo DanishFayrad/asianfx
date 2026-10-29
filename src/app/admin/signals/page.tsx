@@ -302,12 +302,18 @@ export default function AdminSignals() {
               </p>
             </div>
 
-            <div className="bsg-row2">
-              <label className="bsg-field" style={{ gridColumn: '1 / -1', flex: '1 1 100%', width: '100%' }}>
+            {/* Release delay and auto-close, side by side */}
+            <div className="bsg-timers">
+              <label className="bsg-field">
                 <span className="bsg-label">Release after (minutes)</span>
                 <input type="number" min="0" name="timer_minutes" autoComplete="off" onWheel={(e) => e.currentTarget.blur()} className="bsg-input" value={formData.timer_minutes} onChange={handleChange} placeholder="Enter Time" />
               </label>
+              <label className="bsg-field">
+                <span className="bsg-label">Close after (minutes)</span>
+                <input type="number" min="0" name="close_minutes" autoComplete="off" onWheel={(e) => e.currentTarget.blur()} className="bsg-input" value={formData.close_minutes} onChange={handleChange} placeholder="Enter Time" />
+              </label>
             </div>
+            <p className="bsg-hint">Close after: the signal closes automatically this many minutes after release. Leave empty to close it yourself.</p>
 
             {getSignalLevelError({ type, ...formData }) && (
               <div role="alert" className="bsg-alert bsg-alert--error">{getSignalLevelError({ type, ...formData })}</div>
@@ -350,25 +356,6 @@ export default function AdminSignals() {
               )}
             </section>
 
-            {/* Auto-close timer for the signal being sent */}
-            <section className="bsg-card" aria-label="Auto close">
-              <div className="bsg-card-head">
-                <h2>Close After</h2>
-                <p>Automatically close this signal after the specified number of minutes from its release. Members will see a countdown.</p>
-              </div>
-              <label className="bsg-field">
-                <span className="bsg-label">Close after (minutes)</span>
-                <input
-                  type="number"
-                  min="0"
-                  name="close_minutes" autoComplete="off" onWheel={(e) => e.currentTarget.blur()}
-                  className="bsg-input"
-                  value={formData.close_minutes}
-                  onChange={handleChange}
-                  placeholder="Enter Time"
-                />
-              </label>
-            </section>
 
           </div>
         </div>
@@ -478,14 +465,15 @@ export default function AdminSignals() {
                         <>
                           <span className="asg-result-label">Close with result:</span>
                           <div className="asg-result-btns">
-                            {[['TP Hit', 'win'], ['Stop Loss', 'loss'], ['Closed', 'neutral']].map(([label, kind]) => (
+                            {/* Saved as 'TP Hit' / 'Stop Loss' — the database settles members' wins/losses from these. */}
+                            {[['TP Hit', 'win', 'Profit Trade'], ['Stop Loss', 'loss', 'Loss Trade']].map(([status, kind, label]) => (
                               <button
-                                key={label}
+                                key={status}
                                 type="button"
                                 className={`asg-result-btn asg-result-btn--${kind}`}
                                 onClick={async () => {
                                   try {
-                                    await signalService.updateSignalStatus(sig.id, label);
+                                    await signalService.updateSignalStatus(sig.id, status);
                                     toast.success(`${sig.symbol} marked as ${label} — find it under Show: Recent`);
                                     fetchAllAdminData();
                                   } catch (e) { toast.error("Failed to update signal"); }
@@ -495,7 +483,7 @@ export default function AdminSignals() {
                           </div>
                         </>
                       ) : (
-                        <span className={`asg-status asg-status--${statusClass}`}>{sig.status === 'Active' ? 'Closed' : sig.status}</span>
+                        <span className={`asg-status asg-status--${statusClass}`}>{statusClass === 'win' ? 'Profit' : statusClass === 'loss' ? 'Loss' : 'Expired'}</span>
                       )}
                     </div>
                   </div>

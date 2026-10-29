@@ -10,6 +10,7 @@ interface SignalCounts {
     taken: number;
     wins: number;
     losses: number;
+    open: number; // no result yet and the signal is still active
 }
 
 const requestDeposit = async (formData: FormData): Promise<Transaction> => {
@@ -99,15 +100,19 @@ const getUserSignalCounts = async (): Promise<Record<string, SignalCounts>> => {
     const counts: Record<string, SignalCounts> = {};
     const pageSize = 1000;
     for (let from = 0; ; from += pageSize) {
-        const rows = unwrap<Array<{ user_id: string; result: string }>>(await supabase
+        const rows = unwrap<Array<{ user_id: string; result: string; signal: { status: string; close_at: string | null } | null }>>(await supabase
             .from('user_signals')
-            .select('user_id, result')
+            .select('user_id, result, signal:signals(status, close_at)')
             .range(from, from + pageSize - 1));
-        rows.forEach(({ user_id, result }) => {
-            const c = (counts[user_id] ??= { taken: 0, wins: 0, losses: 0 });
+        const now = Date.now();
+        rows.forEach(({ user_id, result, signal }) => {
+            const c = (counts[user_id] ??= { taken: 0, wins: 0, losses: 0, open: 0 });
             c.taken += 1;
             if (result === 'win') c.wins += 1;
             if (result === 'loss') c.losses += 1;
+            // Expired or deleted signals never get a result, so they don't count as open.
+            const stillOpen = signal?.status === 'Active' && !(signal.close_at && new Date(signal.close_at).getTime() <= now);
+            if (result === 'pending' && stillOpen) c.open += 1;
         });
         if (rows.length < pageSize) break;
     }
@@ -128,6 +133,7 @@ const getAllUsersWithSignals = async (): Promise<AdminUser[]> => {
         signals_taken: signalCounts[u.id]?.taken || 0,
         signals_won: signalCounts[u.id]?.wins || 0,
         signals_lost: signalCounts[u.id]?.losses || 0,
+        signals_open: signalCounts[u.id]?.open || 0,
     }));
 };
 

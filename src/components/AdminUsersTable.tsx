@@ -184,7 +184,7 @@ export default function AdminUsersTable({ users: rawUsers = EMPTY_ROWS, loading 
                                     const taken = Number(u.signals_taken || 0);
                                     const won = Number(u.signals_won || 0);
                                     const lost = Number(u.signals_lost || 0);
-                                    const open = Math.max(0, taken - won - lost);
+                                    const open = Number(u.signals_open || 0);
                                     const decided = won + lost;
                                     const rate = decided > 0 ? Math.round((won / decided) * 100) : null;
                                     const muted = { color: 'var(--admin-text-muted)' };
@@ -196,7 +196,7 @@ export default function AdminUsersTable({ users: rawUsers = EMPTY_ROWS, loading 
                                             <td style={{ ...td, textAlign: 'center' }}>
                                                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                                                     <span style={{ fontWeight: 700 }}>{taken}</span>
-                                                    {open > 0 && <span style={{ fontSize: '0.72rem', color: '#d97706' }} title="No result yet (still open, or closed without TP/SL)">{open} open</span>}
+                                                    {open > 0 && <span style={{ fontSize: '0.72rem', color: '#d97706' }} title="Still active — waiting for Profit / Loss">{open} open</span>}
                                                 </div>
                                             </td>
                                             <td style={{ ...td, textAlign: 'center' }} title="Signals that hit Take Profit">{num(won, '#16a34a')}</td>

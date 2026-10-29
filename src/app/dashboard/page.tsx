@@ -558,31 +558,31 @@ export default function Dashboard() {
       )}
 
       {mounted && !user?.is_admin && signalBanner && (
-        <div style={{ background: 'rgba(var(--t-accent-rgb), 0.15)', borderBottom: '2px solid var(--t-accent)', padding: '12px 1rem', color: 'var(--t-gold)', fontSize: '0.9rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '15px', zIndex: 1, position: 'relative' }}>
-            <span style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '1.2rem' }}>📈</span> 
-                {signalBanner.title}: {signalBanner.message}
+        <div className="sig-banner-wrap">
+          <div className="sig-banner" role="status">
+            <span className="sig-banner-icon" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17" /><polyline points="16 7 22 7 22 13" /></svg>
             </span>
-            <button 
+            <div className="sig-banner-text">
+              <strong>{String(signalBanner.title || 'New signal').replace(/[!:\s]+$/, '')}</strong>
+              <span>{signalBanner.message}</span>
+            </div>
+            <div className="sig-banner-actions">
+              <button
+                type="button"
+                className="sig-banner-btn"
                 onClick={() => {
-                    setSignalBanner(null);
-                    const tableElement = document.querySelector('.table-box');
-                    if (tableElement) tableElement.scrollIntoView({ behavior: 'smooth' });
-                }} 
-                style={{ 
-                    background: 'var(--btn-primary)', 
-                    color: 'var(--t-on-accent)', 
-                    border: 'none', 
-                    padding: '5px 15px', 
-                    borderRadius: '4px', 
-                    cursor: 'pointer', 
-                    fontSize: '0.8rem', 
-                    fontWeight: 700 
+                  setSignalBanner(null);
+                  document.querySelector('.table-box')?.scrollIntoView({ behavior: 'smooth' });
                 }}
-            >
-                View Details
-            </button>
-            <button onClick={() => setSignalBanner(null)} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'var(--t-gold)', cursor: 'pointer', fontSize: '1.2rem' }}>✕</button>
+              >
+                View signal
+              </button>
+              <button type="button" className="sig-banner-close" onClick={() => setSignalBanner(null)} aria-label="Dismiss">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -1130,8 +1130,12 @@ export default function Dashboard() {
             <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', zIndex: 5000, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(10px)' }}>
                 <div className="modal-content" style={{ background: 'var(--t-surface)', padding: '2.5rem', borderRadius: '24px', color: 'var(--t-text)', width: '400px', border: '1px solid rgba(239, 68, 68, 0.3)', boxShadow: '0 25px 50px -12px rgba(239, 68, 68, 0.1)' }}>
                     <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-                        <div style={{ background: 'rgba(239, 68, 68, 0.1)', width: '70px', height: '70px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}>
-                            <span style={{ fontSize: '2.5rem', color: '#ef4444' }}>⚠️</span>
+                        <div style={{ background: 'rgba(239, 68, 68, 0.1)', width: '70px', height: '70px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem', color: '#ef4444' }}>
+                            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                                <line x1="12" y1="9" x2="12" y2="13" />
+                                <line x1="12" y1="17" x2="12.01" y2="17" />
+                            </svg>
                         </div>
                         <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '0.75rem' }}>{user?.is_admin ? 'Delete Signal?' : 'Remove Signal?'}</h2>
                         <p style={{ color: 'var(--t-text-muted)', fontSize: '1rem', lineHeight: '1.6' }}>{user?.is_admin ? 'Are you sure you want to remove this signal? This action cannot be undone.' : 'This removes the signal from your dashboard. It will not come back.'}</p>
