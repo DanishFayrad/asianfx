@@ -92,7 +92,7 @@ export default function ForgotPassword() {
                     </form>
                 ) : (
                     <form onSubmit={handleResetPassword}>
-                        <p className="subtitle">Enter the 6-digit code sent to <strong>{email}</strong> and your new password.</p>
+                        <p className="subtitle">We sent an email to <strong>{email}</strong>. Click the <strong>Reset password</strong> link in it, or enter the code from the email below with your new password.</p>
                         
                         <div className="form-group">
                             <label>Verification Code</label>

@@ -79,12 +79,16 @@ export default function AuthGuard({ children }: { children: ReactNode }) {
 
     // Re-read the profile whenever the Supabase session changes (sign in, sign out, token refresh).
     useEffect(() => {
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
             // Defer: Supabase recommends not awaiting other calls inside this callback.
             setTimeout(() => queryClient.invalidateQueries({ queryKey: authKeys.user }), 0);
+            // Opened the "Reset password" email link (it can land on any page) → choose a new password.
+            if (event === 'PASSWORD_RECOVERY' && window.location.pathname !== '/reset-password') {
+                router.replace('/reset-password');
+            }
         });
         return () => subscription.unsubscribe();
-    }, [queryClient]);
+    }, [queryClient, router]);
 
     // Show the logged-in user as "online" on every page (admins are excluded from the count).
     useEffect(() => {

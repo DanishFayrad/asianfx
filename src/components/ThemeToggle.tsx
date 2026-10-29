@@ -17,7 +17,7 @@ const MoonIcon = () => (
 );
 
 // Pages without a navbar get the floating button instead.
-const NO_NAVBAR_ROUTES = ['/login', '/register', '/otp', '/verify', '/verify-email', '/forgot-password', '/bossjutt'];
+const NO_NAVBAR_ROUTES = ['/login', '/register', '/otp', '/verify', '/verify-email', '/forgot-password', '/reset-password', '/bossjutt'];
 
 /**
  * Light/dark switch.

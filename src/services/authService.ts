@@ -86,7 +86,10 @@ const resendOTP = async ({ email }: { email: string }): Promise<MessageResponse>
 };
 
 const forgotPassword = async ({ email }: { email: string }): Promise<MessageResponse> => {
-    unwrap(await supabase.auth.resetPasswordForEmail(email));
+    // The email's "Reset password" link opens /reset-password (if the email shows a code instead,
+    // the member types it on the Forgot Password page).
+    const redirectTo = typeof window !== 'undefined' ? `${window.location.origin}/reset-password` : undefined;
+    unwrap(await supabase.auth.resetPasswordForEmail(email, { redirectTo }));
     return { message: 'Reset code sent' };
 };
 
