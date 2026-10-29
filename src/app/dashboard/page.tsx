@@ -400,7 +400,7 @@ export default function Dashboard() {
     const time = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
     return (
       <span style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.3 }}>
-        <span>{time}</span>
+        <span style={{ color: 'var(--t-text)', fontWeight: 600 }}>{time}</span>
         <span style={{ fontSize: '0.75rem', color: 'var(--t-text-muted)' }}>{date}</span>
       </span>
     );
@@ -562,12 +562,6 @@ export default function Dashboard() {
             <span style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span style={{ fontSize: '1.2rem' }}>📈</span> 
                 {signalBanner.title}: {signalBanner.message}
-                {signalBanner.signal?.release_at && new Date(signalBanner.signal.release_at).getTime() > currentTime.getTime() && (
-                  <span style={{ background: 'rgba(0,0,0,0.5)', padding: '4px 12px', borderRadius: '6px', marginLeft: '10px', border: '1px solid var(--t-accent)', display: 'inline-flex', alignItems: 'center', gap: '5px', animation: 'pulse 2s infinite' }}>
-                    <span style={{ fontSize: '1.1rem' }}>⌛</span>
-                    <span style={{ fontWeight: 800, fontFamily: 'monospace', letterSpacing: '1px' }}>{formatCountdown(signalBanner.signal.release_at)}</span>
-                  </span>
-                )}
             </span>
             <button 
                 onClick={() => {
@@ -601,6 +595,14 @@ export default function Dashboard() {
           </div>
 
           <div className="right-actions">
+            {/* Countdown of the newest signal (from the banner) until it unlocks, next to Deposit */}
+            {mounted && !user?.is_admin && signalBanner?.signal?.release_at
+              && new Date(signalBanner.signal.release_at).getTime() > currentTime.getTime() && (
+              <div className="gtm-chip" title="The new signal unlocks when this countdown ends">
+                <span>⏳ {signalBanner.signal.symbol || 'Signal'} unlocks in</span>
+                <b>{formatCountdown(signalBanner.signal.release_at)}</b>
+              </div>
+            )}
             {mounted && !user?.is_admin && globalTimer && !isGlobalTimerHidden && (
               <div className="gtm-chip">
                 <span>Next signal in</span>
@@ -901,8 +903,8 @@ export default function Dashboard() {
                                                         {signal.release_at && new Date(signal.release_at).getTime() > currentTime.getTime() 
                                                             ? (
                                                                 <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                                                    <span style={{ color: '#f59e0b', fontWeight: 700, fontSize: '0.8rem' }}>Release In</span>
-                                                                    <span style={{ color: '#f59e0b', fontSize: '0.75rem' }}>{formatCountdown(signal.release_at)}</span>
+                                                                    <span style={{ color: 'var(--t-text)', fontWeight: 700, fontSize: '0.8rem' }}>Release In</span>
+                                                                    <span style={{ color: 'var(--t-text)', fontSize: '0.75rem', fontFamily: 'var(--font-num)' }}>{formatCountdown(signal.release_at)}</span>
                                                                 </div>
                                                             )
                                                             : formatReleaseTime(signal.release_at || signal.created_at)
@@ -937,8 +939,14 @@ export default function Dashboard() {
                                                                             🔒 {formatCountdown(signal.release_at)}
                                                                         </button>
                                                                     ) : (
-                                                                        <button type="button" className="sig-btn sig-btn--take" onClick={() => handleTakeSignal(signal)}>
-                                                                            Take · {(user && user.free_signals > 0) ? 'FREE' : '$1'}
+                                                                        <button
+                                                                            type="button"
+                                                                            className={`sig-btn sig-btn--take${closesAt ? ' sig-btn--timed' : ''}`}
+                                                                            onClick={() => handleTakeSignal(signal)}
+                                                                            title={closesAt ? 'This signal closes automatically' : undefined}
+                                                                        >
+                                                                            <span>Take · {(user && user.free_signals > 0) ? 'FREE' : '$1'}</span>
+                                                                            {closesAt && <small className="sig-btn-timer">⏱ {formatCountdown(closesAt)}</small>}
                                                                         </button>
                                                                     )}
                                                                     {canHide && (
@@ -951,9 +959,6 @@ export default function Dashboard() {
                                                                         >
                                                                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
                                                                         </button>
-                                                                    )}
-                                                                    {closesAt && (
-                                                                        <span className="sig-closes" title="This signal closes automatically">⏱ Closes in {formatCountdown(closesAt)}</span>
                                                                     )}
                                                                 </div>
                                                             );
@@ -1064,60 +1069,62 @@ export default function Dashboard() {
             </div>
         )}
 
-        {/* TAKE SIGNAL CONFIRMATION MODAL */}
-        {isTakeSignalModalOpen && signalToTake && (
-            <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(10px)' }}>
-                <div className="modal-content" style={{ background: 'var(--t-surface)', padding: '2.5rem', borderRadius: '24px', color: 'var(--t-text)', width: '400px', border: '1px solid var(--tw-10)', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}>
-                    <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-                        <div style={{ display: 'flex', justifyContent: 'center', margin: '0 auto 1.5rem' }}>
-                            <AssetBadge symbol={signalToTake.symbol} size={64} />
+        {/* TAKE SIGNAL CONFIRMATION MODAL — same look as the "New signal" popup */}
+        {isTakeSignalModalOpen && signalToTake && (() => {
+            const side = (signalToTake.type || '').toLowerCase() === 'sell' ? 'sell' : 'buy';
+            const isFree = !!user && user.free_signals > 0;
+            const lockIcon = (
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <rect x="4" y="11" width="16" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" />
+                </svg>
+            );
+            return (
+                <div className="nsa-overlay" style={{ zIndex: 3000 }} onClick={() => { if (!isSubmitting) setIsTakeSignalModalOpen(false); }}>
+                    <div className="nsa-card" role="dialog" aria-modal="true" aria-labelledby="tsc-title" onClick={(e) => e.stopPropagation()}>
+                        <div className="nsa-head">
+                            <span className="nsa-badge">Confirm signal</span>
+                            <button type="button" className="nsa-close" onClick={() => setIsTakeSignalModalOpen(false)} aria-label="Close" disabled={isSubmitting}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
+                            </button>
                         </div>
-                        <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '0.5rem' }}>Confirm Signal</h2>
-                        <p style={{ color: 'var(--t-text-muted)', fontSize: '0.95rem', lineHeight: '1.5' }}>
-                            Are you sure you want to take <strong>{signalToTake.symbol}</strong> signal?
+
+                        <div className="nsa-pair">
+                            <AssetBadge symbol={signalToTake.symbol} size={46} />
+                            <div className="nsa-pair-text">
+                                <h2 id="tsc-title">{signalToTake.symbol}</h2>
+                                <small>{getSymbolName(signalToTake.symbol)}</small>
+                            </div>
+                            <span className={`nsa-side nsa-side--${side}`}>{side.toUpperCase()}</span>
+                        </div>
+
+                        <div className="nsa-levels">
+                            {[['Entry', signalToTake.entry_price], ['Take profit', signalToTake.target_price], ['Stop loss', signalToTake.stop_loss]].map(([label, value]) => (
+                                <div key={String(label)}>
+                                    <small>{label}</small>
+                                    {value != null ? <b>{value}</b> : <b className="nsa-locked">{lockIcon} Locked</b>}
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="tsc-fee">
+                            <span>Signal fee</span>
+                            <strong>{isFree ? `FREE (${user!.free_signals} credit${user!.free_signals > 1 ? 's' : ''})` : '$1.00'}</strong>
+                        </div>
+
+                        <p className="nsa-note">
+                            <strong>You trade on your own behalf.</strong> Taking a signal unlocks its levels — you then open and manage the trade yourself in your own broker account.
                         </p>
-                    </div>
 
-                    <div style={{ background: 'var(--tw-03)', padding: '1.5rem', borderRadius: '16px', marginBottom: '1.5rem', border: '1px solid var(--tw-05)' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                            <span style={{ color: 'var(--t-text-dim)' }}>Entry / TP / SL</span>
-                            <span style={{ fontWeight: 700 }}>
-                                {signalToTake.entry_price == null
-                                    ? '🔒 Unlocked after you take it'
-                                    : signalToTake.entry_price + ' / ' + signalToTake.target_price + ' / ' + signalToTake.stop_loss}
-                            </span>
+                        <div className="tsc-actions">
+                            <button type="button" className="btn-cancel" onClick={() => setIsTakeSignalModalOpen(false)} disabled={isSubmitting}>Cancel</button>
+                            <button type="button" className="nsa-take" onClick={confirmTakeSignal} disabled={isSubmitting}>
+                                {isSubmitting ? 'Processing…' : `Take signal · ${isFree ? 'FREE' : '$1'}`}
+                            </button>
                         </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <span style={{ color: 'var(--t-text-dim)' }}>Signal Fee</span>
-                            <span style={{ fontWeight: 700, color: 'var(--t-gold)' }}>
-                                {(user && user.free_signals > 0) ? `FREE (${user.free_signals} credit${user.free_signals > 1 ? 's' : ''})` : '$1.00'}
-                            </span>
-                        </div>
-                    </div>
-
-                    <p style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', fontSize: '0.82rem', lineHeight: 1.5, color: 'var(--t-text-muted)', background: 'rgba(var(--t-accent-rgb), 0.08)', border: '1px solid rgba(var(--t-accent-rgb), 0.3)', borderRadius: '12px', padding: '10px 12px', marginBottom: '1.25rem', textAlign: 'left' }}>
-                        <span aria-hidden="true">ℹ️</span>
-                        <span><strong style={{ color: 'var(--t-text)' }}>You trade on your own behalf.</strong> Taking a signal unlocks its levels — you then open and manage the trade yourself in your own broker account.</span>
-                    </p>
-
-                    <div style={{ display: 'flex', gap: '12px' }}>
-                        <button 
-                            onClick={confirmTakeSignal} 
-                            disabled={isSubmitting}
-                            style={{ flex: 2, background: 'var(--btn-primary)', border: 'none', padding: '14px', borderRadius: '12px', cursor: isSubmitting ? 'not-allowed' : 'pointer', opacity: isSubmitting ? 0.7 : 1, fontWeight: 700, color: 'var(--t-on-accent)', fontSize: '1rem' }}
-                        >
-                            {isSubmitting ? 'Processing...' : 'Take Signal'}
-                        </button>
-                        <button 
-                            className="btn-cancel" onClick={() => setIsTakeSignalModalOpen(false)} 
-                            style={{ flex: 1, background: 'var(--tw-05)', border: '1px solid var(--tw-10)', color: 'var(--t-text)', padding: '14px', borderRadius: '12px', cursor: 'pointer', fontWeight: 600 }}
-                        >
-                            Cancel
-                        </button>
                     </div>
                 </div>
-            </div>
-        )}
+            );
+        })()}
 
         {/* DELETE CONFIRMATION MODAL */}
         {isDeleteModalOpen && (

@@ -533,3 +533,16 @@
   .adb-alert-btn { margin-left: 0; }
   .adb-new { padding: 0 12px; font-size: 0.8rem; }
 }
+
+/* =====================================================================
+   Typography (sizes come from the scale in globals.css)
+   ===================================================================== */
+.atx-kpi strong { font-size: var(--fs-kpi); font-weight: 700; line-height: 1.2; }
+.atx-kpi-label { font-size: var(--fs-helper); }
+.atx-kpi small { font-size: var(--fs-small); }
+.atx-table th { font-size: var(--fs-th); font-weight: 600; }
+.atx-table td { font-size: var(--fs-table); font-weight: 400; }
+
+@media (max-width: 600px) {
+  .atx-kpi strong { font-size: var(--fs-kpi); }
+}

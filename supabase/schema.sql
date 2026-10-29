@@ -579,7 +579,9 @@ returns json language sql stable security definer set search_path = public as $$
           and (public.is_admin()
                or s.target_user_id = auth.uid()
                or us.id is not null
-               or (s.target_user_id is null and public.can_receive_signals(auth.uid())))
+               -- broadcast signals: only ones sent after the member joined (new members don't see old history)
+               or (s.target_user_id is null and public.can_receive_signals(auth.uid())
+                   and s.created_at >= (select p.created_at from public.profiles p where p.id = auth.uid())))
           and not exists (select 1 from public.hidden_signals h where h.user_id = auth.uid() and h.signal_id = s.id)
         order by s.created_at desc
         limit 100

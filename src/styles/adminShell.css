@@ -627,7 +627,7 @@
 }
 
 .bsg-timer-label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #d97706; }
-.bsg-timer b { font-family: var(--font-geist-mono), ui-monospace, monospace; font-size: 1.6rem; font-weight: 800; color: var(--t-gold); font-variant-numeric: tabular-nums; }
+.bsg-timer b { font-family: var(--font-jetbrains), ui-monospace, monospace; font-size: 1.6rem; font-weight: 800; color: var(--t-gold); font-variant-numeric: tabular-nums; }
 .bsg-timer .bsg-btn-ghost { margin-left: auto; }
 
 /* Requests */
@@ -795,3 +795,32 @@
 .ifa-status { padding: 3px 10px; border-radius: 999px; font-size: 0.72rem; font-weight: 700; }
 .ifa-status--approved { color: #16a34a; background: rgba(34, 197, 94, 0.12); }
 .ifa-status--rejected { color: var(--t-text-muted); background: var(--tw-05); }
+
+/* =====================================================================
+   Typography (sizes come from the scale in globals.css)
+   ===================================================================== */
+.ahd-title,
+.admin-page-title { font-size: var(--fs-page-title); font-weight: 700; line-height: 1.25; }
+.ahd-subtitle,
+.admin-subtitle { font-size: var(--fs-card); }
+.bsg-card-head h2,
+.ifa-head h2 { font-size: var(--fs-section-title); font-weight: 600; line-height: 1.25; }
+.bsg-card-head p,
+.ifa-info small { font-size: var(--fs-card); }
+.bsg-label { font-size: var(--fs-label); font-weight: 600; }
+.bsg-hint,
+.asg-meta { font-size: var(--fs-helper); }
+.asg-title small { font-size: var(--fs-small); }
+.bsg-submit,
+.bsg-btn,
+.bsg-btn-ghost,
+.ifa-btn,
+.asg-result-btn { font-size: var(--fs-btn); font-weight: 600; }
+/* Signal prices on admin cards and in the broadcast preview */
+.asg-levels b,
+.bsg-preview-levels b { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+
+@media (max-width: 768px) {
+  .ahd-title,
+  .admin-page-title { font-size: var(--fs-page-title); }
+}

@@ -295,3 +295,18 @@ h1{
     margin-top: 20px;
   }
 }
+
+/* =====================================================================
+   Typography (sizes come from the scale in globals.css)
+   ===================================================================== */
+.login-container h1 { font-size: var(--fs-page-title); font-weight: 700; line-height: 1.25; }
+.subtext { font-size: var(--fs-body); }
+.input-group label { font-size: var(--fs-label); font-weight: 600; }
+.login-btn { font-size: var(--fs-btn); font-weight: 600; }
+.options,
+.login-footer { font-size: var(--fs-helper); }
+@media (max-width: 600px) {
+  .login-container h1 { font-size: var(--fs-page-title); }
+  .subtext { font-size: var(--fs-body); }
+  .login-btn { font-size: var(--fs-btn); }
+}

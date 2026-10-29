@@ -31,7 +31,7 @@
     margin: 0 !important;
     background-color: var(--bg-main);
     color: var(--text-main);
-    font-family: var(--font-geist-sans), system-ui, sans-serif;
+    font-family: var(--font-inter), system-ui, sans-serif;
     line-height: 1.5;
 }
 .db-main-layout {
@@ -1698,7 +1698,7 @@
   color: var(--t-text-muted);
   background: var(--tw-05);
   border: 1px dashed var(--tw-20);
-  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-family: var(--font-jetbrains), ui-monospace, monospace;
   cursor: not-allowed;
 }
 
@@ -1763,4 +1763,37 @@
   font-weight: 700;
   color: #d97706;
   font-variant-numeric: tabular-nums;
+}
+
+/* Take button of a signal with an auto-close timer: price on top, countdown below, inside the button */
+.sig-btn--timed { height: auto; min-height: 44px; padding: 5px 14px; flex-direction: column; gap: 1px; line-height: 1.2; }
+.sig-btn-timer {
+  font-size: 0.7rem;
+  font-weight: 700;
+  opacity: 0.8;
+  font-variant-numeric: tabular-nums;
+}
+
+/* =====================================================================
+   Typography (sizes come from the scale in globals.css)
+   ===================================================================== */
+.db-page-title { font-size: var(--fs-page-title); font-weight: 700; line-height: 1.25; }
+.db-subtitle { font-size: var(--fs-body); font-weight: 400; line-height: 1.55; }
+.deposit,
+.sig-btn,
+.page-btn,
+.page-number { font-size: var(--fs-btn); font-weight: 600; }
+.sig-btn-timer { font-size: var(--fs-small); }
+.db-container th { font-size: var(--fs-th); font-weight: 600; }
+.db-container td { font-size: var(--fs-table); font-weight: 400; }
+.time,
+.showing-text { font-size: var(--fs-small); }
+/* Entry / Take profit / Stop loss and taken prices */
+.sig-cell-level,
+.db-container td.green,
+.db-container td.red { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+
+@media (max-width: 768px) {
+  .db-page-title { font-size: var(--fs-page-title); }
+  .deposit { font-size: var(--fs-btn); }
 }

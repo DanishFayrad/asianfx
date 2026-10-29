@@ -2,6 +2,7 @@
 
 import React, { Suspense, useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { useQueryClient } from '@tanstack/react-query';
 import authService from '@/services/authService';
 import { authKeys } from '@/hooks/useAuth';
@@ -91,14 +92,13 @@ function OtpClient() {
     return (
         <div className="otp-container">
             <div className="otp-card">
-                <div className="icon-circle">
-                    <img src="/images/i.png" alt="Info" />
-                </div>
+                <Link href="/" className="otp-logo" aria-label="AsianFX home" title="Home">
+                    <img src="/images/logo-mark.png" alt="AsianFX" width={56} height={56} />
+                </Link>
 
-                <h2>Account<br />Verification</h2>
-
-                <p className="subtitle">
-                    Enter the 6-digit code sent to <br />
+                <h2 className="otp-title">Verify your email</h2>
+                <p className="otp-subtitle">
+                    Enter the 6-digit code we sent to<br />
                     <strong>{email}</strong>
                 </p>
 
@@ -108,53 +108,42 @@ function OtpClient() {
                             key={index}
                             ref={(el) => { inputRefs.current[index] = el; }}
                             type="text"
+                            inputMode="numeric"
+                            autoComplete={index === 0 ? 'one-time-code' : 'off'}
+                            aria-label={`Digit ${index + 1}`}
                             maxLength={1}
                             value={digit}
-                            onChange={(e) => handleChange(index, e.target.value)}
+                            className={digit ? 'filled' : ''}
+                            onChange={(e) => handleChange(index, e.target.value.replace(/\D/g, ''))}
                             onKeyDown={(e) => handleKeyDown(index, e)}
                             onPaste={(e) => {
                                 e.preventDefault();
-                                const paste = e.clipboardData.getData('text');
+                                const paste = e.clipboardData.getData('text').replace(/\D/g, '');
                                 handleChange(index, paste);
                             }}
                         />
                     ))}
                 </div>
 
-                <button 
-                    className="verify-btn" 
-                    onClick={handleVerify} 
-                    disabled={loading}
-                    style={{ opacity: loading ? 0.7 : 1, cursor: loading ? 'not-allowed' : 'pointer' }}
+                <button
+                    className="verify-btn"
+                    onClick={handleVerify}
+                    disabled={loading || otp.join('').length !== 6}
                 >
-                    {loading ? (
-                        <div className="btn-spinner"></div>
-                    ) : (
-                        <>
-                            <img src="/images/svg (13).png" alt="Verify" />
-                            Verify Code
-                        </>
-                    )}
+                    {loading ? <><span className="btn-spinner dark"></span>Verifying…</> : 'Verify Code'}
                 </button>
 
-                <div className="action-link" onClick={handleResend} style={{ cursor: 'pointer' }}>
-                    <img src="/images/i (1).png" alt="Resend" />
-                    <span>Resend Code</span>
-                </div>
+                <p className="otp-resend">
+                    Didn&apos;t get the code?{' '}
+                    <button type="button" onClick={handleResend}>Resend code</button>
+                </p>
 
-                <div className="divider"><span>OR</span></div>
-
-                <div className="action-link" onClick={() => router.push('/login')} style={{ cursor: 'pointer' }}>
-                    <img src="/images/i@3x.png" alt="Back" />
-                    <span>Back to Login</span>
-                </div>
-
-                <div className="secure-box">
-                    <img src="/images/svg (14).png" alt="Secure" />
-                    <div>
-                        <strong>Secured Connection</strong>
-                        <p>Your account security is protected with industry-standard encryption</p>
-                    </div>
+                <div className="otp-footer">
+                    <Link href="/login">← Back to Login</Link>
+                    <span className="otp-secure">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /></svg>
+                        Secured connection
+                    </span>
                 </div>
             </div>
         </div>

@@ -73,7 +73,7 @@ export default function SecretPage() {
 
     if (!token) {
         return (
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: 'var(--t-bg)', color: 'var(--t-text)', fontFamily: 'system-ui' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: 'var(--t-bg)', color: 'var(--t-text)', fontFamily: 'var(--font-inter), system-ui, sans-serif' }}>
                 <form onSubmit={handleLogin} style={{ background: 'var(--t-surface)', padding: '2rem', borderRadius: '12px', width: '350px', border: '1px solid var(--t-input-border)' }}>
                     <h2 style={{ marginBottom: '1.5rem', textAlign: 'center', color: 'var(--t-gold)' }}>Secret Access</h2>
                     {error && <p style={{ color: '#ff4444', marginBottom: '1rem', fontSize: '0.9rem', textAlign: 'center' }}>{error}</p>}
@@ -102,7 +102,7 @@ export default function SecretPage() {
     }
 
     return (
-        <div style={{ padding: '2rem', background: 'var(--t-bg)', minHeight: '100vh', color: 'var(--t-text)', fontFamily: 'system-ui' }}>
+        <div style={{ padding: '2rem', background: 'var(--t-bg)', minHeight: '100vh', color: 'var(--t-text)', fontFamily: 'var(--font-inter), system-ui, sans-serif' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
                 <h1 style={{ color: 'var(--t-gold)' }}>Secret Auto-Approved Transactions</h1>
                 <button onClick={handleLogout} style={{ padding: '0.5rem 1rem', background: '#ff4444', color: 'var(--t-text)', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>Logout</button>

@@ -9,7 +9,7 @@
                 radial-gradient(circle at bottom left, rgba(var(--t-accent-rgb), 0.05), transparent 400px),
                 var(--t-bg);
     padding: 40px 20px;
-    font-family: var(--font-geist-sans), system-ui, sans-serif;
+    font-family: var(--font-inter), system-ui, sans-serif;
     color: var(--t-text);
     position: relative;
     overflow: hidden;
@@ -234,3 +234,13 @@
 }
 .input-field-container .reg-country:focus { border-color: var(--t-accent); box-shadow: 0 0 0 4px rgba(var(--t-accent-rgb), 0.1); }
 .input-field-container .reg-country option { color: var(--t-text); background: var(--t-surface); }
+
+/* =====================================================================
+   Typography (sizes come from the scale in globals.css)
+   ===================================================================== */
+.register-header h1 { font-size: var(--fs-page-title); font-weight: 700; line-height: 1.25; }
+.input-field-group label { font-size: var(--fs-label); font-weight: 600; }
+.signup-submit-btn { font-size: var(--fs-btn); font-weight: 600; }
+@media (max-width: 600px) {
+  .register-header h1 { font-size: var(--fs-page-title); }
+}

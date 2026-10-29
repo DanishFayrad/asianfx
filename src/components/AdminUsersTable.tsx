@@ -104,8 +104,8 @@ export default function AdminUsersTable({ users: rawUsers = EMPTY_ROWS, loading 
     const totalPages = Math.max(1, table.getPageCount());
     const safePage = table.state.pagination.pageIndex + 1;
 
-    const th: CSSProperties = { textAlign: 'left', padding: '12px 14px', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--admin-text-muted)', borderBottom: '1px solid var(--admin-border-color)', whiteSpace: 'nowrap' };
-    const td: CSSProperties = { padding: '12px 14px', fontSize: '0.85rem', borderBottom: '1px solid var(--admin-border-color)', whiteSpace: 'nowrap' };
+    const th: CSSProperties = { textAlign: 'left', padding: '12px 14px', fontSize: 'var(--fs-th)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--admin-text-muted)', borderBottom: '1px solid var(--admin-border-color)', whiteSpace: 'nowrap' };
+    const td: CSSProperties = { padding: '12px 14px', fontSize: 'var(--fs-table)', borderBottom: '1px solid var(--admin-border-color)', whiteSpace: 'nowrap' };
 
     return (
         <div style={{ background: 'var(--admin-bg-card)', border: '1px solid var(--admin-border-color)', borderRadius: '16px', overflow: 'hidden' }}>
