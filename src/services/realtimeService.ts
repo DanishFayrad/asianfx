@@ -124,8 +124,17 @@ export function connectRealtime(user: RealtimeUser | null | undefined): Realtime
                     ({ new: row }) => emit('signal_request', row as SignalRequest));
         }
 
+        let retrying = false;
         channel.subscribe((status) => {
             if (status === 'SUBSCRIBED') emit('connect');
+            // Connection lost (network blip, laptop sleep, server restart): start a fresh channel once.
+            if ((status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') && !closed && !retrying) {
+                retrying = true;
+                const i = channels.indexOf(channel);
+                if (i >= 0) channels.splice(i, 1);
+                supabase.removeChannel(channel);
+                setTimeout(start, 3000);
+            }
         });
         channels.push(channel);
     };

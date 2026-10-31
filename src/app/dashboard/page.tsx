@@ -37,10 +37,6 @@ const signalColumnHelper = createColumnHelper<typeof listTableFeatures, Signal>(
 const signalColumns = signalColumnHelper.columns([
   signalColumnHelper.accessor('symbol', { id: 'search' }),
 ]);
-const historyColumnHelper = createColumnHelper<typeof basicTableFeatures, SignalHistoryItem>();
-const historyColumns = historyColumnHelper.columns([
-  historyColumnHelper.accessor((h) => h.Signal?.symbol ?? '', { id: 'symbol' }),
-]);
 
 export default function Dashboard() {
   const router = useRouter();
@@ -61,8 +57,8 @@ export default function Dashboard() {
   }, []);
   
   const handleDeposit = async () => {
-    if (!depositAmount || parseFloat(depositAmount) < 5) {
-      toast.error('Minimum deposit amount is $5');
+    if (!depositAmount || parseFloat(depositAmount) < 10) {
+      toast.error('Minimum deposit amount is $10');
       return;
     }
     if (!screenshot) {
@@ -110,6 +106,9 @@ export default function Dashboard() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isSignalAlertOpen, setIsSignalAlertOpen] = useState(false);
   const [incomingSignal, setIncomingSignal] = useState<Partial<Signal> | null>(null);
+  // Signals the member has already been alerted about (realtime or the fallback check below).
+  const alertedSignalIds = useRef<Set<number>>(new Set());
+  const knownSignalIds = useRef<Set<number> | null>(null);
   const [isGlobalTimerHidden, setIsGlobalTimerHidden] = useState(false);
   const [rejectedSignalIds, setRejectedSignalIds] = useState<number[]>([]);
   
@@ -125,20 +124,6 @@ export default function Dashboard() {
     localStorage.setItem('rejectedSignalIds', JSON.stringify(rejectedSignalIds));
   }, [rejectedSignalIds]);
 
-  // Purchases of signals the admin deleted can't be hidden on the server (the signal is gone),
-  // so the member's "remove" for those rows is remembered in this browser.
-  const [hiddenHistoryIds, setHiddenHistoryIds] = useState<number[]>(() => {
-    if (typeof window === 'undefined') return [];
-    try { return JSON.parse(localStorage.getItem('hiddenHistoryIds') || '[]'); } catch { return []; }
-  });
-  const hideHistoryRow = (id: number) => {
-    setHiddenHistoryIds((prev) => {
-      const next = [...prev, id];
-      try { localStorage.setItem('hiddenHistoryIds', JSON.stringify(next)); } catch {}
-      return next;
-    });
-    toast.success('Removed from your list');
-  };
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date(Date.now() + serverTimeOffset)), 1000); // Tick every 1s for real-time countdown
@@ -166,6 +151,22 @@ export default function Dashboard() {
   const signalsQuery = useSignalsDashboard(user?.id);
   const signals: Signal[] = signalsQuery.data?.active_signals ?? EMPTY_ROWS;
   const loading = signalsQuery.isPending;
+  // Fallback for the "new signal" popup: if the live connection missed the alert, a signal that
+  // newly appears in the list (and is still open) opens the popup once.
+  useEffect(() => {
+    if (isAdmin || signalsQuery.isPending) return;
+    const ids = new Set(signals.map((s) => Number(s.id)));
+    if (knownSignalIds.current === null) { knownSignalIds.current = ids; return; } // first load: no popup
+    const fresh = signals.find((s) => !knownSignalIds.current!.has(Number(s.id))
+      && !alertedSignalIds.current.has(Number(s.id))
+      && s.status === 'Active');
+    knownSignalIds.current = ids;
+    if (fresh) {
+      alertedSignalIds.current.add(Number(fresh.id));
+      setIncomingSignal(fresh);
+      setIsSignalAlertOpen(true);
+    }
+  }, [signals, isAdmin, signalsQuery.isPending]);
   const signalHistoryQuery = useSignalHistory(user?.id, !!user && !isAdmin);
   const signalHistory: SignalHistoryItem[] = signalHistoryQuery.data ?? EMPTY_ROWS;
   const historyLoading = signalHistoryQuery.isPending;
@@ -227,6 +228,7 @@ export default function Dashboard() {
     
     socket.on('connect', () => {
         console.log("Realtime connected");
+        fetchSignals(); // catch up on anything sent while the connection was down
         socket.emit('join', user.id);
         if (user.is_admin) {
             socket.emit('join_admin');
@@ -250,6 +252,7 @@ export default function Dashboard() {
             
             // Trigger the new Premium Alert Popup
             if (notif.signal) {
+                if (notif.signal.id != null) alertedSignalIds.current.add(Number(notif.signal.id));
                 setIncomingSignal(notif.signal);
                 setIsSignalAlertOpen(true);
             }
@@ -408,7 +411,7 @@ export default function Dashboard() {
 
   const handleTakeSignal = async (signal: Partial<Signal>) => {
     if (!user?.is_active && !user?.is_admin) {
-        toast.error('Your account is not active for signals. Please complete a deposit and wait for admin approval.');
+        toast.error('Your account is not active for signals. Please make a minimum deposit of $10 and wait for admin approval.');
         setIsDepositModalOpen(true);
         return;
     }
@@ -480,18 +483,6 @@ export default function Dashboard() {
   const currentPage = signalsTable.state.pagination.pageIndex + 1;
   const startIndex = signalsTable.state.pagination.pageIndex * rowsPerPage;
 
-  // "My Purchased Signals" table — rendered from the table's row model.
-  const visibleHistory = useMemo(
-    () => signalHistory.filter((h) => !hiddenHistoryIds.includes(h.id)),
-    [signalHistory, hiddenHistoryIds],
-  );
-  const historyTable = useTable({
-    features: basicTableFeatures,
-    columns: historyColumns,
-    data: visibleHistory,
-    getRowId: (h) => String(h.id),
-  });
-  const historyRows = historyTable.getRowModel().rows.map((row) => row.original);
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
@@ -650,8 +641,8 @@ export default function Dashboard() {
                 <div>
                     <h3 style={{ color: '#eab308', marginBottom: '4px' }}>Account Activation Required</h3>
                     <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-                        To receive and take signals, you must have an active deposit. 
-                        {activePendingDeposit ? " Your deposit is currently being reviewed." : " Please make a deposit to activate your account."}
+                        To receive and take signals, you must have an active deposit of minimum $10. 
+                        {activePendingDeposit ? " Your deposit is currently being reviewed." : " Please make a minimum deposit of $10 to activate your account."}
                     </p>
                 </div>
                 {!activePendingDeposit && (
@@ -706,7 +697,7 @@ export default function Dashboard() {
                 <input 
                     type="number" 
                     className="amount-input" 
-                    placeholder="Min $5"
+                    placeholder="Min $10"
                     value={depositAmount}
                     onChange={(e) => setDepositAmount(e.target.value)}
                     style={{ fontSize: '0.85rem', padding: '12px' }}
@@ -867,18 +858,18 @@ export default function Dashboard() {
                                             <SkeletonRows rows={4} cols={8} />
                                         ) : currentSignals.length === 0 ? (
                                             <tr><td colSpan={8} style={{ textAlign: 'center', padding: '40px' }}>
-                                                {user?.is_active && (Number(user?.wallet_balance || 0) >= 1 || Number(user?.free_signals || 0) > 0)
+                                                {user?.is_active
                                                     ? 'No active signals found.'
-                                                    : <>Signals are sent only to members with balance in their wallet.{' '}
+                                                    : <>Signals are sent only to members with an active deposit (min $10).{' '}
                                                         <button type="button" onClick={() => setIsDepositModalOpen(true)} style={{ background: 'none', border: 'none', color: 'var(--t-gold)', fontWeight: 700, cursor: 'pointer', textDecoration: 'underline', fontSize: 'inherit' }}>Deposit now</button>{' '}
                                                         to start receiving signals.</>}
                                             </td></tr>
                                         ) : (
                                             currentSignals.map((signal, index) => (
-                                                <tr key={signal.id || index} className="sig-row">
+                                                <tr key={signal.id || index} className={`sig-row ${isSignalOpen(signal) ? 'sig-row--open' : 'sig-row--closed'}`}>
                                                     <td className="sig-cell-symbol">
                                                         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                                                            <AssetBadge symbol={signal.symbol} size={42} />
+                                                            <AssetBadge symbol={signal.symbol} size={36} />
                                                             <div>
                                                                 <div style={{ fontWeight: "600" }}>{signal.symbol}</div>
                                                                 <div style={{ fontSize: "12px", color: "var(--t-text-muted)", marginTop: "2px" }}>{getSymbolName(signal.symbol)}</div>
@@ -911,7 +902,7 @@ export default function Dashboard() {
                                                                 : st.includes('hit') ? ['hit', 'Profit']
                                                                 : st.includes('stop') ? ['loss', 'Loss']
                                                                 : ['close', 'Expired'];
-                                                            return <span className={`db-badge status ${cls}`}>{label}</span>;
+                                                            return <span className={`db-badge status ${cls}`}><i className="sig-dot" aria-hidden="true" />{label}</span>;
                                                         })()}
                                                     </td>
                                                     <td className="time sig-cell-time">
@@ -941,10 +932,12 @@ export default function Dashboard() {
                                                                             className={`sig-owned${expired ? ' sig-owned--expired' : ''}`}
                                                                             title={expired ? 'You took this signal — it has now closed' : 'You took this signal'}
                                                                         >
-                                                                            ✓ Purchased
+                                                                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>
+                                                                            Purchased
                                                                         </span>
                                                                     ) : expired ? (
-                                                                        <span className="sig-expired" title="This signal has closed and can no longer be taken">Expired</span>
+                                                                        // Status column already says Profit / Loss / Expired — keep this quiet.
+                                                                        <span className="sig-closed-note" title="This signal has closed and can no longer be taken">Closed</span>
                                                                     ) : locked ? (
                                                                         <button
                                                                             type="button"
@@ -1002,84 +995,6 @@ export default function Dashboard() {
                         </div>
                     )}
 
-                    {/* MY PURCHASED SIGNALS SECTION */}
-                    {!user?.is_admin && visibleHistory.length > 0 && (
-                        <div className="table-box" style={{ marginTop: '2.5rem' }}>
-                            <h3 style={{ padding: '1.5rem', margin: 0, color: 'var(--t-text)', borderBottom: '1px solid var(--tw-05)' }}>My Purchased Signals</h3>
-                            <div className="table-wrapper">
-                                <table>
-                                    <thead>
-                                        <tr>
-                                            <th>Symbol</th>
-                                            <th>Type</th>
-                                            <th>Taken Price</th>
-                                            <th>Invested</th>
-                                            <th>Result</th>
-                                            <th>Date</th>
-                                            <th style={{ textAlign: 'right' }} aria-label="Remove"></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {historyRows.map((history, idx) => {
-                                            // The admin deleted this signal: the purchase record stays, but the signal itself is gone.
-                                            const deleted = !history.Signal?.symbol;
-                                            const result = history.result === 'win' ? { label: 'Profit', cls: 'hit' }
-                                                : history.result === 'loss' ? { label: 'Loss', cls: 'loss' }
-                                                : deleted ? { label: 'Deleted', cls: 'close' }
-                                                : history.Signal?.status === 'Active' ? { label: 'Open', cls: 'active' }
-                                                : { label: 'Closed', cls: 'close' };
-                                            return (
-                                            <tr key={idx}>
-                                                <td>
-                                                    {deleted ? (
-                                                        <div style={{ display: "flex", alignItems: "center", gap: "10px" }} title="This signal was deleted by the admin">
-                                                            <span style={{ width: 32, height: 32, borderRadius: 9, display: 'grid', placeItems: 'center', flexShrink: 0, fontWeight: 700, color: 'var(--t-text-muted)', background: 'var(--tw-05)', border: '1px solid var(--tw-10)' }}>?</span>
-                                                            <div style={{ fontWeight: 600, color: 'var(--t-text-muted)' }}>Deleted signal</div>
-                                                        </div>
-                                                    ) : (
-                                                        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                                                            <AssetBadge symbol={history.Signal?.symbol} size={32} />
-                                                            <div style={{ fontWeight: "600" }}>{history.Signal?.symbol}</div>
-                                                        </div>
-                                                    )}
-                                                </td>
-                                                <td>
-                                                    {deleted ? <span style={{ color: 'var(--t-text-muted)' }}>—</span> : (
-                                                        <span className={history.Signal?.type?.toLowerCase() || ''}>
-                                                            {history.Signal?.type}
-                                                        </span>
-                                                    )}
-                                                </td>
-                                                <td>{history.taken_price}</td>
-                                                <td>${history.invested_amount}</td>
-                                                <td>
-                                                    <span className={`db-badge status ${result.cls}`}>{result.label}</span>
-                                                </td>
-                                                <td className="time">{new Date(history.taken_at).toLocaleDateString()}</td>
-                                                <td style={{ textAlign: 'right' }}>
-                                                    {(history.signal_id || deleted) && (
-                                                        <button
-                                                            type="button"
-                                                            className="sig-hide"
-                                                            onClick={() => {
-                                                                if (history.signal_id != null) handleDeleteSignal(history.signal_id);
-                                                                else hideHistoryRow(history.id);
-                                                            }}
-                                                            title="Remove from my list"
-                                                            aria-label="Remove from my list"
-                                                        >
-                                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
-                                                        </button>
-                                                    )}
-                                                </td>
-                                            </tr>
-                                            );
-                                        })}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    )}
                 </div>
 
             </div>

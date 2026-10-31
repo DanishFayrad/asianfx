@@ -164,7 +164,7 @@ $$;
 -- (wallet ≥ $1 signal fee) or who hold a free credit from a Stop Loss.
 create or replace function public.can_receive_signals(p_user_id uuid)
 returns boolean language sql stable security definer set search_path = public as $$
-    select coalesce((select not p.is_admin and p.is_active and (p.wallet_balance >= 1 or p.free_signals > 0)
+    select coalesce((select not p.is_admin and p.is_active
                      from public.profiles p where p.id = p_user_id), false);
 $$;
 revoke execute on function public.can_receive_signals(uuid) from public, anon, authenticated;
@@ -230,7 +230,7 @@ begin
     where not p.is_admin
       -- Private → that member. Broadcast → only members with money (or a free credit) in their account.
       and (p.id = new.target_user_id
-           or (new.target_user_id is null and p.is_active and (p.wallet_balance >= 1 or p.free_signals > 0)));
+           or (new.target_user_id is null and p.is_active));
     return new;
 end $$;
 
@@ -429,14 +429,18 @@ begin
         where id = v_tx.user_id
         returning referred_by into v_ref;
 
-    -- Referral commission: only approved influencers earn it, at the percentage the admin set for them.
+    -- Referral commission: only approved influencers earn it, at the percentage the admin set for them,
+    -- and only on the member's FIRST approved deposit (later deposits pay no commission).
     if v_ref is not null then
         select case when is_influencer then commission_percent else 0 end
             into v_percent from public.profiles where id = v_ref;
         update public.profiles
             set total_referral_deposits = total_referral_deposits + p_amount
             where id = v_ref;
-        if coalesce(v_percent, 0) > 0 then
+        if coalesce(v_percent, 0) > 0 and not exists (
+            select 1 from public.transactions
+            where user_id = v_tx.user_id and type = 'deposit' and status = 'approved' and id <> p_tx_id
+        ) then
             v_commission := round(p_amount * v_percent / 100, 2);
             update public.profiles
                 set affiliate_balance = affiliate_balance + v_commission
@@ -785,7 +789,7 @@ begin
     update public.profiles set is_influencer = true, commission_percent = p_percent where id = v_user;
     insert into public.notifications (user_id, type, title, message)
         values (v_user, 'info', 'Influencer application approved',
-                'You are now an AsianFX influencer. You earn ' || p_percent || ' percent commission on every deposit your referrals make.');
+                'You are now an AsianFX influencer. You earn ' || p_percent || ' percent commission on the first deposit of every member you refer.');
     return json_build_object('message', 'Influencer approved');
 end $$;
 

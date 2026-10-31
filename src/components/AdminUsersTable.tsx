@@ -134,8 +134,8 @@ export default function AdminUsersTable({ users: rawUsers = EMPTY_ROWS, loading 
                             <th style={{ ...th, textAlign: 'right' }}>Wallet</th>
                             <th style={{ ...th, textAlign: 'center' }}>Free signals</th>
                             <th style={{ ...th, textAlign: 'center' }}>Signals</th>
-                            <th style={{ ...th, textAlign: 'center', color: '#16a34a' }}>Won</th>
-                            <th style={{ ...th, textAlign: 'center', color: '#dc2626' }}>Lost</th>
+                            <th style={{ ...th, textAlign: 'center' }}>Won</th>
+                            <th style={{ ...th, textAlign: 'center' }}>Lost</th>
                             <th style={{ ...th, textAlign: 'center' }}>Win rate</th>
                             <th style={th}>Status</th>
                             <th style={th}>Joined</th>
@@ -166,18 +166,18 @@ export default function AdminUsersTable({ users: rawUsers = EMPTY_ROWS, loading 
                                 </td>
                                 <td style={{ ...td, textAlign: 'right' }}>
                                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                                        <span style={{ fontWeight: 700, color: 'var(--admin-success)' }}>${fmt(u.total_deposit)}</span>
+                                        <span style={{ fontWeight: 600, color: 'var(--t-text)' }}>${fmt(u.total_deposit)}</span>
                                         <span style={{ fontSize: '0.75rem', color: 'var(--admin-text-muted)' }}>{u.deposit_count || 0} deposit{(u.deposit_count || 0) === 1 ? '' : 's'}</span>
                                     </div>
                                 </td>
                                 <td style={{ ...td, textAlign: 'right', fontWeight: 600 }}>${fmt(u.wallet_balance)}</td>
                                 <td style={{ ...td, textAlign: 'center' }}>
                                     {u.free_signals > 0 ? (
-                                        <span title={`${u.free_signals} free signal credit${u.free_signals > 1 ? 's' : ''} (earned from Stop Loss)`} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem', fontWeight: 700, padding: '3px 10px', borderRadius: '20px', background: 'rgba(var(--t-accent-rgb), 0.15)', color: 'var(--t-gold)' }}>
-                                            🎁 {u.free_signals}
+                                        <span title={`${u.free_signals} free signal credit${u.free_signals > 1 ? 's' : ''} (earned from Stop Loss)`} style={{ color: 'var(--t-text)' }}>
+                                            {u.free_signals}
                                         </span>
                                     ) : (
-                                        <span style={{ color: 'var(--admin-text-muted)' }}>0</span>
+                                        <span style={{ color: 'var(--t-text)' }}>0</span>
                                     )}
                                 </td>
                                 {(() => {
@@ -187,27 +187,23 @@ export default function AdminUsersTable({ users: rawUsers = EMPTY_ROWS, loading 
                                     const open = Number(u.signals_open || 0);
                                     const decided = won + lost;
                                     const rate = decided > 0 ? Math.round((won / decided) * 100) : null;
-                                    const muted = { color: 'var(--admin-text-muted)' };
+                                    const muted = { color: 'var(--t-text)' };
                                     const num = (n: number, color: string) => n > 0
-                                        ? <span style={{ fontWeight: 700, fontSize: '0.95rem', color }}>{n}</span>
+                                        ? <span style={{ color }}>{n}</span>
                                         : <span style={muted}>0</span>;
                                     return (
                                         <>
                                             <td style={{ ...td, textAlign: 'center' }}>
                                                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                                    <span style={{ fontWeight: 700 }}>{taken}</span>
+                                                    <span style={{ color: 'var(--t-text)' }}>{taken}</span>
                                                     {open > 0 && <span style={{ fontSize: '0.72rem', color: '#d97706' }} title="Still active — waiting for Profit / Loss">{open} open</span>}
                                                 </div>
                                             </td>
-                                            <td style={{ ...td, textAlign: 'center' }} title="Signals that hit Take Profit">{num(won, '#16a34a')}</td>
-                                            <td style={{ ...td, textAlign: 'center' }} title="Signals that hit Stop Loss">{num(lost, '#dc2626')}</td>
+                                            <td style={{ ...td, textAlign: 'center' }} title="Signals that hit Take Profit">{num(won, 'var(--t-text)')}</td>
+                                            <td style={{ ...td, textAlign: 'center' }} title="Signals that hit Stop Loss">{num(lost, 'var(--t-text)')}</td>
                                             <td style={{ ...td, textAlign: 'center' }}>
                                                 {rate === null ? <span style={muted}>—</span> : (
-                                                    <span style={{
-                                                        fontSize: '0.75rem', fontWeight: 700, padding: '3px 10px', borderRadius: '20px',
-                                                        background: rate >= 50 ? 'rgba(34, 197, 94, 0.12)' : 'rgba(239, 68, 68, 0.1)',
-                                                        color: rate >= 50 ? '#16a34a' : '#dc2626'
-                                                    }}>{rate}%</span>
+                                                    <span style={{ color: 'var(--t-text)' }}>{rate}%</span>
                                                 )}
                                             </td>
                                         </>

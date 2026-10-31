@@ -421,18 +421,7 @@ export default function AdminSignals() {
                         <>
                           <span className="asg-dot" aria-hidden="true">•</span>
                           <span className="asg-timer" title="This signal closes automatically">⏱ Closes in {countdown(sig.close_at, currentTime)}</span>
-                          <button
-                            type="button"
-                            className="asg-extend"
-                            title="Remove the auto-close timer"
-                            onClick={async () => {
-                              try {
-                                await signalService.removeCloseTimer(sig.id);
-                                fetchAllAdminData();
-                                toast.success('Auto-close removed');
-                              } catch (e) { toast.error(errorMessage(e, 'Failed to remove auto-close')); }
-                            }}
-                          >✕ Remove</button>
+                         
                         </>
                       )}
                       {locked && (

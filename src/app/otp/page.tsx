@@ -17,12 +17,12 @@ function OtpClient() {
     const searchParams = useSearchParams();
     const queryClient = useQueryClient();
     const email = searchParams.get('email');
-    
+
     const [otp, setOtp] = useState(['', '', '', '', '', '']);
     const [loading, setLoading] = useState(false);
     const inputRefs = useRef<Array<HTMLInputElement | null>>([]);
 
-    // The code is valid for 2 minutes; the timer restarts whenever a new code is sent.
+    // The code is valid for 2 minutes; restarts whenever a new code is sent.
     const [expiresAt, setExpiresAt] = useState(() => Date.now() + OTP_LIFETIME_MS);
     const [now, setNow] = useState(() => Date.now());
     const secondsLeft = Math.max(0, Math.ceil((expiresAt - now) / 1000));
@@ -42,46 +42,55 @@ function OtpClient() {
         }
     }, [email, router]);
 
-    const handleChange = (index: number, value: string) => {
-        if (value.length > 1) {
-            // Handle paste
-            const pastedData = value.slice(0, 6).split('');
-            const newOtp = [...otp];
-            pastedData.forEach((char, i) => {
-                if (index + i < 6) newOtp[index + i] = char;
+    const handlePaste = (e: React.ClipboardEvent) => {
+        e.preventDefault();
+        const text = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+        if (!text) return;
+
+        const newOtp = ['', '', '', '', '', ''];
+        text.split('').forEach((c, i) => {
+            if (i < 6) newOtp[i] = c;
+        });
+        setOtp(newOtp);
+
+        const focusIdx = Math.min(text.length, 5);
+        inputRefs.current[focusIdx]?.focus();
+    };
+
+    const handleChange = (index: number, val: string) => {
+        const clean = val.replace(/\D/g, '');
+        if (clean.length > 1) {
+            // User pasted into a single input
+            const newOtp = ['', '', '', '', '', ''];
+            clean.slice(0, 6).split('').forEach((c, i) => {
+                if (i < 6) newOtp[i] = c;
             });
             setOtp(newOtp);
-            // Focus last pasted or last input
-            const lastIndex = Math.min(index + pastedData.length - 1, 5);
-            inputRefs.current[lastIndex]?.focus();
+            const focusIdx = Math.min(clean.length, 5);
+            inputRefs.current[focusIdx]?.focus();
             return;
         }
 
         const newOtp = [...otp];
-        newOtp[index] = value;
+        newOtp[index] = clean;
         setOtp(newOtp);
 
-        // Move to next input if value is entered
-        if (value && index < 5) {
+        if (clean && index < 5) {
             inputRefs.current[index + 1]?.focus();
         }
     };
 
     const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
-        // Move to previous input on backspace
         if (e.key === 'Backspace' && !otp[index] && index > 0) {
             inputRefs.current[index - 1]?.focus();
         }
     };
 
-    const handleVerify = async () => {
-        const otpString = otp.join('');
+    const handleVerify = async (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
+        const otpString = otp.join('').trim().replace(/\D/g, '');
         if (otpString.length !== 6) {
             toast.error('Please enter the full 6-digit code');
-            return;
-        }
-        if (expired) {
-            toast.error('This code has expired. Please request a new one.');
             return;
         }
 
@@ -89,11 +98,13 @@ function OtpClient() {
         try {
             await authService.verifyOTP({ email: email || '', otp: otpString });
             toast.success('Email verified! Welcome to AsianFX.');
-            // Verifying signs the member in — load their profile before opening the dashboard.
+            // Refetch the current user session and redirect to dashboard
             await queryClient.refetchQueries({ queryKey: authKeys.user });
             router.push('/dashboard');
         } catch (error) {
-            toast.error(errorMessage(error, 'Verification failed. Incorrect OTP.'));
+            console.error('OTP verification error:', error);
+            const msg = errorMessage(error, 'Verification failed. Incorrect OTP.');
+            toast.error(msg);
         } finally {
             setLoading(false);
         }
@@ -132,42 +143,39 @@ function OtpClient() {
                     <strong>{email}</strong>
                 </p>
 
-                <div className="otp-inputs">
-                    {otp.map((digit, index) => (
-                        <input
-                            key={index}
-                            ref={(el) => { inputRefs.current[index] = el; }}
-                            type="text"
-                            inputMode="numeric"
-                            autoComplete={index === 0 ? 'one-time-code' : 'off'}
-                            aria-label={`Digit ${index + 1}`}
-                            maxLength={1}
-                            value={digit}
-                            className={digit ? 'filled' : ''}
-                            onChange={(e) => handleChange(index, e.target.value.replace(/\D/g, ''))}
-                            onKeyDown={(e) => handleKeyDown(index, e)}
-                            onPaste={(e) => {
-                                e.preventDefault();
-                                const paste = e.clipboardData.getData('text').replace(/\D/g, '');
-                                handleChange(index, paste);
-                            }}
-                        />
-                    ))}
-                </div>
+                <form onSubmit={handleVerify}>
+                    <div className="otp-inputs" onPaste={handlePaste}>
+                        {otp.map((digit, index) => (
+                            <input
+                                key={index}
+                                ref={(el) => { inputRefs.current[index] = el; }}
+                                type="text"
+                                inputMode="numeric"
+                                autoComplete={index === 0 ? 'one-time-code' : 'off'}
+                                aria-label={`Digit ${index + 1}`}
+                                maxLength={1}
+                                value={digit}
+                                className={digit ? 'filled' : ''}
+                                onChange={(e) => handleChange(index, e.target.value)}
+                                onKeyDown={(e) => handleKeyDown(index, e)}
+                            />
+                        ))}
+                    </div>
 
-                <p className={`otp-timer${expired ? ' expired' : secondsLeft <= 30 ? ' warn' : ''}`} aria-live="polite">
-                    {expired
-                        ? 'Code expired. Please request a new one.'
-                        : <>Code expires in <span className="num">{timerText}</span></>}
-                </p>
+                    <p className={`otp-timer${expired ? ' expired' : secondsLeft <= 30 ? ' warn' : ''}`} aria-live="polite">
+                        {expired
+                            ? 'Code expired. Please request a new one.'
+                            : <>Code expires in <span className="num">{timerText}</span></>}
+                    </p>
 
-                <button
-                    className="verify-btn"
-                    onClick={handleVerify}
-                    disabled={loading || expired || otp.join('').length !== 6}
-                >
-                    {loading ? <><span className="btn-spinner dark"></span>Verifying…</> : 'Verify Code'}
-                </button>
+                    <button
+                        type="submit"
+                        className="verify-btn"
+                        disabled={loading || otp.join('').trim().length !== 6}
+                    >
+                        {loading ? <><span className="btn-spinner dark"></span>Verifying…</> : 'Verify Code'}
+                    </button>
+                </form>
 
                 <p className="otp-resend">
                     Didn&apos;t get the code?{' '}

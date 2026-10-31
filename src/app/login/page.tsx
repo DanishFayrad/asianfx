@@ -8,6 +8,7 @@ import { useSetCurrentUser } from '@/hooks/useAuth';
 import { errorMessage } from '@/lib/supabaseClient';
 import Link from 'next/link';
 import PasswordEye from '@/components/PasswordEye';
+import toast from 'react-hot-toast';
 import '../../styles/login.css';
 
 export default function Login() {
@@ -36,10 +37,9 @@ export default function Login() {
     try {
       await login.mutateAsync({ email, password });
     } catch (err) {
-      // Account exists but email isn't verified yet — send a fresh code and go verify.
-      if (/not confirmed/i.test(errorMessage(err, ''))) {
-        try { await authService.resendOTP({ email }); } catch {}
-        login.reset();
+      const errMsg = errorMessage(err, '');
+      if (/not confirmed/i.test(errMsg)) {
+        toast.error('Email not verified. Please verify your 6-digit code.');
         router.push(`/otp?email=${encodeURIComponent(email)}`);
       }
     }

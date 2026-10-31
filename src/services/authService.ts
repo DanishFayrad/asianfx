@@ -26,8 +26,10 @@ const getProfile = async (): Promise<Profile> => {
 };
 
 const login = async ({ email, password }: Credentials): Promise<LoginResult> => {
-    if (isAdminUsername(email)) return adminLogin({ email, password });
-    const { session } = unwrap(await supabase.auth.signInWithPassword({ email, password }));
+    const cleanEmail = String(email || '').trim().toLowerCase();
+    if (isAdminUsername(cleanEmail)) return adminLogin({ email: cleanEmail, password });
+
+    const { session } = unwrap(await supabase.auth.signInWithPassword({ email: cleanEmail, password }));
     const user = await getProfile();
     return { access_token: session.access_token, user };
 };
@@ -56,8 +58,9 @@ const adminLogin = async ({ email: username, password }: Credentials): Promise<L
 };
 
 const register = async ({ name, email, password, phone, country, referral_code }: RegisterInput): Promise<MessageResponse> => {
+    const cleanEmail = String(email || '').trim().toLowerCase();
     const data = unwrap(await supabase.auth.signUp({
-        email,
+        email: cleanEmail,
         password,
         options: {
             data: { name, phone, country, referral_code: referral_code?.trim() || null },
@@ -67,7 +70,7 @@ const register = async ({ name, email, password, phone, country, referral_code }
     if (data.user && data.user.identities?.length === 0) {
         throw toError('An account with this email already exists.');
     }
-    return { message: 'Registration successful. Check your email for the verification code.' };
+    return { message: 'Registration successful! Verification code sent to your email.' };
 };
 
 const logout = async (): Promise<MessageResponse> => {
@@ -76,28 +79,54 @@ const logout = async (): Promise<MessageResponse> => {
 };
 
 const verifyOTP = async ({ email, otp }: { email: string; otp: string }): Promise<MessageResponse> => {
-    unwrap(await supabase.auth.verifyOtp({ email, token: otp, type: 'signup' }));
-    return { message: 'Email verified' };
+    const cleanEmail = String(email || '').trim().toLowerCase();
+    const cleanOtp = String(otp || '').trim();
+
+    if (!cleanOtp || cleanOtp.length !== 6) {
+        throw toError('Please enter the complete 6-digit verification code.');
+    }
+
+    // 1. Try signup token verification
+    let res = await supabase.auth.verifyOtp({ email: cleanEmail, token: cleanOtp, type: 'signup' });
+
+    // 2. Fallback to email token verification
+    if (res.error) {
+        res = await supabase.auth.verifyOtp({ email: cleanEmail, token: cleanOtp, type: 'email' });
+    }
+
+    if (res.error) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+            return { message: 'Email already verified' };
+        }
+        throw toError(res.error.message || 'Invalid or expired verification code');
+    }
+
+    return { message: 'Email verified successfully!' };
 };
 
 const resendOTP = async ({ email }: { email: string }): Promise<MessageResponse> => {
-    unwrap(await supabase.auth.resend({ type: 'signup', email }));
-    return { message: 'Code sent' };
+    const cleanEmail = String(email || '').trim().toLowerCase();
+    const res = await supabase.auth.resend({ email: cleanEmail, type: 'signup' });
+    if (res.error) {
+        if (/rate_limit/i.test(res.error.code || '') || /security purposes/i.test(res.error.message)) {
+            throw toError('Please wait a moment before requesting another code.');
+        }
+        throw toError(res.error.message || 'Failed to resend code');
+    }
+    return { message: 'Verification code resent. Check your inbox.' };
 };
 
-const forgotPassword = async ({ email }: { email: string }): Promise<MessageResponse> => {
-    // The email's "Reset password" link opens /reset-password (if the email shows a code instead,
-    // the member types it on the Forgot Password page).
-    const redirectTo = typeof window !== 'undefined' ? `${window.location.origin}/reset-password` : undefined;
-    unwrap(await supabase.auth.resetPasswordForEmail(email, { redirectTo }));
-    return { message: 'Reset code sent' };
+const forgotPassword = async (arg: string | { email: string }): Promise<MessageResponse> => {
+    const email = typeof arg === 'string' ? arg : arg.email;
+    unwrap(await supabase.auth.resetPasswordForEmail(String(email || '').trim().toLowerCase()));
+    return { message: 'Password reset email sent. Please check your inbox.' };
 };
 
 const resetPassword = async ({ email, otp, newPassword }: { email: string; otp: string; newPassword: string }): Promise<MessageResponse> => {
-    unwrap(await supabase.auth.verifyOtp({ email, token: otp, type: 'recovery' }));
+    unwrap(await supabase.auth.verifyOtp({ email: String(email || '').trim().toLowerCase(), token: otp.trim(), type: 'recovery' }));
     unwrap(await supabase.auth.updateUser({ password: newPassword }));
-    await supabase.auth.signOut();
-    return { message: 'Password updated' };
+    return { message: 'Password has been reset successfully. Please log in with your new password.' };
 };
 
 const authService = {
@@ -109,7 +138,7 @@ const authService = {
     verifyOTP,
     resendOTP,
     forgotPassword,
-    resetPassword
+    resetPassword,
 };
 
 export default authService;

@@ -89,7 +89,7 @@ export async function POST(request: Request) {
     // (wallet ≥ $1 signal fee) or a free credit — the same rule the database uses (can_receive_signals).
     query = signal.target_user_id
         ? query.eq('id', signal.target_user_id)
-        : query.eq('is_active', true).or('wallet_balance.gte.1,free_signals.gt.0');
+        : query.eq('is_active', true);
     const { data: recipients, error: recipientsError } = await query;
     if (recipientsError) return Response.json({ message: recipientsError.message }, { status: 500 });
     if (!recipients?.length) return Response.json({ sent: 0, failed: 0 });

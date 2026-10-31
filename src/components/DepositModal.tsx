@@ -40,8 +40,8 @@ export default function DepositModal({ isOpen, onClose }: { isOpen: boolean; onC
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!depositAmount || parseFloat(depositAmount) < 5) {
-      toast.error('Minimum deposit amount is $5');
+    if (!depositAmount || parseFloat(depositAmount) < 10) {
+      toast.error('Minimum deposit amount is $10');
       return;
     }
     if (!screenshot) {
@@ -137,10 +137,10 @@ export default function DepositModal({ isOpen, onClose }: { isOpen: boolean; onC
             <label style={label}>Amount Sent (USDT)</label>
             <input
               type="number"
-              min="5"
+              min="10"
               step="any"
               required
-              placeholder="Min $5"
+              placeholder="Min $10"
               value={depositAmount}
               onChange={(e) => setDepositAmount(e.target.value)}
               style={field}

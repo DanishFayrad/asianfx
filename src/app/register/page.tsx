@@ -8,6 +8,7 @@ import { errorMessage } from '@/lib/supabaseClient';
 import Link from 'next/link';
 import { PhoneInput, defaultCountries, parseCountry, type PhoneInputRefType } from 'react-international-phone';
 import PasswordEye from '@/components/PasswordEye';
+import toast from 'react-hot-toast';
 import 'react-international-phone/style.css';
 import '../../styles/register.css';
 
@@ -49,7 +50,10 @@ export default function Register() {
   // After signing up, go verify the email with the code Supabase sent.
   const register = useMutation({
     mutationFn: authService.register,
-    onSuccess: (_data, variables) => router.push(`/otp?email=${encodeURIComponent(variables.email)}`),
+    onSuccess: (_data, variables) => {
+      toast.success('Verification code sent to your email!');
+      router.push(`/otp?email=${encodeURIComponent(variables.email)}`);
+    },
   });
   const isLoading = register.isPending;
   const isError = register.isError;

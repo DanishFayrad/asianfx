@@ -92,9 +92,9 @@ export default function ReferEarnSection({ user }: { user: Profile | null }) {
                     <div>
                         <h3>Refer &amp; Earn</h3>
                         {isInfluencer ? (
-                            <p>Earn <strong>{percent}%</strong> commission on every deposit your referrals make.</p>
+                            <p>Earn <strong>{percent}%</strong> commission on the first deposit of every member you refer.</p>
                         ) : (
-                            <p>Are you an influencer? <strong>Apply</strong> to unlock your referral link and earn commission on every deposit your followers make.</p>
+                            <p>Are you an influencer? <strong>Apply</strong> to unlock your referral link and earn commission on the first deposit of every follower who joins.</p>
                         )}
                     </div>
                 </div>
@@ -144,7 +144,7 @@ export default function ReferEarnSection({ user }: { user: Profile | null }) {
                 <div className="mdb-refer-gate">
                     <span className="mdb-kpi-icon mdb-kpi-icon--gold"><IconUsers size={20} /></span>
                     <h3>Refer &amp; Earn</h3>
-                    <p>Are you an influencer? Apply to unlock your referral link and earn commission on every deposit your followers make.</p>
+                    <p>Are you an influencer? Apply to unlock your referral link and earn commission on the first deposit of every follower who joins.</p>
                     {isPending ? (
                         <span className="mdb-refer-status" title="We are reviewing your application">⏳ Application under review</span>
                     ) : (
@@ -161,7 +161,7 @@ export default function ReferEarnSection({ user }: { user: Profile | null }) {
                         <div className="ifl-head">
                             <div>
                                 <h2 id="ifl-title">Apply as an influencer</h2>
-                                <p>Tell us about your audience. Once approved you get your own referral link and a commission on every deposit your referrals make.</p>
+                                <p>Tell us about your audience. Once approved you get your own referral link and a commission on the first deposit of every member you refer.</p>
                             </div>
                             <button type="button" className="ifl-close" onClick={() => setIsFormOpen(false)} aria-label="Close" disabled={apply.isPending}>
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>

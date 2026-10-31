@@ -448,7 +448,7 @@
   border-radius: 999px;
   font-size: 0.75rem;
   font-weight: 700;
-  color: var(--t-gold);
+  color: var(--t-text);
   background: rgba(var(--t-accent-rgb), 0.14);
 }
 
@@ -617,6 +617,16 @@
 .ifl-card select:focus,
 .ifl-card textarea:focus { border-color: rgba(var(--t-accent-rgb), 0.6); }
 .ifl-card textarea { resize: vertical; }
+/* Own arrow so it sits a little in from the right edge */
+.ifl-card select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 32px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238f9bb3' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  cursor: pointer;
+}
 
 .ifl-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 

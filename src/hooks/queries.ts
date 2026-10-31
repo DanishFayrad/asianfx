@@ -32,6 +32,7 @@ export const useSignalsDashboard = (userId?: string, enabled = true) => useQuery
     queryKey: queryKeys.signalsDashboard(userId),
     queryFn: signalService.getSignalsDashboard,
     enabled: enabled && !!userId,
+    refetchInterval: 30_000, // safety net if a live update is missed
 });
 
 /** The member's purchased signals with their results. */

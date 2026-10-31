@@ -142,7 +142,7 @@ export default function AdminInfluencersPage() {
                                                 {app.message && <p className="ifa-msg">{app.message}</p>}
                                             </div>
                                             <div className="ifa-actions">
-                                                <label className="ifa-percent" title="Commission on every deposit their referrals make">
+                                                <label className="ifa-percent" title="Commission on the first deposit of each member they refer">
                                                     <input
                                                         type="number"
                                                         min={0.01}
@@ -194,7 +194,7 @@ export default function AdminInfluencersPage() {
                                                 </div>
                                             </div>
                                             <div className="ifa-actions">
-                                                <label className="ifa-percent" title="Commission on every deposit their referrals make">
+                                                <label className="ifa-percent" title="Commission on the first deposit of each member they refer">
                                                     <input
                                                         type="number"
                                                         min={0.01}

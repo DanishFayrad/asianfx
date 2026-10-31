@@ -71,14 +71,14 @@
   background: none;
   font: inherit;
   font-weight: 700;
-  color: var(--t-gold);
+  color: var(--t-text);
   cursor: pointer;
 }
 .otp-resend button:hover { text-decoration: underline; }
 .otp-resend button:disabled { opacity: 0.6; cursor: default; text-decoration: none; }
 
 .otp-timer { margin: -8px 0 16px; font-size: var(--fs-helper); color: var(--t-text-muted); }
-.otp-timer .num { font-weight: 700; color: var(--t-gold); }
+.otp-timer .num { font-weight: 700; color: var(--t-text); }
 .otp-timer.warn .num { color: #f59e0b; }
 .otp-timer.expired { color: #ef4444; font-weight: 600; }
 
@@ -94,7 +94,7 @@
 }
 .otp-footer a { color: var(--t-text-muted); text-decoration: none; font-weight: 600; }
 .otp-footer a:hover { color: var(--t-gold); }
-.otp-secure { display: inline-flex; align-items: center; gap: 5px; color: #16a34a; font-weight: 600; }
+.otp-secure { display: inline-flex; align-items: center; gap: 5px; color: var(--t-text); font-weight: 600; }
 
 @media (max-width: 420px) {
   .otp-card { padding: 26px 18px 20px; }

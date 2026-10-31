@@ -829,3 +829,9 @@
 .bsg-timers { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .bsg-timers + .bsg-hint { margin-top: -4px; }
 @media (max-width: 600px) { .bsg-timers { grid-template-columns: 1fr; } }
+
+/* Influencer cards: count, details line and tags in the main text colour (black in light mode) */
+.ifa-count,
+.ifa-info small,
+.ifa-tags span,
+.ifa-tags a { color: var(--t-text); }
