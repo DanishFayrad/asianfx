@@ -4,11 +4,13 @@ import type { Signal } from '@/types';
 // Emails members when an admin publishes a signal (sent through Brevo's API).
 // Server-only env vars (set in Vercel / .env.local, NEVER prefixed with NEXT_PUBLIC_):
 //   BREVO_API_KEY       Brevo → Settings → SMTP & API → API keys
-//   BREVO_SENDER_EMAIL  verified sender, e.g. no-reply@asianfxsignals.com
+//   BREVO_SENDER_EMAIL  verified sender — must match Brevo exactly (e.g. fxasians@gmail.com)
 //   BREVO_SENDER_NAME   optional, defaults to "AsianFX"
 //   SITE_URL            optional, defaults to https://www.asianfxsignals.com
 
-const BATCH_SIZE = 500;
+// Parallel sends per wave. Same simple `to` shape as /api/contact (proven working on live).
+// messageVersions batching was rejecting on this Brevo/Gmail setup even though single sends work.
+const PARALLEL = 15;
 
 const HTML_ESCAPES: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
 
@@ -92,33 +94,65 @@ export async function POST(request: Request) {
         : query.eq('is_active', true);
     const { data: recipients, error: recipientsError } = await query;
     if (recipientsError) return Response.json({ message: recipientsError.message }, { status: 500 });
-    if (!recipients?.length) return Response.json({ sent: 0, failed: 0 });
+    if (!recipients?.length) {
+        return Response.json({
+            sent: 0,
+            failed: 0,
+            message: 'No active members to email. Activate members (is_active) first.',
+        }, { status: 400 });
+    }
 
     const siteUrl = (process.env.SITE_URL || 'https://www.asianfxsignals.com').replace(/\/$/, '');
     const { subject, html } = buildEmail(signal as Signal, siteUrl);
 
+    // Drop blank / obviously invalid addresses so one bad row doesn't kill the whole run.
+    const valid = recipients.filter((r) => typeof r.email === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(r.email.trim()));
+    if (!valid.length) {
+        return Response.json({ sent: 0, failed: 0, message: 'No active members with a valid email to notify.' }, { status: 400 });
+    }
+
+    const sender = { email: senderEmail.trim(), name: process.env.BREVO_SENDER_NAME || 'AsianFX' };
     let sent = 0;
     let failed = 0;
-    for (let i = 0; i < recipients.length; i += BATCH_SIZE) {
-        const batch = recipients.slice(i, i + BATCH_SIZE);
+    let lastBrevoError = '';
+
+    const sendOne = async (r: { email: string; name: string | null }) => {
         const res = await fetch('https://api.brevo.com/v3/smtp/email', {
             method: 'POST',
             headers: { 'api-key': apiKey, 'content-type': 'application/json', accept: 'application/json' },
             body: JSON.stringify({
-                sender: { email: senderEmail, name: process.env.BREVO_SENDER_NAME || 'AsianFX' },
+                sender,
+                to: [{ email: String(r.email).trim(), name: r.name || undefined }],
                 subject,
                 htmlContent: html,
-                // One separate email per member — nobody sees anyone else's address.
-                messageVersions: batch.map((r) => ({ to: [{ email: r.email, name: r.name || undefined }] })),
             }),
         });
         if (res.ok) {
-            sent += batch.length;
-        } else {
-            failed += batch.length;
-            console.error('Brevo send failed', res.status, await res.text().catch(() => ''));
+            sent += 1;
+            return;
         }
+        failed += 1;
+        const errText = await res.text().catch(() => '');
+        lastBrevoError = errText;
+        console.error('Brevo send failed', res.status, errText);
+    };
+
+    for (let i = 0; i < valid.length; i += PARALLEL) {
+        await Promise.all(valid.slice(i, i + PARALLEL).map(sendOne));
     }
 
-    return Response.json({ sent, failed }, { status: failed && !sent ? 502 : 200 });
+    if (failed && !sent) {
+        let detail = lastBrevoError.slice(0, 300);
+        try {
+            const parsed = JSON.parse(lastBrevoError);
+            detail = parsed.message || parsed.error || detail;
+        } catch { /* keep raw text */ }
+        return Response.json({
+            sent,
+            failed,
+            message: `Brevo rejected the send: ${detail}`,
+        }, { status: 502 });
+    }
+
+    return Response.json({ sent, failed });
 }

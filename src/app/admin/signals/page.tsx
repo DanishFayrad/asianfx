@@ -199,7 +199,9 @@ export default function AdminSignals() {
       const created = await signalService.createSignal(payload);
       if (created.email?.error)
         toast.error(`Signal sent, but email failed: ${created.email.error}`);
-      else if (created.email?.sent) toast.success("Email sent to members");
+      else if (created.email?.sent)
+        toast.success(`Email sent to ${created.email.sent} member${created.email.sent === 1 ? "" : "s"}`);
+      else toast.error("Signal sent, but no emails went out (no active members?)");
       setMessage(
         formData.timer_minutes
           ? `Signal scheduled for release in ${formData.timer_minutes}m`
