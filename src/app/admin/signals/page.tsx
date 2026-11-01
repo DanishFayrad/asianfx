@@ -73,9 +73,26 @@ export default function AdminSignals() {
     target_price: "",
     stop_loss: "",
     signal_type: "free",
-    timer_minutes: "", // New field
-    close_minutes: "", // auto-close this many minutes after release
+    timer_minutes: "",
+    timer_seconds: "",
+    close_minutes: "",
+    close_seconds: "",
   });
+
+  /** Pretty "2m 30s" / "45s" / "3m" for buttons and preview. */
+  const formatDuration = (minutes: string, seconds: string) => {
+    const m = parseInt(minutes, 10) || 0;
+    const s = parseInt(seconds, 10) || 0;
+    if (m <= 0 && s <= 0) return "";
+    if (m > 0 && s > 0) return `${m}m ${s}s`;
+    if (m > 0) return `${m}m`;
+    return `${s}s`;
+  };
+  const releaseLabel = formatDuration(formData.timer_minutes, formData.timer_seconds);
+  const closeLabel = formatDuration(formData.close_minutes, formData.close_seconds);
+  const closeTotalSec =
+    (parseInt(formData.close_minutes, 10) || 0) * 60 +
+    (parseInt(formData.close_seconds, 10) || 0);
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -177,8 +194,8 @@ export default function AdminSignals() {
       setLoading(false);
       return;
     }
-    if (!formData.close_minutes) {
-      toast.error("Please select close timer");
+    if (closeTotalSec <= 0) {
+      toast.error("Please set close timer (minutes and/or seconds)");
       setLoading(false);
       return;
     }
@@ -192,7 +209,9 @@ export default function AdminSignals() {
         stop_loss: parseFloat(formData.stop_loss),
         signal_type: formData.signal_type,
         timer_minutes: formData.timer_minutes,
+        timer_seconds: formData.timer_seconds,
         close_minutes: formData.close_minutes,
+        close_seconds: formData.close_seconds,
         description: `Signal for ${selectedAsset.name}`,
       };
 
@@ -203,8 +222,8 @@ export default function AdminSignals() {
         toast.success(`Email sent to ${created.email.sent} member${created.email.sent === 1 ? "" : "s"}`);
       else toast.error("Signal sent, but no emails went out (no active members?)");
       setMessage(
-        formData.timer_minutes
-          ? `Signal scheduled for release in ${formData.timer_minutes}m`
+        releaseLabel
+          ? `Signal scheduled for release in ${releaseLabel}`
           : "Signal broadcasted successfully!",
       );
 
@@ -215,7 +234,9 @@ export default function AdminSignals() {
         stop_loss: "",
         signal_type: "free",
         timer_minutes: "",
+        timer_seconds: "",
         close_minutes: "",
+        close_seconds: "",
       });
 
       // Refresh recent list
@@ -380,40 +401,80 @@ export default function AdminSignals() {
               </p>
             </div>
 
-            {/* Release delay and auto-close, side by side */}
+            {/* Release delay and auto-close — minutes / seconds labels sit above each input */}
             <div className="bsg-timers">
-              <label className="bsg-field">
-                <span className="bsg-label">Release after (minutes)</span>
-                <input
-                  type="number"
-                  min="0"
-                  name="timer_minutes"
-                  autoComplete="off"
-                  onWheel={(e) => e.currentTarget.blur()}
-                  className="bsg-input"
-                  value={formData.timer_minutes}
-                  onChange={handleChange}
-                  placeholder="Enter Time"
-                />
-              </label>
-              <label className="bsg-field">
-                <span className="bsg-label">Close after (minutes)</span>
-                <input
-                  type="number"
-                  min="0"
-                  name="close_minutes"
-                  autoComplete="off"
-                  onWheel={(e) => e.currentTarget.blur()}
-                  className="bsg-input"
-                  value={formData.close_minutes}
-                  onChange={handleChange}
-                  placeholder="Enter Time"
-                />
-              </label>
+              <div className="bsg-field">
+                <span className="bsg-label">Release after</span>
+                <div className="bsg-duration">
+                  <label className="bsg-duration-part">
+                    <span className="bsg-duration-unit">Minutes</span>
+                    <input
+                      type="number"
+                      min="0"
+                      name="timer_minutes"
+                      autoComplete="off"
+                      onWheel={(e) => e.currentTarget.blur()}
+                      className="bsg-input"
+                      value={formData.timer_minutes}
+                      onChange={handleChange}
+                      placeholder="0"
+                    />
+                  </label>
+                  <label className="bsg-duration-part">
+                    <span className="bsg-duration-unit">Seconds</span>
+                    <input
+                      type="number"
+                      min="0"
+                      max="59"
+                      name="timer_seconds"
+                      autoComplete="off"
+                      onWheel={(e) => e.currentTarget.blur()}
+                      className="bsg-input"
+                      value={formData.timer_seconds}
+                      onChange={handleChange}
+                      placeholder="0"
+                    />
+                  </label>
+                </div>
+              </div>
+              <div className="bsg-field">
+                <span className="bsg-label">Close after</span>
+                <div className="bsg-duration">
+                  <label className="bsg-duration-part">
+                    <span className="bsg-duration-unit">Minutes</span>
+                    <input
+                      type="number"
+                      min="0"
+                      name="close_minutes"
+                      autoComplete="off"
+                      onWheel={(e) => e.currentTarget.blur()}
+                      className="bsg-input"
+                      value={formData.close_minutes}
+                      onChange={handleChange}
+                      placeholder="0"
+                    />
+                  </label>
+                  <label className="bsg-duration-part">
+                    <span className="bsg-duration-unit">Seconds</span>
+                    <input
+                      type="number"
+                      min="0"
+                      max="59"
+                      name="close_seconds"
+                      autoComplete="off"
+                      onWheel={(e) => e.currentTarget.blur()}
+                      className="bsg-input"
+                      value={formData.close_seconds}
+                      onChange={handleChange}
+                      placeholder="0"
+                    />
+                  </label>
+                </div>
+              </div>
             </div>
             <p className="bsg-hint">
-              Close after: the signal closes automatically this many minutes
-              after release. Leave empty to close it yourself.
+              Close after: the signal closes automatically this long after
+              release. Set minutes and/or seconds.
             </p>
 
             {getSignalLevelError({ type, ...formData }) && (
@@ -439,8 +500,8 @@ export default function AdminSignals() {
                 <>
                   <span className="btn-spinner dark"></span>Broadcasting…
                 </>
-              ) : formData.timer_minutes ? (
-                `Schedule signal (${formData.timer_minutes} min)`
+              ) : releaseLabel ? (
+                `Schedule signal (${releaseLabel})`
               ) : (
                 "Broadcast signal now"
               )}
@@ -494,14 +555,13 @@ export default function AdminSignals() {
                 </div>
               </div>
               <p className="bsg-preview-foot">
-                {formData.timer_minutes
-                  ? `⏳ Locked for ${formData.timer_minutes} min after broadcast`
+                {releaseLabel
+                  ? `⏳ Locked for ${releaseLabel} after broadcast`
                   : "⚡ Available instantly after broadcast"}
               </p>
-              {Number(formData.close_minutes) > 0 && (
+              {closeLabel && (
                 <p className="bsg-preview-foot">
-                  ⏱ Closes automatically {formData.close_minutes} min after
-                  release
+                  ⏱ Closes automatically {closeLabel} after release
                 </p>
               )}
             </section>

@@ -520,7 +520,11 @@ export default function Dashboard() {
               </div>
             )}
 
-            <AdminDashboardStats adminStats={adminStats} onNav={(p) => router.push(p)} />
+            <AdminDashboardStats
+              adminStats={adminStats}
+              signalStats={signalsQuery.data?.stats ?? null}
+              onNav={(p) => router.push(p)}
+            />
             <AdminUsersTable users={adminUsers} loading={usersLoading} />
           </div>
         </main>
@@ -785,7 +789,11 @@ export default function Dashboard() {
         )}
 
         {mounted && user?.is_admin ? (
-            <AdminDashboardStats adminStats={adminStats} onNav={(p) => router.push(p)} />
+            <AdminDashboardStats
+              adminStats={adminStats}
+              signalStats={signalsQuery.data?.stats ?? null}
+              onNav={(p) => router.push(p)}
+            />
         ) : (
             <div className="db-content-flex-wrapper">
                 <div className="db-main-content-column" style={{ flex: 1, minWidth: 0 }}>

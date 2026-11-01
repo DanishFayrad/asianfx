@@ -646,7 +646,11 @@ begin
             'pending_deposits',  count(*)             filter (where type = 'deposit'    and status = 'pending'),
             'total_withdrawal',  coalesce(sum(amount) filter (where type = 'withdrawal' and status = 'approved'), 0),
             'withdrawal_count',  count(*)             filter (where type = 'withdrawal' and status = 'approved'),
-            'total_profit',      coalesce(sum(amount) filter (where type = 'signal_fee'), 0)
+            'total_profit',      coalesce(sum(amount) filter (where type = 'signal_fee'), 0),
+            'total_signals',     (select count(*) from public.signals where target_user_id is null),
+            'active_signals',    (select count(*) from public.signals
+                                    where target_user_id is null and status = 'Active'
+                                      and (close_at is null or close_at > now()))
         )
         from public.transactions
     );

@@ -828,6 +828,21 @@
 /* Release after + Close after side by side (stack on phones) */
 .bsg-timers { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .bsg-timers + .bsg-hint { margin-top: -4px; }
+.bsg-duration { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.bsg-duration-part {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  min-width: 0;
+}
+.bsg-duration-part .bsg-input { width: 100%; min-width: 0; }
+.bsg-duration-unit {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--t-text-muted);
+  letter-spacing: 0.02em;
+}
 @media (max-width: 600px) { .bsg-timers { grid-template-columns: 1fr; } }
 
 /* Influencer cards: count, details line and tags in the main text colour (black in light mode) */

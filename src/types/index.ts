@@ -145,6 +145,8 @@ export interface AdminStats {
     total_withdrawal?: number;
     withdrawal_count?: number;
     total_profit?: number;
+    total_signals?: number;
+    active_signals?: number;
 }
 
 export interface WalletStats {

@@ -26,8 +26,12 @@ export interface NewSignalInput {
     stop_loss: PriceInput;
     signal_type?: string;
     timer_minutes?: string | number;
+    /** Extra seconds added to timer_minutes (0–59). */
+    timer_seconds?: string | number;
     /** Close the signal automatically this many minutes after it is released (blank = never). */
     close_minutes?: string | number;
+    /** Extra seconds added to close_minutes (0–59). */
+    close_seconds?: string | number;
     description?: string | null;
     target_user_id?: string | null;
 }
@@ -86,10 +90,18 @@ export const getSignalLevelError = ({ type, entry_price, target_price, stop_loss
     }
 };
 
+/** Minutes + seconds → total milliseconds (invalid / empty parts count as 0). */
+const durationMs = (minutes?: PriceInput, seconds?: PriceInput): number => {
+    const m = parseFloat(String(minutes ?? '')) || 0;
+    const s = parseFloat(String(seconds ?? '')) || 0;
+    if (m < 0 || s < 0) return 0;
+    return Math.round((m * 60 + s) * 1000);
+};
+
 const createSignal = async (signalData: NewSignalInput): Promise<Signal> => {
-    const minutes = parseFloat(String(signalData.timer_minutes ?? ''));
-    const closeMinutes = parseFloat(String(signalData.close_minutes ?? ''));
-    const releaseMs = Date.now() + serverTimeOffset + (minutes > 0 ? minutes * 60000 : 0);
+    const releaseDelayMs = durationMs(signalData.timer_minutes, signalData.timer_seconds);
+    const closeDelayMs = durationMs(signalData.close_minutes, signalData.close_seconds);
+    const releaseMs = Date.now() + serverTimeOffset + releaseDelayMs;
     const row = {
         symbol: String(signalData.symbol || '').trim().toUpperCase(),
         type: signalData.type,
@@ -99,11 +111,11 @@ const createSignal = async (signalData: NewSignalInput): Promise<Signal> => {
         signal_type: signalData.signal_type || 'free',
         description: signalData.description || null,
         target_user_id: signalData.target_user_id || null,
-        release_at: minutes > 0
-            ? new Date(Date.now() + serverTimeOffset + minutes * 60000).toISOString()
+        release_at: releaseDelayMs > 0
+            ? new Date(Date.now() + serverTimeOffset + releaseDelayMs).toISOString()
             : null,
         // Counted from the release time, so a delayed signal still gets its full open window.
-        close_at: closeMinutes > 0 ? new Date(releaseMs + closeMinutes * 60000).toISOString() : null,
+        close_at: closeDelayMs > 0 ? new Date(releaseMs + closeDelayMs).toISOString() : null,
     };
     validateSignal(row);
     const signal = unwrap<Signal>(await supabase.from('signals').insert(row).select().single());
