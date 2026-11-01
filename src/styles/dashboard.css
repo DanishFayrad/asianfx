@@ -292,6 +292,7 @@
 }
 
 
+
 .db-main-layout .mobile-only-nav {
     display: none;
 }
@@ -721,6 +722,23 @@
       display: block;
       text-align: center;
       padding: 0.5rem;
+  }
+
+  .db-nav-icons {
+      flex-direction: column;
+      justify-content: flex-start;
+      gap: 12px;
+  }
+
+  /* Always show the profile card + Log Out under the avatar in the drawer. */
+  .db-nav-right.show .profile-dropdown {
+      display: block;
+      position: static;
+      width: 100%;
+      right: auto;
+      top: auto;
+      margin-top: 0;
+      box-shadow: none;
   }
 
   .db-nav-left nav {
