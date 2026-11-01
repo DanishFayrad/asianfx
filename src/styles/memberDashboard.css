@@ -242,7 +242,15 @@
   }
 
   .sig-cell-status { align-self: center; }
-  .sig-cell-time { grid-column: span 2; justify-self: end; align-self: center; text-align: right !important; }
+  .sig-cell-time {
+    grid-column: span 2;
+    justify-self: end;
+    align-self: center;
+    text-align: right !important;
+    min-width: 0;
+  }
+  .sig-cell-time > span,
+  .sig-cell-time > div { max-width: 100%; }
 
   tr.sig-row > td.Action { grid-column: 1 / -1; }
   tr.sig-row .sig-actions { justify-content: stretch; }

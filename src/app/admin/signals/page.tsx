@@ -652,25 +652,10 @@ export default function AdminSignals() {
 
         {/* RECENT BROADCASTS SECTION */}
         <section className="admin-recent-section">
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: "1rem",
-              flexWrap: "wrap",
-              marginBottom: "1.5rem",
-            }}
-          >
-            <h3 style={{ fontSize: "1.25rem", fontWeight: 700, margin: 0 }}>
+          <div className="asg-toolbar">
+            <h3 className="asg-toolbar-title">
               Open &amp; Recent Signals{" "}
-              <span
-                style={{
-                  fontSize: "0.8rem",
-                  fontWeight: 500,
-                  color: "var(--admin-text-muted)",
-                }}
-              >
+              <span>
                 — close every open signal with its result
               </span>
             </h3>
