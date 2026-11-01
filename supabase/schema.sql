@@ -186,8 +186,8 @@ begin
         exit when not exists (select 1 from public.profiles where referral_code = v_code);
     end loop;
 
-    -- Every new member starts with $5 free wallet credit (one time, at signup) and is active,
-    -- so they can take signals straight away.
+    -- New members start with $0 and inactive. The $5 free credit is granted once,
+    -- on their FIRST approved deposit (see approve_deposit).
     insert into public.profiles (id, email, name, phone, country, referral_code, referred_by, wallet_balance, is_active)
     values (
         new.id,
@@ -197,8 +197,8 @@ begin
         new.raw_user_meta_data->>'country',
         v_code,
         v_ref,
-        5,
-        true
+        0,
+        false
     );
 
     if v_ref is not null then
@@ -412,6 +412,8 @@ declare
     v_ref uuid;
     v_commission numeric;
     v_percent numeric;
+    v_is_first boolean;
+    v_bonus numeric := 5; -- one-time free credit on first approved deposit
 begin
     if not public.is_admin() then raise exception 'Admin only'; end if;
     if p_amount is null or p_amount <= 0 then raise exception 'Invalid amount'; end if;
@@ -420,14 +422,27 @@ begin
     if v_tx.id is null then raise exception 'Transaction not found'; end if;
     if v_tx.status <> 'pending' then raise exception 'Transaction already processed'; end if;
 
+    -- First approved deposit? (check before marking this one approved)
+    v_is_first := not exists (
+        select 1 from public.transactions
+        where user_id = v_tx.user_id and type = 'deposit' and status = 'approved'
+    );
+
     update public.transactions
         set status = 'approved', amount = p_amount, processed_at = now()
         where id = p_tx_id;
 
     update public.profiles
-        set wallet_balance = wallet_balance + p_amount, is_active = true
+        set wallet_balance = wallet_balance + p_amount
+                + case when v_is_first then v_bonus else 0 end,
+            is_active = true
         where id = v_tx.user_id
         returning referred_by into v_ref;
+
+    if v_is_first then
+        insert into public.transactions (user_id, type, amount, status, processed_at)
+            values (v_tx.user_id, 'bonus', v_bonus, 'approved', now());
+    end if;
 
     -- Referral commission: only approved influencers earn it, at the percentage the admin set for them,
     -- and only on the member's FIRST approved deposit (later deposits pay no commission).
@@ -437,10 +452,7 @@ begin
         update public.profiles
             set total_referral_deposits = total_referral_deposits + p_amount
             where id = v_ref;
-        if coalesce(v_percent, 0) > 0 and not exists (
-            select 1 from public.transactions
-            where user_id = v_tx.user_id and type = 'deposit' and status = 'approved' and id <> p_tx_id
-        ) then
+        if coalesce(v_percent, 0) > 0 and v_is_first then
             v_commission := round(p_amount * v_percent / 100, 2);
             update public.profiles
                 set affiliate_balance = affiliate_balance + v_commission
@@ -452,9 +464,14 @@ begin
 
     insert into public.notifications (user_id, type, title, message)
         values (v_tx.user_id, 'payment_approval', 'Deposit Approved',
-                format('Your deposit of $%s has been approved and credited to your wallet.', p_amount));
+                case when v_is_first then
+                    format('Your deposit of $%s was approved, plus a $%s first-deposit bonus. Total credited: $%s.',
+                           p_amount, v_bonus, p_amount + v_bonus)
+                else
+                    format('Your deposit of $%s has been approved and credited to your wallet.', p_amount)
+                end);
 
-    return json_build_object('message', 'Deposit approved');
+    return json_build_object('message', 'Deposit approved', 'first_deposit_bonus', case when v_is_first then v_bonus else 0 end);
 end $$;
 
 create or replace function public.reject_deposit(p_tx_id bigint)

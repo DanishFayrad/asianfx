@@ -34,6 +34,8 @@ export interface NewSignalInput {
     close_seconds?: string | number;
     description?: string | null;
     target_user_id?: string | null;
+    /** When false, skip Brevo email after insert. Default true. */
+    send_email?: boolean;
 }
 
 /** The signal taken by take_signal(), with its now-unlocked levels. */
@@ -119,7 +121,11 @@ const createSignal = async (signalData: NewSignalInput): Promise<Signal> => {
     };
     validateSignal(row);
     const signal = unwrap<Signal>(await supabase.from('signals').insert(row).select().single());
-    signal.email = await notifySignalByEmail(signal.id);
+    if (signalData.send_email === false) {
+        signal.email = { sent: 0, failed: 0 };
+    } else {
+        signal.email = await notifySignalByEmail(signal.id);
+    }
     return signal;
 };
 

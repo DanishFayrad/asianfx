@@ -19,7 +19,7 @@ import Skeleton from "@/components/Skeleton";
 import { IconTrash } from "@/components/admin/AdminIcons";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import "../../../styles/adminSignals.css";
-import { errorMessage } from "@/lib/supabaseClient";
+import { errorMessage, supabase } from "@/lib/supabaseClient";
 import type { Signal } from "@/types";
 import { ASSETS as assets, type Asset } from "@/config/assets";
 import AssetBadge, { AssetGlyph as AssetIcon } from "@/components/AssetBadge";
@@ -34,12 +34,17 @@ const SIGNAL_FILTERS = [
     label: "Active",
     hint: "Open signals you still need to close",
   },
+  { key: "profit", label: "Profit Trade", hint: "Signals closed as profit (TP Hit)" },
+  { key: "loss", label: "Lose Trade", hint: "Signals closed as loss (Stop Loss)" },
   { key: "recent", label: "Recent", hint: "Signals sent in the last 24 hours" },
   { key: "weekly", label: "Weekly", hint: "Signals sent in the last 7 days" },
 ] as const;
 type SignalFilter = (typeof SIGNAL_FILTERS)[number]["key"];
 const DAY_MS = 24 * 60 * 60 * 1000;
 const WEEK_MS = 7 * DAY_MS;
+
+const isProfitSignal = (s: Signal) => String(s.status || "").includes("Hit");
+const isLossSignal = (s: Signal) => String(s.status || "").includes("Stop");
 
 /** "1:05:09" / "12:30" style countdown until `iso`, from `now`. */
 const countdown = (iso: string | null | undefined, now: Date) => {
@@ -96,6 +101,7 @@ export default function AdminSignals() {
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [comingSoonLoading, setComingSoonLoading] = useState(false);
   const signalsQuery = useSignalsDashboard(user?.id, isAdmin);
   const recentSignals: Signal[] = signalsQuery.data?.active_signals ?? [];
   const signalsLoading = signalsQuery.isPending;
@@ -113,27 +119,48 @@ export default function AdminSignals() {
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
-  // Signals list: Active / Recent / Weekly tabs, a page of cards at a time ("Show more" adds the next page).
+  // Signals list: status filter + optional date/time range, a page of cards at a time.
   const [signalFilter, setSignalFilter] = useState<SignalFilter>("recent");
   const [signalsShown, setSignalsShown] = useState(SIGNALS_PAGE);
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   // A signal past its "Close after" time counts as closed even before the database catches up.
   const isSignalOpen = (s: Signal) =>
     s.status === "Active" &&
     !(s.close_at && new Date(s.close_at).getTime() <= currentTime.getTime());
   const openSignals = recentSignals.filter(isSignalOpen);
   const closedSignals = recentSignals.filter((s) => !isSignalOpen(s));
+  const allSignals = [...openSignals, ...closedSignals];
   const sentSince = (ms: number) =>
-    [...openSignals, ...closedSignals].filter(
+    allSignals.filter(
       (s) => new Date(s.created_at).getTime() >= currentTime.getTime() - ms,
     );
   const signalLists: Record<SignalFilter, Signal[]> = {
     active: openSignals,
+    profit: closedSignals.filter(isProfitSignal),
+    loss: closedSignals.filter(isLossSignal),
     recent: sentSince(DAY_MS),
     weekly: sentSince(WEEK_MS),
   };
-  const filteredSignals = signalLists[signalFilter];
+  const filteredSignals = signalLists[signalFilter].filter((s) => {
+    const t = new Date(s.created_at).getTime();
+    if (dateFrom) {
+      const from = new Date(dateFrom).getTime();
+      if (!Number.isNaN(from) && t < from) return false;
+    }
+    if (dateTo) {
+      const to = new Date(dateTo).getTime();
+      if (!Number.isNaN(to) && t > to) return false;
+    }
+    return true;
+  });
   const changeSignalFilter = (key: SignalFilter) => {
     setSignalFilter(key);
+    setSignalsShown(SIGNALS_PAGE);
+  };
+  const clearDateFilter = () => {
+    setDateFrom("");
+    setDateTo("");
     setSignalsShown(SIGNALS_PAGE);
   };
 
@@ -219,7 +246,7 @@ export default function AdminSignals() {
       if (created.email?.error)
         toast.error(`Signal sent, but email failed: ${created.email.error}`);
       else if (created.email?.sent)
-        toast.success(`Email sent to ${created.email.sent} member${created.email.sent === 1 ? "" : "s"}`);
+        toast.success("Email sent to members");
       else toast.error("Signal sent, but no emails went out (no active members?)");
       setMessage(
         releaseLabel
@@ -565,6 +592,61 @@ export default function AdminSignals() {
                 </p>
               )}
             </section>
+
+            <button
+              type="button"
+              className={`bsg-mail-alert${comingSoonLoading ? "" : " bsg-mail-alert--on"}`}
+              disabled={comingSoonLoading}
+              onClick={async () => {
+                setComingSoonLoading(true);
+                try {
+                  const {
+                    data: { session },
+                  } = await supabase.auth.getSession();
+                  const res = await fetch("/api/notify-coming", {
+                    method: "POST",
+                    headers: {
+                      "content-type": "application/json",
+                      authorization: `Bearer ${session?.access_token}`,
+                    },
+                    body: JSON.stringify({
+                      symbol: selectedAsset?.symbol,
+                      type,
+                    }),
+                  });
+                  const body = await res.json().catch(() => ({}));
+                  if (!res.ok) {
+                    toast.error(body.message || "Coming soon email failed");
+                    return;
+                  }
+                  if (!body.sent) {
+                    toast.error(
+                      body.message || "No active members to email",
+                    );
+                    return;
+                  }
+                  toast.success("Coming soon alert emailed to members");
+                } catch (e) {
+                  toast.error(errorMessage(e, "Coming soon email failed"));
+                } finally {
+                  setComingSoonLoading(false);
+                }
+              }}
+            >
+              <span className="bsg-mail-alert-icon" aria-hidden="true">
+                {comingSoonLoading ? "…" : "✉"}
+              </span>
+              <span className="bsg-mail-alert-text">
+                <strong>
+                  {comingSoonLoading
+                    ? "Sending alert…"
+                    : "Send alert for mail"}
+                </strong>
+                <small>
+                  Emails members: signal coming soon — get ready
+                </small>
+              </span>
+            </button>
           </div>
         </div>
 
@@ -592,23 +674,60 @@ export default function AdminSignals() {
                 — close every open signal with its result
               </span>
             </h3>
-            <label className="asg-filter">
-              <span>Show</span>
-              <select
-                value={signalFilter}
-                onChange={(e) =>
-                  changeSignalFilter(e.target.value as SignalFilter)
-                }
-                aria-label="Filter signals"
-                title={SIGNAL_FILTERS.find((f) => f.key === signalFilter)?.hint}
-              >
-                {SIGNAL_FILTERS.map((f) => (
-                  <option key={f.key} value={f.key}>
-                    {f.label}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <div className="asg-filters">
+              <label className="asg-filter">
+                <span>From</span>
+                <input
+                  type="datetime-local"
+                  className="asg-filter-date"
+                  value={dateFrom}
+                  onChange={(e) => {
+                    setDateFrom(e.target.value);
+                    setSignalsShown(SIGNALS_PAGE);
+                  }}
+                  aria-label="Filter from date and time"
+                />
+              </label>
+              <label className="asg-filter">
+                <span>To</span>
+                <input
+                  type="datetime-local"
+                  className="asg-filter-date"
+                  value={dateTo}
+                  onChange={(e) => {
+                    setDateTo(e.target.value);
+                    setSignalsShown(SIGNALS_PAGE);
+                  }}
+                  aria-label="Filter to date and time"
+                />
+              </label>
+              {(dateFrom || dateTo) && (
+                <button
+                  type="button"
+                  className="asg-filter-clear"
+                  onClick={clearDateFilter}
+                >
+                  Clear dates
+                </button>
+              )}
+              <label className="asg-filter">
+                <span>Show</span>
+                <select
+                  value={signalFilter}
+                  onChange={(e) =>
+                    changeSignalFilter(e.target.value as SignalFilter)
+                  }
+                  aria-label="Filter signals"
+                  title={SIGNAL_FILTERS.find((f) => f.key === signalFilter)?.hint}
+                >
+                  {SIGNAL_FILTERS.map((f) => (
+                    <option key={f.key} value={f.key}>
+                      {f.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
           </div>
           <div className="admin-recent-grid">
             {filteredSignals.slice(0, signalsShown).map((sig, idx) => {
@@ -803,11 +922,17 @@ export default function AdminSignals() {
               ))}
             {!signalsLoading && filteredSignals.length === 0 && (
               <p style={{ color: "var(--admin-text-muted)" }}>
-                {signalFilter === "active"
-                  ? "No open signals — every signal has been closed."
-                  : signalFilter === "weekly"
-                    ? "No signals in the last 7 days."
-                    : "No recent broadcasts found."}
+                {dateFrom || dateTo
+                  ? "No signals in this date range."
+                  : signalFilter === "active"
+                    ? "No open signals — every signal has been closed."
+                    : signalFilter === "profit"
+                      ? "No profit trades yet."
+                      : signalFilter === "loss"
+                        ? "No lose trades yet."
+                        : signalFilter === "weekly"
+                          ? "No signals in the last 7 days."
+                          : "No recent broadcasts found."}
               </p>
             )}
           </div>

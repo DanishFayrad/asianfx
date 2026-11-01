@@ -645,8 +645,8 @@ export default function Dashboard() {
                 <div>
                     <h3 style={{ color: '#eab308', marginBottom: '4px' }}>Account Activation Required</h3>
                     <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-                        To receive and take signals, you must have an active deposit of minimum $10. 
-                        {activePendingDeposit ? " Your deposit is currently being reviewed." : " Please make a minimum deposit of $10 to activate your account."}
+                        To receive and take signals, deposit at least $10. Your first approved deposit also gets a $5 free bonus.
+                        {activePendingDeposit ? " Your deposit is currently being reviewed." : " Make a deposit to activate your account."}
                     </p>
                 </div>
                 {!activePendingDeposit && (
@@ -914,23 +914,41 @@ export default function Dashboard() {
                                                         })()}
                                                     </td>
                                                     <td className="time sig-cell-time">
-                                                        {/* A closed/expired signal never counts down — show its time instead. */}
-                                                        {isSignalOpen(signal) && signal.release_at && new Date(signal.release_at).getTime() > currentTime.getTime()
-                                                            ? (
-                                                                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                                                    <span style={{ color: 'var(--t-text)', fontWeight: 700, fontSize: '0.8rem' }}>Release In</span>
-                                                                    <span style={{ color: 'var(--t-text)', fontSize: '0.75rem', fontFamily: 'var(--font-num)' }}>{formatCountdown(signal.release_at)}</span>
-                                                                </div>
-                                                            )
-                                                            : formatReleaseTime(signal.release_at || signal.created_at)
-                                                        }
+                                                        {/* Open + still locked → release countdown. Open + closing soon → close countdown. Closed → the time it closed. */}
+                                                        {(() => {
+                                                            const open = isSignalOpen(signal);
+                                                            const releaseAt = signal.release_at ? new Date(signal.release_at).getTime() : 0;
+                                                            const closeAt = signal.close_at ? new Date(signal.close_at).getTime() : 0;
+                                                            const now = currentTime.getTime();
+                                                            if (open && releaseAt > now) {
+                                                                return (
+                                                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                                        <span style={{ color: 'var(--t-text)', fontWeight: 700, fontSize: '0.8rem' }}>Release In</span>
+                                                                        <span style={{ color: 'var(--t-text)', fontSize: '0.75rem', fontFamily: 'var(--font-num)' }}>{formatCountdown(signal.release_at)}</span>
+                                                                    </div>
+                                                                );
+                                                            }
+                                                            if (open && closeAt > now) {
+                                                                return (
+                                                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                                        <span style={{ color: 'var(--t-text)', fontWeight: 700, fontSize: '0.8rem' }}>Closes In</span>
+                                                                        <span style={{ color: 'var(--t-text)', fontSize: '0.75rem', fontFamily: 'var(--font-num)' }}>{formatCountdown(signal.close_at)}</span>
+                                                                    </div>
+                                                                );
+                                                            }
+                                                            // Closed (or no live timer): show when it closed, else release / created time.
+                                                            return formatReleaseTime(
+                                                                !open && signal.close_at
+                                                                    ? signal.close_at
+                                                                    : (signal.release_at || signal.created_at),
+                                                            );
+                                                        })()}
                                                     </td>
                                                     <td className="Action">
                                                         {(() => {
                                                             const owned = signal.purchased || signalHistory.some(h => h.signal_id === signal.id);
                                                             const locked = signal.release_at && new Date(signal.release_at).getTime() > currentTime.getTime();
                                                             const expired = !isSignalOpen(signal); // closed (TP / SL / Closed, or its close timer ran out) — can't be taken any more
-                                                            const closesAt = !expired && signal.close_at ? signal.close_at : null;
                                                             const canHide = true; // admin: delete · member: remove from own list
                                                             return (
                                                                 <div className="sig-actions">
@@ -953,17 +971,15 @@ export default function Dashboard() {
                                                                             title="This signal unlocks when the countdown ends"
                                                                             onClick={() => toast.error(`This signal is locked. Please wait ${formatCountdown(signal.release_at)} more.`)}
                                                                         >
-                                                                            🔒 {formatCountdown(signal.release_at)}
+                                                                            🔒 Locked
                                                                         </button>
                                                                     ) : (
                                                                         <button
                                                                             type="button"
-                                                                            className={`sig-btn sig-btn--take${closesAt ? ' sig-btn--timed' : ''}`}
+                                                                            className="sig-btn sig-btn--take"
                                                                             onClick={() => handleTakeSignal(signal)}
-                                                                            title={closesAt ? 'This signal closes automatically' : undefined}
                                                                         >
                                                                             <span>Take · {(user && user.free_signals > 0) ? 'FREE' : '$1'}</span>
-                                                                            {closesAt && <small className="sig-btn-timer">⏱ {formatCountdown(closesAt)}</small>}
                                                                         </button>
                                                                     )}
                                                                     {canHide && (

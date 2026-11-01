@@ -60,8 +60,8 @@ const FEATURES = [
 ];
 
 const STEPS = [
-    ['Create your account', `Sign up with your email and verify it with a 6-digit code. Takes under a minute — and you get $${PRICING.signupBonus} free wallet credit to take your first signals.`],
-    ['Fund your wallet', `Deposit USDT (TRC20) — minimum $${PRICING.minDeposit}. Upload your payment proof and we credit your wallet within 2 hours after verification.`],
+    ['Create your account', 'Sign up with your email and verify it with a 6-digit code. Takes under a minute.'],
+    ['Fund your wallet', `Deposit USDT (TRC20) — minimum $${PRICING.minDeposit}. On your first approved deposit you also get $${PRICING.firstDepositBonus} free wallet credit. We credit your wallet within 2 hours after verification.`],
     ['Get live signals', 'Signals appear on your dashboard in real time with Entry, Target and Stop Loss.'],
     ['Take the trade', `Unlock a signal for $${PRICING.signalFee} and place it with your own broker. Your account, your control.`],
 ];
@@ -69,7 +69,7 @@ const STEPS = [
 const FAQ = [
     ['What markets do you cover?', 'Mainly Gold (XAU/USD) & Silver (XAG/USD), major Forex pairs and Bitcoin.'],
     ['How much does a signal cost?', `Each signal costs $${PRICING.signalFee}, deducted from your AsianFX wallet when you choose to take it. You only pay for the signals you take.`],
-    ['Is there a free trial?', `Yes. Every new member gets $${PRICING.signupBonus} free wallet credit when they first register, so you can take signals right away before making any deposit.`],
+    ['Is there a free trial?', `Yes. On your first approved deposit you get an extra $${PRICING.firstDepositBonus} free wallet credit (one time), so you can take more signals right away.`],
     ['What happens if a signal hits Stop Loss?', 'Every member who took that signal automatically receives a free signal credit — your next signal costs nothing.'],
     ['How do I deposit?', `Send USDT on the TRC20 network to the address shown in the deposit window (minimum $${PRICING.minDeposit}), then upload a screenshot of the transfer. An admin verifies it and your deposit is approved and credited to your wallet within 2 hours.`],
     ['Do you trade on my behalf?', 'No. We provide signals only. You take every trade yourself, on your own behalf, in your own brokerage account — we never trade for you, and you stay in full control of your funds.'],
@@ -101,7 +101,7 @@ export default function Home() {
                             <a href="#how" className={`${styles.btnGhost} ${styles.btnLg}`}>How it works</a>
                         </div>
                         <ul className={styles.heroPoints}>
-                            <li><Icon d={ICONS.check} size={16} /> ${PRICING.signupBonus} free when you sign up</li>
+                            <li><Icon d={ICONS.check} size={16} /> ${PRICING.firstDepositBonus} free on your first deposit</li>
                             <li><Icon d={ICONS.check} size={16} /> ${PRICING.minDeposit} minimum deposit</li>
                             <li><Icon d={ICONS.check} size={16} /> Pay only for signals you take</li>
                             <li><Icon d={ICONS.check} size={16} /> USDT (TRC20) wallet</li>

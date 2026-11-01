@@ -12,7 +12,8 @@ export const SITE = {
 
 export const PRICING = {
     minDeposit: 10,
-    signupBonus: 5, // free wallet credit for every new member at signup
+    /** One-time free wallet credit — granted on the member's first approved deposit (not at signup). */
+    firstDepositBonus: 5,
     signalFee: 1,
     referralPercent: 10, // commission the referrer earns on each approved deposit
 };
