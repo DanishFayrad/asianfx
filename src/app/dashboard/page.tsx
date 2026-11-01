@@ -914,9 +914,9 @@ export default function Dashboard() {
                                                         })()}
                                                     </td>
                                                     <td className="time sig-cell-time">
-                                                        {/* Open + still locked → release countdown. Open + closing soon → close countdown. Closed → the time it closed. */}
                                                         {(() => {
                                                             const open = isSignalOpen(signal);
+                                                            const owned = signal.purchased || signalHistory.some(h => h.signal_id === signal.id);
                                                             const releaseAt = signal.release_at ? new Date(signal.release_at).getTime() : 0;
                                                             const closeAt = signal.close_at ? new Date(signal.close_at).getTime() : 0;
                                                             const now = currentTime.getTime();
@@ -928,7 +928,8 @@ export default function Dashboard() {
                                                                     </div>
                                                                 );
                                                             }
-                                                            if (open && closeAt > now) {
+                                                            // Close countdown is only for members who still need to take it.
+                                                            if (open && !owned && closeAt > now) {
                                                                 return (
                                                                     <div style={{ display: 'flex', flexDirection: 'column' }}>
                                                                         <span style={{ color: 'var(--t-text)', fontWeight: 700, fontSize: '0.8rem' }}>Closes In</span>
@@ -936,7 +937,6 @@ export default function Dashboard() {
                                                                     </div>
                                                                 );
                                                             }
-                                                            // Closed (or no live timer): show when it closed, else release / created time.
                                                             return formatReleaseTime(
                                                                 !open && signal.close_at
                                                                     ? signal.close_at
