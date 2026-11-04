@@ -25,6 +25,7 @@ import AdminUsersTable from '../../components/AdminUsersTable';
 import Skeleton, { SkeletonRows } from '@/components/Skeleton';
 import AssetBadge from '@/components/AssetBadge';
 import ReferEarnSection from '@/components/ReferEarnSection';
+import PushAlerts from '@/components/PushAlerts';
 import { assetFor } from '@/config/assets';
 import '../../styles/dashboard.css';
 import { errorMessage } from '@/lib/supabaseClient';
@@ -797,6 +798,9 @@ export default function Dashboard() {
         ) : (
             <div className="db-content-flex-wrapper">
                 <div className="db-main-content-column" style={{ flex: 1, minWidth: 0 }}>
+                    {/* Web push: signal alerts even when the site is closed */}
+                    {mounted && user && <PushAlerts />}
+
                     {/* KPI ROW */}
                     <section className="mdb-kpis" aria-label="Your overview">
                         <div className="mdb-kpi">

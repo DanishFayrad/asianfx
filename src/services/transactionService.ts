@@ -57,6 +57,11 @@ const approveTransaction = async (id: number, amount: number): Promise<MessageRe
     return unwrap<MessageResponse>(await supabase.rpc('approve_deposit', { p_tx_id: id, p_amount: amount }));
 };
 
+// Admin: add a deposit by hand for a member (paid outside the site) — approved straight away.
+const addManualDeposit = async (userId: string, amount: number, method: string): Promise<MessageResponse> => {
+    return unwrap<MessageResponse>(await supabase.rpc('admin_add_deposit', { p_user_id: userId, p_amount: amount, p_method: method }));
+};
+
 const rejectTransaction = async (id: number): Promise<MessageResponse> => {
     return unwrap<MessageResponse>(await supabase.rpc('reject_deposit', { p_tx_id: id }));
 };
@@ -182,6 +187,7 @@ const transactionService = {
     getPendingTransactions,
     getUserTransactions,
     approveTransaction,
+    addManualDeposit,
     rejectTransaction,
     getAllTransactions,
     getAdminStats,

@@ -11,6 +11,7 @@ import { useAllTransactions, usePendingTransactions } from '@/hooks/queries';
 import toast from 'react-hot-toast';
 import AdminSidebar, { initials } from '../../components/AdminSidebar';
 import AdminHeader from '@/components/admin/AdminHeader';
+import AddDepositModal from '@/components/admin/AddDepositModal';
 import { IconCheck, IconX, IconClock, IconImage, IconTrash, IconSearch, IconInbox, IconTransactions } from '@/components/admin/AdminIcons';
 import { displayUserId } from '@/lib/memberId';
 import Skeleton, { SkeletonRows } from '@/components/Skeleton';
@@ -74,6 +75,7 @@ export default function Transaction() {
   }, []);
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [addOpen, setAddOpen] = useState(false); // "Add deposit" form
   const pendingQuery = usePendingTransactions(isAdmin);
   const allQuery = useAllTransactions(isAdmin);
   const pendingDeposits: Transaction[] = pendingQuery.data ?? EMPTY_ROWS;
@@ -329,16 +331,21 @@ export default function Transaction() {
                 ))}
               </div>
 
-              <label className="atx-search">
-                <IconSearch size={16} />
-                <input
-                  type="search"
-                  placeholder="Search name, email or ID…"
-                  value={search}
-                  onChange={(e) => changeSearch(e.target.value)}
-                  aria-label="Search deposits"
-                />
-              </label>
+              <div className="atx-toolbar-end">
+                <label className="atx-search">
+                  <IconSearch size={16} />
+                  <input
+                    type="search"
+                    placeholder="Search name, email or ID…"
+                    value={search}
+                    onChange={(e) => changeSearch(e.target.value)}
+                    aria-label="Search deposits"
+                  />
+                </label>
+                <button type="button" className="atx-btn atx-btn--add" onClick={() => setAddOpen(true)}>
+                  + Add deposit
+                </button>
+              </div>
             </div>
 
             {loading ? (
@@ -516,6 +523,16 @@ export default function Transaction() {
                     </div>
                 </div>
             </div>
+        )}
+
+        {addOpen && (
+          <AddDepositModal
+            onClose={() => setAddOpen(false)}
+            onAdded={() => {
+              fetchData(); // also refreshes the members list (['admin', ...])
+              changeFilter('approved');
+            }}
+          />
         )}
 
         {/* Recent Transactions History removed per request */}

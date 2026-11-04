@@ -504,6 +504,25 @@ begin
     return json_build_object('message', 'Deposit approved', 'first_deposit_bonus', case when v_is_first then v_bonus else 0 end);
 end $$;
 
+-- Admin adds a deposit by hand (cash / bank transfer); approved at once through approve_deposit.
+create or replace function public.admin_add_deposit(p_user_id uuid, p_amount numeric, p_method text default 'manual')
+returns json language plpgsql security definer set search_path = public as $$
+declare v_tx bigint;
+begin
+    if not public.is_admin() then raise exception 'Admin only'; end if;
+    if p_amount is null or p_amount <= 0 then raise exception 'Enter an amount greater than 0'; end if;
+    if not exists (select 1 from public.profiles where id = p_user_id and not is_admin) then
+        raise exception 'Member not found';
+    end if;
+
+    insert into public.transactions (user_id, type, amount, status, payment_method)
+        values (p_user_id, 'deposit', p_amount, 'pending', coalesce(nullif(trim(p_method), ''), 'manual'))
+        returning id into v_tx;
+    perform public.approve_deposit(v_tx, p_amount);
+
+    return json_build_object('message', 'Deposit added and approved', 'transaction_id', v_tx);
+end $$;
+
 create or replace function public.reject_deposit(p_tx_id bigint)
 returns json language plpgsql security definer set search_path = public as $$
 declare v_tx public.transactions;
@@ -886,6 +905,54 @@ create or replace function public.get_global_transaction_count()
 returns integer language sql stable security definer set search_path = public as $$
     select count(*)::int from public.transactions where type = 'deposit';
 $$;
+
+-- ---------------- Web push (signal alerts when the site is closed) ----------------
+
+create table if not exists public.push_subscriptions (
+    id         bigint generated always as identity primary key,
+    user_id    uuid not null references public.profiles(id) on delete cascade,
+    endpoint   text not null unique,       -- the browser's push address
+    p256dh     text not null,              -- browser encryption keys
+    auth       text not null,
+    user_agent text,
+    created_at timestamptz not null default now()
+);
+create index if not exists idx_push_subscriptions_user on public.push_subscriptions(user_id);
+alter table public.push_subscriptions enable row level security;
+
+-- Members see their own; admins read all (to send pushes) and delete dead ones.
+drop policy if exists push_subscriptions_select on public.push_subscriptions;
+create policy push_subscriptions_select on public.push_subscriptions for select to authenticated
+    using (user_id = auth.uid() or public.is_admin());
+
+drop policy if exists push_subscriptions_delete on public.push_subscriptions;
+create policy push_subscriptions_delete on public.push_subscriptions for delete to authenticated
+    using (user_id = auth.uid() or public.is_admin());
+
+-- Save (or move to this member) the current browser's subscription.
+create or replace function public.save_push_subscription(
+    p_endpoint text, p_p256dh text, p_auth text, p_user_agent text default null)
+returns json language plpgsql security definer set search_path = public as $$
+begin
+    if auth.uid() is null then raise exception 'Not authenticated'; end if;
+    if coalesce(p_endpoint, '') = '' or coalesce(p_p256dh, '') = '' or coalesce(p_auth, '') = '' then
+        raise exception 'Invalid subscription';
+    end if;
+    insert into public.push_subscriptions (user_id, endpoint, p256dh, auth, user_agent)
+        values (auth.uid(), p_endpoint, p_p256dh, p_auth, left(p_user_agent, 300))
+        on conflict (endpoint) do update
+            set user_id = excluded.user_id, p256dh = excluded.p256dh, auth = excluded.auth,
+                user_agent = excluded.user_agent;
+    return json_build_object('message', 'Signal alerts turned on');
+end $$;
+
+create or replace function public.remove_push_subscription(p_endpoint text)
+returns json language plpgsql security definer set search_path = public as $$
+begin
+    if auth.uid() is null then raise exception 'Not authenticated'; end if;
+    delete from public.push_subscriptions where endpoint = p_endpoint and user_id = auth.uid();
+    return json_build_object('message', 'Signal alerts turned off');
+end $$;
 
 -- ---------------------------------------------------------------------
 -- STORAGE (deposit proof screenshots — private bucket)

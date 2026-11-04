@@ -818,3 +818,56 @@
   .sig-banner { flex-wrap: wrap; }
   .sig-banner-actions { width: 100%; justify-content: flex-end; }
 }
+
+/* Web push: "Turn on signal alerts" card on the member dashboard */
+.mdb-push {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(var(--t-accent-rgb), 0.55);
+  background: rgba(var(--t-accent-rgb), 0.08);
+  color: var(--t-text);
+}
+.mdb-push--on { border-color: var(--tw-10); background: var(--t-surface); }
+.mdb-push-icon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  font-size: 1.1rem;
+  background: rgba(var(--t-accent-rgb), 0.18);
+}
+.mdb-push-text { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 200px; line-height: 1.35; }
+.mdb-push-text strong { font-size: 0.95rem; }
+.mdb-push-text small { font-size: 0.8rem; color: var(--t-text-muted); }
+.mdb-push-actions { display: flex; align-items: center; gap: 10px; }
+.mdb-push-btn {
+  height: 38px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 10px;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--t-on-accent);
+  background: var(--btn-primary);
+  cursor: pointer;
+}
+.mdb-push-btn:disabled { opacity: 0.7; cursor: wait; }
+.mdb-push-link {
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--t-text-muted);
+  text-decoration: underline;
+  cursor: pointer;
+}

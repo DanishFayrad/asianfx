@@ -127,7 +127,9 @@ const createSignal = async (signalData: NewSignalInput): Promise<Signal> => {
     if (signalData.send_email === false) {
         signal.email = { sent: 0, failed: 0 };
     } else {
-        signal.email = await notifySignalByEmail(signal.id);
+        // Email and browser push go out together; push problems never block the broadcast.
+        const [email] = await Promise.all([notifySignalByEmail(signal.id), notifySignalByPush(signal.id)]);
+        signal.email = email;
     }
     return signal;
 };
@@ -146,6 +148,21 @@ const notifySignalByEmail = async (signalId: number): Promise<EmailResult> => {
         return res.ok ? { sent: body.sent || 0, failed: body.failed || 0 } : { error: body.message || 'Email failed' };
     } catch (e) {
         return { error: errorMessage(e) };
+    }
+};
+
+// Ask the server to send a browser push notification to members with signal alerts on. Never throws.
+const notifySignalByPush = async (signalId: number): Promise<void> => {
+    try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const res = await fetch('/api/notify-push', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json', authorization: `Bearer ${session?.access_token}` },
+            body: JSON.stringify({ signal_id: signalId }),
+        });
+        if (!res.ok) console.warn('Web push not sent:', (await res.json().catch(() => ({}))).message);
+    } catch (e) {
+        console.warn('Web push not sent:', errorMessage(e));
     }
 };
 
