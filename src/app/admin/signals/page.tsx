@@ -754,6 +754,10 @@ export default function AdminSignals() {
               const isBuy = String(sig.type || "").toLowerCase() === "buy";
               const isOpen = isSignalOpen(sig);
               const closesSoon = isOpen && !!sig.close_at;
+              // Timer ended but no result yet: members can no longer buy it, but the trade may still be
+              // running in the market, so the admin can still close it as Profit / Loss / Close now.
+              const canSetResult =
+                isOpen || sig.status === "Active" || sig.status === "Closed";
               const locked =
                 isOpen &&
                 sig.release_at &&
@@ -869,7 +873,7 @@ export default function AdminSignals() {
 
                   {/* Close the signal with its result — settles every member who took it. */}
                   <div className="asg-result">
-                    {isOpen && closingId === sig.id ? (
+                    {canSetResult && closingId === sig.id ? (
                       (() => {
                         // Close early in profit: admin enters the current price; it must be in profit.
                         const entry = Number(sig.entry_price);
@@ -933,10 +937,10 @@ export default function AdminSignals() {
                           </div>
                         );
                       })()
-                    ) : isOpen ? (
+                    ) : canSetResult ? (
                       <>
                         <span className="asg-result-label">
-                          Close with result:
+                          {isOpen ? "Close with result:" : "Timer ended — set result:"}
                         </span>
                         <div className="asg-result-btns">
                           {/* Saved as 'TP Hit' / 'Stop Loss' — the database settles members' wins/losses from these. */}
