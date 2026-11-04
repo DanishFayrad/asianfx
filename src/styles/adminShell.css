@@ -1039,8 +1039,8 @@
   font: inherit;
   font-size: 0.9rem;
   font-weight: 700;
-  color: #111;
-  background: var(--t-gold);
+  color: var(--t-on-accent);
+  background: var(--btn-primary);
   cursor: pointer;
   transition: filter 0.15s ease;
 }
