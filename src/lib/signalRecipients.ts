@@ -23,7 +23,7 @@ export const getSignalRecipients = async (
     signal: SignalTarget,
 ): Promise<{ recipients: SignalRecipient[]; error?: string }> => {
     const audience = signal.audience || 'deposited';
-    let query = supabase.from('profiles').select('id, email, name').eq('is_admin', false);
+    let query = supabase.from('profiles').select('id, email, name').eq('is_admin', false).is('deleted_at', null);
     if (signal.target_user_id) query = query.eq('id', signal.target_user_id);
     else if (audience === 'deposited') query = query.eq('is_active', true);
 

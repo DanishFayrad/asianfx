@@ -82,6 +82,7 @@ export async function POST(request: Request) {
         .from('profiles')
         .select('id, email, name')
         .eq('is_admin', false)
+        .is('deleted_at', null)
         .not('email', 'is', null);
     if (recipientsError) return Response.json({ message: recipientsError.message }, { status: 500 });
 

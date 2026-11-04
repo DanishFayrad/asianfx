@@ -26,6 +26,8 @@ export interface Profile {
 
 /** A row from get_all_users(), with the signal counts merged in by transactionService. */
 export interface AdminUser extends Profile {
+    /** Set when an admin deleted the member (soft delete — can be restored). */
+    deleted_at?: string | null;
     total_deposit: number;
     deposit_count: number;
     signals_taken: number;

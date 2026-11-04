@@ -41,16 +41,19 @@ export default function AdminUsersTable({ users: rawUsers = EMPTY_ROWS, loading 
     const [statusOverrides, setStatusOverrides] = useState<Record<string, boolean>>({});
     const [deletedIds, setDeletedIds] = useState<string[]>([]);
     const [pendingDelete, setPendingDelete] = useState<AdminUser | null>(null);
-    // Which tab is open: activated members or deactivated ones.
-    const [tab, setTab] = useState<'active' | 'inactive'>('active');
+    // Which tab is open: current members or the ones an admin deleted.
+    const [tab, setTab] = useState<'members' | 'deleted'>('members');
+    // Local soft-delete / restore changes, shown right away without a page reload.
+    const [deletedOverrides, setDeletedOverrides] = useState<Record<string, boolean>>({});
 
     // Memoized so the table only re-processes rows when the list really changes.
     const allMembers = useMemo(() => rawUsers
         .filter((u) => !u.is_admin && !deletedIds.includes(u.id)) // admins are not members — keep them out of the list
-        .map((u) => (u.id in statusOverrides ? { ...u, is_active: statusOverrides[u.id] } : u)),
-    [rawUsers, deletedIds, statusOverrides]);
-    const activeCount = useMemo(() => allMembers.filter((u) => u.is_active).length, [allMembers]);
-    const users = useMemo(() => allMembers.filter((u) => !!u.is_active === (tab === 'active')), [allMembers, tab]);
+        .map((u) => (u.id in statusOverrides ? { ...u, is_active: statusOverrides[u.id] } : u))
+        .map((u) => (u.id in deletedOverrides ? { ...u, deleted_at: deletedOverrides[u.id] ? new Date().toISOString() : null } : u)),
+    [rawUsers, deletedIds, statusOverrides, deletedOverrides]);
+    const deletedCount = useMemo(() => allMembers.filter((u) => u.deleted_at).length, [allMembers]);
+    const users = useMemo(() => allMembers.filter((u) => !!u.deleted_at === (tab === 'deleted')), [allMembers, tab]);
 
     // Search and paging. The page goes back to 1 when the search or the list changes.
     const table = useTable({
@@ -68,8 +71,10 @@ export default function AdminUsersTable({ users: rawUsers = EMPTY_ROWS, loading 
         try {
             const { message } = await transactionService.updateUserStatus(u.id, action);
             toast.success(message);
-            if (action === 'delete') setDeletedIds((ids) => [...ids, u.id]);
-            else setStatusOverrides((o) => ({ ...o, [u.id]: action === 'activate' }));
+            if (action === 'delete' || action === 'restore') {
+                setDeletedOverrides((o) => ({ ...o, [u.id]: action === 'delete' }));
+                if (action === 'delete') setStatusOverrides((o) => ({ ...o, [u.id]: false }));
+            } else setStatusOverrides((o) => ({ ...o, [u.id]: action === 'activate' }));
             // Refresh member lists and platform stats everywhere they are shown.
             queryClient.invalidateQueries({ queryKey: ['admin'] });
         } catch (e) {
@@ -121,7 +126,7 @@ export default function AdminUsersTable({ users: rawUsers = EMPTY_ROWS, loading 
                     </p>
                 </div>
                 <div role="tablist" style={{ display: 'flex', gap: '4px', padding: '4px', background: 'var(--admin-bg-main)', border: '1px solid var(--admin-border-color)', borderRadius: '12px' }}>
-                    {([['active', 'Activated', activeCount], ['inactive', 'Deactivated', allMembers.length - activeCount]] as const).map(([key, text, count]) => (
+                    {([['members', 'Members', allMembers.length - deletedCount], ['deleted', 'Deleted', deletedCount]] as const).map(([key, text, count]) => (
                         <button
                             key={key}
                             type="button"
@@ -230,6 +235,13 @@ export default function AdminUsersTable({ users: rawUsers = EMPTY_ROWS, loading 
                                 <td style={td}>
                                     {u.is_admin ? (
                                         <span style={{ color: 'var(--admin-text-muted)' }}>—</span>
+                                    ) : u.deleted_at ? (
+                                        <button
+                                            type="button"
+                                            disabled={busyId === u.id}
+                                            onClick={() => performAction(u, 'restore')}
+                                            style={{ background: 'var(--btn-primary)', color: 'var(--t-on-accent)', border: 'none', padding: '6px 12px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 700, cursor: busyId === u.id ? 'wait' : 'pointer' }}
+                                        >Restore</button>
                                     ) : (
                                         <select
                                             value={u.is_active ? 'active' : 'inactive'}
@@ -290,7 +302,7 @@ export default function AdminUsersTable({ users: rawUsers = EMPTY_ROWS, loading 
                 open={!!pendingDelete}
                 title="Are you sure you want to delete this user?"
                 message={pendingDelete && (
-                    <><strong>{pendingDelete.name || pendingDelete.email}</strong> — their account, deposits and signal history will be removed. This cannot be undone.</>
+                    <><strong>{pendingDelete.name || pendingDelete.email}</strong> — they will be logged out and blocked, and moved to the Deleted tab. You can restore them from there.</>
                 )}
                 onConfirm={confirmDelete}
                 onCancel={() => setPendingDelete(null)}

@@ -26,6 +26,9 @@ create table if not exists public.profiles (
     profile_image           text,
     created_at              timestamptz   not null default now()
 );
+-- Set when an admin deletes the member (soft delete: data is kept, login is blocked, can be restored).
+alter table public.profiles add column if not exists deleted_at timestamptz;
+
 
 create table if not exists public.signals (
     id             bigint generated always as identity primary key,
@@ -258,6 +261,7 @@ begin
                'release_at', new.release_at, 'target_user_id', new.target_user_id, 'created_at', new.created_at))
     from public.profiles p
     where not p.is_admin
+      and p.deleted_at is null
       -- Private → that member. Broadcast → only members with money (or a free credit) in their account.
       and (p.id = new.target_user_id
            or (new.target_user_id is null and public.signal_audience_match(new.audience, p.id)));
@@ -720,8 +724,8 @@ begin
     if not public.is_admin() then raise exception 'Admin only'; end if;
     return (
         select json_build_object(
-            'platform_balance', (select round(coalesce(sum(wallet_balance), 0), 2) from public.profiles where not is_admin),
-            'total_users',      (select count(*) from public.profiles where not is_admin),
+            'platform_balance', (select round(coalesce(sum(wallet_balance), 0), 2) from public.profiles where not is_admin and deleted_at is null),
+            'total_users',      (select count(*) from public.profiles where not is_admin and deleted_at is null),
             'total_deposit',     coalesce(sum(amount) filter (where type = 'deposit'    and status = 'approved'), 0),
             'deposit_count',     count(*)             filter (where type = 'deposit'    and status = 'approved'),
             'pending_deposits',  count(*)             filter (where type = 'deposit'    and status = 'pending'),
