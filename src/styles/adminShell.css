@@ -1013,7 +1013,8 @@
 .bsg-mail-card--on .bsg-mail-alert-icon { background: rgba(var(--t-accent-rgb), 0.18); color: var(--t-accent); }
 .bsg-mail-row { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
 .bsg-mail-field { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 160px; font-size: 0.78rem; font-weight: 600; color: var(--t-text-muted); }
-.bsg-mail-field select {
+.bsg-mail-field select,
+.bsg-audience {
   height: 42px;
   padding: 0 34px 0 12px;
   border-radius: 10px;
@@ -1030,7 +1031,9 @@
   background-repeat: no-repeat;
   background-position: right 12px center;
 }
-.bsg-mail-field select:focus { border-color: rgba(var(--t-accent-rgb), 0.6); outline: none; }
+.bsg-audience { flex-shrink: 0; max-width: 220px; }
+.bsg-mail-field select:focus,
+.bsg-audience:focus { border-color: rgba(var(--t-accent-rgb), 0.6); outline: none; }
 .bsg-mail-send {
   height: 42px;
   padding: 0 20px;

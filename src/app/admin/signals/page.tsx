@@ -102,6 +102,7 @@ export default function AdminSignals() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [comingSoonLoading, setComingSoonLoading] = useState(false);
+  const [signalAudience, setSignalAudience] = useState<"all" | "deposited" | "not_deposited">("deposited");
   const [mailAudience, setMailAudience] = useState<"all" | "deposited" | "not_deposited">("all");
   const signalsQuery = useSignalsDashboard(user?.id, isAdmin);
   const recentSignals: Signal[] = signalsQuery.data?.active_signals ?? [];
@@ -241,6 +242,7 @@ export default function AdminSignals() {
         close_minutes: formData.close_minutes,
         close_seconds: formData.close_seconds,
         description: `Signal for ${selectedAsset.name}`,
+        audience: signalAudience,
       };
 
       const created = await signalService.createSignal(payload);
@@ -331,9 +333,24 @@ export default function AdminSignals() {
         <div className="bsg">
           {/* ---------- NEW SIGNAL FORM ---------- */}
           <form onSubmit={handleSubmit} className="bsg-card bsg-form">
-            <div className="bsg-card-head">
-              <h2>New signal</h2>
-              <p>Sent to every member instantly, or when the countdown ends.</p>
+            <div className="bsg-card-head bsg-card-head--row">
+              <div>
+                <h2>New signal</h2>
+                <p>Sent to every member instantly, or when the countdown ends.</p>
+              </div>
+              {/* Who receives this signal (popup, dashboard and email) */}
+              <select
+                className="bsg-audience"
+                value={signalAudience}
+                onChange={(e) =>
+                  setSignalAudience(e.target.value as typeof signalAudience)
+                }
+                aria-label="Who receives this signal"
+              >
+                <option value="deposited">Deposited members</option>
+                <option value="not_deposited">Not deposited</option>
+                <option value="all">All members</option>
+              </select>
             </div>
 
             <div className="bsg-field">

@@ -171,6 +171,31 @@ returns boolean language sql stable security definer set search_path = public as
 $$;
 revoke execute on function public.can_receive_signals(uuid) from public, anon, authenticated;
 
+-- Who a BROADCAST signal goes to (chosen by the admin when sending):
+--   'all'           → every registered member
+--   'deposited'     → active members (activated by an approved deposit) — the original rule
+--   'not_deposited' → members with no approved deposit yet (they see it, and must deposit to unlock it)
+alter table public.signals add column if not exists audience text not null default 'deposited';
+
+create or replace function public.has_deposit(p_user_id uuid)
+returns boolean language sql stable security definer set search_path = public as $$
+    select exists (select 1 from public.transactions
+                   where user_id = p_user_id and type = 'deposit' and status = 'approved');
+$$;
+revoke execute on function public.has_deposit(uuid) from public, anon, authenticated;
+
+create or replace function public.signal_audience_match(p_audience text, p_user_id uuid)
+returns boolean language sql stable security definer set search_path = public as $$
+    select coalesce((
+        select not p.is_admin and case coalesce(p_audience, 'deposited')
+            when 'all'           then true
+            when 'not_deposited' then not public.has_deposit(p.id)
+            else p.is_active
+        end
+        from public.profiles p where p.id = p_user_id), false);
+$$;
+revoke execute on function public.signal_audience_match(text, uuid) from public, anon, authenticated;
+
 -- Create a profile row automatically when someone signs up.
 create or replace function public.handle_new_user()
 returns trigger language plpgsql security definer set search_path = public as $$
@@ -232,7 +257,7 @@ begin
     where not p.is_admin
       -- Private → that member. Broadcast → only members with money (or a free credit) in their account.
       and (p.id = new.target_user_id
-           or (new.target_user_id is null and p.is_active));
+           or (new.target_user_id is null and public.signal_audience_match(new.audience, p.id)));
     return new;
 end $$;
 
@@ -369,7 +394,8 @@ begin
     end if;
 
     select * into v_s from public.signals where id = p_signal_id;
-    if v_s.id is null or (v_s.target_user_id is not null and v_s.target_user_id <> v_p.id) then
+    if v_s.id is null or (v_s.target_user_id is not null and v_s.target_user_id <> v_p.id)
+       or (v_s.target_user_id is null and not v_p.is_admin and not public.signal_audience_match(v_s.audience, v_p.id)) then
         raise exception 'Signal not found';
     end if;
     if v_s.release_at is not null and v_s.release_at > now() then
@@ -603,7 +629,7 @@ returns json language sql stable security definer set search_path = public as $$
                or s.target_user_id = auth.uid()
                or us.id is not null
                -- broadcast signals: only ones sent after the member joined (new members don't see old history)
-               or (s.target_user_id is null and public.can_receive_signals(auth.uid())
+               or (s.target_user_id is null and public.signal_audience_match(s.audience, auth.uid())
                    and s.created_at >= (select p.created_at from public.profiles p where p.id = auth.uid())))
           and not exists (select 1 from public.hidden_signals h where h.user_id = auth.uid() and h.signal_id = s.id)
         order by s.created_at desc

@@ -34,6 +34,8 @@ export interface NewSignalInput {
     close_seconds?: string | number;
     description?: string | null;
     target_user_id?: string | null;
+    /** Who a broadcast signal goes to (default: deposited members). */
+    audience?: 'all' | 'deposited' | 'not_deposited';
     /** When false, skip Brevo email after insert. Default true. */
     send_email?: boolean;
 }
@@ -113,6 +115,7 @@ const createSignal = async (signalData: NewSignalInput): Promise<Signal> => {
         signal_type: signalData.signal_type || 'free',
         description: signalData.description || null,
         target_user_id: signalData.target_user_id || null,
+        audience: signalData.audience || 'deposited',
         release_at: releaseDelayMs > 0
             ? new Date(Date.now() + serverTimeOffset + releaseDelayMs).toISOString()
             : null,

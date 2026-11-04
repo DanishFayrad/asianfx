@@ -86,14 +86,22 @@ export async function POST(request: Request) {
     const { data: signal, error: signalError } = await supabase.from('signals').select('*').eq('id', signalId).single();
     if (signalError || !signal) return Response.json({ message: 'Signal not found' }, { status: 404 });
 
-    let query = supabase.from('profiles').select('email, name').eq('is_admin', false).not('email', 'is', null);
-    // Private signal → that member. Broadcast → only active members with money in their account
-    // (wallet ≥ $1 signal fee) or a free credit — the same rule the database uses (can_receive_signals).
-    query = signal.target_user_id
-        ? query.eq('id', signal.target_user_id)
-        : query.eq('is_active', true);
-    const { data: recipients, error: recipientsError } = await query;
+    let query = supabase.from('profiles').select('id, email, name').eq('is_admin', false).not('email', 'is', null);
+    // Private signal → that member. Broadcast → the audience the admin picked, same rule as the
+    // database (signal_audience_match): deposited = active members, not_deposited = no approved deposit, all = everyone.
+    const audience = signal.audience || 'deposited';
+    if (signal.target_user_id) query = query.eq('id', signal.target_user_id);
+    else if (audience === 'deposited') query = query.eq('is_active', true);
+    const { data: members, error: recipientsError } = await query;
     if (recipientsError) return Response.json({ message: recipientsError.message }, { status: 500 });
+    let recipients = members ?? [];
+    if (!signal.target_user_id && audience === 'not_deposited') {
+        const { data: deposits, error: depositsError } = await supabase
+            .from('transactions').select('user_id').eq('type', 'deposit').eq('status', 'approved');
+        if (depositsError) return Response.json({ message: depositsError.message }, { status: 500 });
+        const depositors = new Set((deposits ?? []).map((d) => d.user_id));
+        recipients = recipients.filter((m) => !depositors.has(m.id));
+    }
     if (!recipients?.length) {
         return Response.json({
             sent: 0,

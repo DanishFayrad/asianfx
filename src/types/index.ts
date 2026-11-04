@@ -48,6 +48,8 @@ export interface Signal {
     description: string | null;
     status: string;
     target_user_id: string | null;
+    /** Who a broadcast signal goes to: every member, only depositors, or only members without a deposit. */
+    audience?: SignalAudience;
     release_at: string | null;
     /** When the signal closes on its own (admin's "Close after" timer); null = closed by hand. */
     close_at?: string | null;
@@ -186,3 +188,5 @@ export interface InfluencerApplication {
 export interface MessageResponse {
     message: string;
 }
+
+export type SignalAudience = 'all' | 'deposited' | 'not_deposited';
