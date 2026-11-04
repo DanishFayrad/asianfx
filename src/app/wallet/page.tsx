@@ -191,7 +191,7 @@ export default function Wallet() {
             <div>
               <span className="mdb-kpi-label">Spent on signals</span>
               <strong>{sv(`$${money(stats?.total_signal_fees)}`, 90, 24)}</strong>
-              <small className="mwl-muted">Free after a Stop Loss</small>
+              <small className="mwl-muted">Refunded after a Stop Loss</small>
             </div>
           </div>
         </section>

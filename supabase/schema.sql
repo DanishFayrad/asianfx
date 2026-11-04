@@ -59,7 +59,7 @@ create table if not exists public.user_signals (
 create table if not exists public.transactions (
     id             bigint generated always as identity primary key,
     user_id        uuid not null references public.profiles(id) on delete cascade,
-    type           text not null,                    -- deposit / withdrawal / signal_fee / commission
+    type           text not null,                    -- deposit / withdrawal / signal_fee / signal_refund / commission
     amount         numeric(14,2) not null default 0,
     status         text not null default 'pending',  -- pending / approved / rejected
     payment_method text,
@@ -673,7 +673,9 @@ returns json language sql stable security definer set search_path = public as $$
         'deposit_count',     count(*)             filter (where type = 'deposit'    and status = 'approved'),
         'total_withdrawal',  coalesce(sum(amount) filter (where type = 'withdrawal' and status = 'approved'), 0),
         'withdrawal_count',  count(*)             filter (where type = 'withdrawal' and status = 'approved'),
-        'total_signal_fees', coalesce(sum(amount) filter (where type = 'signal_fee'), 0),
+        -- Net: fees paid minus fees refunded after a Stop Loss.
+        'total_signal_fees', coalesce(sum(amount) filter (where type = 'signal_fee'), 0)
+                           - coalesce(sum(amount) filter (where type = 'signal_refund'), 0),
         'total_profit',      (select coalesce(sum(profit), 0) from public.user_signals where user_id = auth.uid())
     )
     from public.transactions
@@ -693,7 +695,8 @@ begin
             'pending_deposits',  count(*)             filter (where type = 'deposit'    and status = 'pending'),
             'total_withdrawal',  coalesce(sum(amount) filter (where type = 'withdrawal' and status = 'approved'), 0),
             'withdrawal_count',  count(*)             filter (where type = 'withdrawal' and status = 'approved'),
-            'total_profit',      coalesce(sum(amount) filter (where type = 'signal_fee'), 0),
+            'total_profit',      coalesce(sum(amount) filter (where type = 'signal_fee'), 0)
+                               - coalesce(sum(amount) filter (where type = 'signal_refund'), 0),
             'total_signals',     (select count(*) from public.signals where target_user_id is null),
             'active_signals',    (select count(*) from public.signals
                                     where target_user_id is null and status = 'Active'
@@ -749,18 +752,26 @@ create or replace function public.settle_signal_results()
 returns trigger language plpgsql security definer set search_path = public as $$
 begin
     if new.status is distinct from old.status then
-        -- Loss → every holder gets one free signal credit.
+        -- Loss → every holder gets the signal fee they paid ($1) back in their wallet.
+        -- (Members who used a free credit paid $0, so nothing is refunded to them.)
         if new.status ilike '%stop%' then
             update public.profiles p
-                set free_signals = free_signals + 1
+                set wallet_balance = wallet_balance + us.invested_amount
                 from public.user_signals us
-                where us.signal_id = new.id and us.result = 'pending' and us.user_id = p.id;
+                where us.signal_id = new.id and us.result = 'pending' and us.user_id = p.id
+                  and us.invested_amount > 0;
+
+            insert into public.transactions (user_id, type, amount, status, processed_at)
+                select us.user_id, 'signal_refund', us.invested_amount, 'approved', now()
+                from public.user_signals us
+                where us.signal_id = new.id and us.result = 'pending' and us.invested_amount > 0;
 
             insert into public.notifications (user_id, type, title, message)
-                select us.user_id, 'info', 'Free Signal Credited',
-                       format('%s hit Stop Loss — your next signal is FREE.', new.symbol)
+                select us.user_id, 'info', 'Signal Fee Refunded',
+                       format('%s hit Stop Loss — your $%s signal fee is back in your wallet.',
+                              new.symbol, to_char(us.invested_amount, 'FM999990.00'))
                 from public.user_signals us
-                where us.signal_id = new.id and us.result = 'pending';
+                where us.signal_id = new.id and us.result = 'pending' and us.invested_amount > 0;
         end if;
 
         update public.user_signals

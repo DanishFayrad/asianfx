@@ -10,7 +10,7 @@ import SignalNotification from '@/components/SignalNotification';
 
 export const metadata = {
     title: 'AsianFX Signals | Gold, Silver, Forex & Crypto Trading Signals',
-    description: `Real-time trading signals for Gold (XAU/USD), Silver, Forex and Crypto with clear Entry, Take Profit and Stop Loss. $${PRICING.signalFee} per signal — free replacement after a Stop Loss.`,
+    description: `Real-time trading signals for Gold (XAU/USD), Silver, Forex and Crypto with clear Entry, Take Profit and Stop Loss. $${PRICING.signalFee} per signal — fee refunded after a Stop Loss.`,
     keywords: 'trading signals, gold signals, xauusd signals, forex signals, silver signals, crypto signals, asianfx',
 };
 
@@ -72,7 +72,7 @@ const FAQ = [
     ['What markets do you cover?', 'Mainly Gold (XAU/USD) & Silver (XAG/USD), major Forex pairs and Bitcoin.'],
     ['How much does a signal cost?', `Each signal costs $${PRICING.signalFee}, deducted from your AsianFX wallet when you choose to take it. You only pay for the signals you take.`],
     ['Is there a free trial?', `Yes. On your first approved deposit you get an extra $${PRICING.firstDepositBonus} free wallet credit (one time), so you can take more signals right away.`],
-    ['What happens if a signal hits Stop Loss?', 'Every member who took that signal automatically receives a free signal credit — your next signal costs nothing.'],
+    ['What happens if a signal hits Stop Loss?', 'Every member who took that signal automatically gets the $1 signal fee back in their wallet.'],
     ['How do I deposit?', `Send USDT on the TRC20 network to the address shown in the deposit window (minimum $${PRICING.minDeposit}), then upload a screenshot of the transfer. An admin verifies it and your deposit is approved and credited to your wallet within 2 hours.`],
     ['Do you trade on my behalf?', 'No. We provide signals only. You take every trade yourself, on your own behalf, in your own brokerage account — we never trade for you, and you stay in full control of your funds.'],
     ['Is profit guaranteed?', 'No. Trading carries real risk and no signal provider can guarantee profits. Only trade with money you can afford to lose.'],
@@ -239,7 +239,7 @@ export default function Home() {
                             <ul className={styles.checkList}>
                                 <li><Icon d={ICONS.check} size={16} /> Entry, Take Profit &amp; Stop Loss</li>
                                 <li><Icon d={ICONS.check} size={16} /> Real-time dashboard alerts</li>
-                                <li><Icon d={ICONS.check} size={16} /> Free replacement after a Stop Loss</li>
+                                <li><Icon d={ICONS.check} size={16} /> $1 refunded after a Stop Loss</li>
                                 <li><Icon d={ICONS.check} size={16} /> Personal signal history</li>
                                 <li><Icon d={ICONS.check} size={16} /> Minimum deposit just ${PRICING.minDeposit}</li>
                             </ul>
@@ -249,8 +249,8 @@ export default function Home() {
                         <div className={styles.priceSide}>
                             <div className={styles.priceCard}>
                                 <span className={styles.featureIcon}><Icon d={ICONS.gift} /></span>
-                                <h3>Loss? Next signal is free.</h3>
-                                <p>If a signal you took closes at Stop Loss, a free signal credit is added to your account automatically.</p>
+                                <h3>Loss? Your $1 comes back.</h3>
+                                <p>If a signal you took closes at Stop Loss, the $1 signal fee is refunded to your wallet automatically.</p>
                             </div>
                             <div className={styles.priceCard}>
                                 <span className={styles.featureIcon}><Icon d={ICONS.users} /></span>
