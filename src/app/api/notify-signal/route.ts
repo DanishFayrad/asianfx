@@ -1,16 +1,12 @@
 import { createClient } from '@supabase/supabase-js';
 import { getSignalRecipients } from '@/lib/signalRecipients';
+import { MAIL_NOT_CONFIGURED, mailConfig, sendMail } from '@/lib/mailtrap';
 import type { Signal } from '@/types';
 
-// Emails members when an admin publishes a signal (sent through Brevo's API).
-// Server-only env vars (set in Vercel / .env.local, NEVER prefixed with NEXT_PUBLIC_):
-//   BREVO_API_KEY       Brevo → Settings → SMTP & API → API keys
-//   BREVO_SENDER_EMAIL  verified sender — must match Brevo exactly (e.g. fxasians@gmail.com)
-//   BREVO_SENDER_NAME   optional, defaults to "AsianFX"
-//   SITE_URL            optional, defaults to https://www.asianfxsignals.com
+// Emails members when an admin publishes a signal (sent through Mailtrap — env vars in src/lib/mailtrap.ts).
+//   SITE_URL  optional, defaults to https://www.asianfxsignals.com
 
-// Parallel sends per wave. Same simple `to` shape as /api/contact (proven working on live).
-// messageVersions batching was rejecting on this Brevo/Gmail setup even though single sends work.
+// Parallel sends per wave.
 const PARALLEL = 15;
 
 const HTML_ESCAPES: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
@@ -56,11 +52,7 @@ const buildEmail = (signal: Signal, siteUrl: string) => {
 };
 
 export async function POST(request: Request) {
-    const apiKey = process.env.BREVO_API_KEY;
-    const senderEmail = process.env.BREVO_SENDER_EMAIL;
-    if (!apiKey || !senderEmail) {
-        return Response.json({ message: 'Email is not configured (BREVO_API_KEY / BREVO_SENDER_EMAIL missing).' }, { status: 503 });
-    }
+    if (!mailConfig()) return Response.json({ message: MAIL_NOT_CONFIGURED }, { status: 503 });
 
     const token = request.headers.get('authorization')?.replace(/^Bearer\s+/i, '');
     if (!token) return Response.json({ message: 'Not authenticated' }, { status: 401 });
@@ -107,30 +99,17 @@ export async function POST(request: Request) {
         return Response.json({ sent: 0, failed: 0, message: 'No active members with a valid email to notify.' }, { status: 400 });
     }
 
-    const sender = { email: senderEmail.trim(), name: process.env.BREVO_SENDER_NAME || 'AsianFX' };
     let sent = 0;
     let failed = 0;
-    let lastBrevoError = '';
+    let lastError = '';
 
     const sendOne = async (r: { email: string | null; name: string | null }) => {
-        const res = await fetch('https://api.brevo.com/v3/smtp/email', {
-            method: 'POST',
-            headers: { 'api-key': apiKey, 'content-type': 'application/json', accept: 'application/json' },
-            body: JSON.stringify({
-                sender,
-                to: [{ email: String(r.email).trim(), name: r.name || undefined }],
-                subject,
-                htmlContent: html,
-            }),
-        });
-        if (res.ok) {
-            sent += 1;
-            return;
+        const res = await sendMail({ to: { email: String(r.email), name: r.name }, subject, html });
+        if (res.ok) sent += 1;
+        else {
+            failed += 1;
+            lastError = res.error || '';
         }
-        failed += 1;
-        const errText = await res.text().catch(() => '');
-        lastBrevoError = errText;
-        console.error('Brevo send failed', res.status, errText);
     };
 
     for (let i = 0; i < valid.length; i += PARALLEL) {
@@ -138,16 +117,7 @@ export async function POST(request: Request) {
     }
 
     if (failed && !sent) {
-        let detail = lastBrevoError.slice(0, 300);
-        try {
-            const parsed = JSON.parse(lastBrevoError);
-            detail = parsed.message || parsed.error || detail;
-        } catch { /* keep raw text */ }
-        return Response.json({
-            sent,
-            failed,
-            message: `Brevo rejected the send: ${detail}`,
-        }, { status: 502 });
+        return Response.json({ sent, failed, message: `Mailtrap rejected the send: ${lastError}` }, { status: 502 });
     }
 
     return Response.json({ sent, failed });

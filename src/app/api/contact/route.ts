@@ -1,11 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
+import { mailConfig, sendMail } from '@/lib/mailtrap';
 
-// Landing-page contact form: saves the message and emails it to the AsianFX inbox (via Brevo,
-// the same account used for signal emails). Server-only env vars:
-//   BREVO_API_KEY       Brevo → Settings → SMTP & API → API keys
-//   BREVO_SENDER_EMAIL  verified sender, e.g. no-reply@asianfxsignals.com
-//   BREVO_SENDER_NAME   optional, defaults to "AsianFX"
-//   CONTACT_EMAIL       optional, where messages go — defaults to fxasians@gmail.com
+// Landing-page contact form: saves the message and emails it to the AsianFX inbox (via Mailtrap,
+// the same account used for signal emails — env vars in src/lib/mailtrap.ts).
+//   CONTACT_EMAIL  optional, where messages go — defaults to fxasians@gmail.com
 
 const INBOX = process.env.CONTACT_EMAIL || 'fxasians@gmail.com';
 
@@ -39,9 +37,7 @@ export async function POST(request: Request) {
 
     // 2) Email it to the inbox, with the visitor as Reply-To so a reply goes straight to them.
     let emailed = false;
-    const apiKey = process.env.BREVO_API_KEY;
-    const senderEmail = process.env.BREVO_SENDER_EMAIL;
-    if (apiKey && senderEmail) {
+    if (mailConfig()) {
         const html = `
 <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#111;line-height:1.6">
   <h2 style="margin:0 0 12px;font-size:18px">New message from the AsianFX website</h2>
@@ -50,25 +46,10 @@ export async function POST(request: Request) {
   <div style="padding:12px 14px;border-radius:8px;background:#f5f5f5;white-space:pre-wrap">${escapeHtml(message || '(no message)')}</div>
   <p style="margin:16px 0 0;color:#666;font-size:12px">Reply to this email to answer ${escapeHtml(fullName)} directly.</p>
 </div>`;
-        try {
-            const res = await fetch('https://api.brevo.com/v3/smtp/email', {
-                method: 'POST',
-                headers: { 'api-key': apiKey, 'content-type': 'application/json', accept: 'application/json' },
-                body: JSON.stringify({
-                    sender: { email: senderEmail, name: process.env.BREVO_SENDER_NAME || 'AsianFX' },
-                    to: [{ email: INBOX }],
-                    replyTo: { email, name: fullName },
-                    subject: `New contact message from ${fullName}`,
-                    htmlContent: html,
-                }),
-            });
-            if (res.ok) emailed = true;
-            else console.error('Brevo contact email failed', res.status, await res.text().catch(() => ''));
-        } catch (e) {
-            console.error('Brevo contact email failed', e);
-        }
+        const res = await sendMail({ to: { email: INBOX }, replyTo: email, subject: `New contact message from ${fullName}`, html });
+        emailed = res.ok;
     } else {
-        console.error('Contact email not sent: BREVO_API_KEY / BREVO_SENDER_EMAIL missing.');
+        console.error('Contact email not sent: MAILTRAP_API_TOKEN / MAILTRAP_SENDER_EMAIL missing.');
     }
 
     if (!saved && !emailed) {

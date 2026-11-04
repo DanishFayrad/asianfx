@@ -1,7 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
+import { MAIL_NOT_CONFIGURED, mailConfig, sendMail } from '@/lib/mailtrap';
 
 // Admin "coming soon" alert — emails active members that a signal is about to drop.
-// Same Brevo env vars as /api/notify-signal (BREVO_API_KEY, BREVO_SENDER_EMAIL, …).
+// Sent through Mailtrap (env vars in src/lib/mailtrap.ts).
 
 const PARALLEL = 15;
 
@@ -51,11 +52,7 @@ const buildComingSoonEmail = (opts: {
 };
 
 export async function POST(request: Request) {
-    const apiKey = process.env.BREVO_API_KEY;
-    const senderEmail = process.env.BREVO_SENDER_EMAIL;
-    if (!apiKey || !senderEmail) {
-        return Response.json({ message: 'Email is not configured (BREVO_API_KEY / BREVO_SENDER_EMAIL missing).' }, { status: 503 });
-    }
+    if (!mailConfig()) return Response.json({ message: MAIL_NOT_CONFIGURED }, { status: 503 });
 
     const token = request.headers.get('authorization')?.replace(/^Bearer\s+/i, '');
     if (!token) return Response.json({ message: 'Not authenticated' }, { status: 401 });
@@ -112,30 +109,17 @@ export async function POST(request: Request) {
         return Response.json({ sent: 0, failed: 0, message: 'No active members with a valid email.' }, { status: 400 });
     }
 
-    const sender = { email: senderEmail.trim(), name: process.env.BREVO_SENDER_NAME || 'AsianFX' };
     let sent = 0;
     let failed = 0;
-    let lastBrevoError = '';
+    let lastError = '';
 
     const sendOne = async (r: { email: string; name: string | null }) => {
-        const res = await fetch('https://api.brevo.com/v3/smtp/email', {
-            method: 'POST',
-            headers: { 'api-key': apiKey, 'content-type': 'application/json', accept: 'application/json' },
-            body: JSON.stringify({
-                sender,
-                to: [{ email: String(r.email).trim(), name: r.name || undefined }],
-                subject,
-                htmlContent: html,
-            }),
-        });
-        if (res.ok) {
-            sent += 1;
-            return;
+        const res = await sendMail({ to: { email: String(r.email), name: r.name }, subject, html });
+        if (res.ok) sent += 1;
+        else {
+            failed += 1;
+            lastError = res.error || '';
         }
-        failed += 1;
-        const errText = await res.text().catch(() => '');
-        lastBrevoError = errText;
-        console.error('Brevo coming-soon send failed', res.status, errText);
     };
 
     for (let i = 0; i < valid.length; i += PARALLEL) {
@@ -143,12 +127,7 @@ export async function POST(request: Request) {
     }
 
     if (failed && !sent) {
-        let detail = lastBrevoError.slice(0, 300);
-        try {
-            const parsed = JSON.parse(lastBrevoError);
-            detail = parsed.message || parsed.error || detail;
-        } catch { /* keep raw */ }
-        return Response.json({ sent, failed, message: `Brevo rejected the send: ${detail}` }, { status: 502 });
+        return Response.json({ sent, failed, message: `Mailtrap rejected the send: ${lastError}` }, { status: 502 });
     }
 
     return Response.json({ sent, failed });
