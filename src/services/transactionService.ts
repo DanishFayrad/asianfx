@@ -13,13 +13,18 @@ interface SignalCounts {
     open: number; // no result yet and the signal is still active
 }
 
+// The payment's transaction ID members must enter with a deposit: exactly 12 digits.
+export const TX_ID_RE = /^\d{12}$/;
+
 const requestDeposit = async (formData: FormData): Promise<Transaction> => {
     const userId = await getSessionUserId();
     const amount = parseFloat(String(formData.get('amount') ?? ''));
     const paymentMethod = formData.get('payment_method');
     const file = formData.get('proof_image');
+    const txId = String(formData.get('tx_id') ?? '').trim();
 
     if (!amount || amount <= 0) throw toError('Invalid deposit amount');
+    if (!TX_ID_RE.test(txId)) throw toError('Transaction ID must be exactly 12 digits');
 
     let proofPath: string | null = null;
     if (file && typeof file !== 'string') {
@@ -30,7 +35,7 @@ const requestDeposit = async (formData: FormData): Promise<Transaction> => {
 
     return unwrap<Transaction>(await supabase
         .from('transactions')
-        .insert({ user_id: userId, type: 'deposit', amount, payment_method: paymentMethod, proof_image: proofPath })
+        .insert({ user_id: userId, type: 'deposit', amount, payment_method: paymentMethod, proof_image: proofPath, tx_id: txId })
         .select()
         .single());
 };

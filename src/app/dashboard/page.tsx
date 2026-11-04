@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import signalService from '../../services/signalService';
-import transactionService from '../../services/transactionService';
+import transactionService, { TX_ID_RE } from '../../services/transactionService';
 import { connectRealtime } from '../../services/realtimeService';
 import { useCurrentUser, useLogout } from '@/hooks/useAuth';
 import {
@@ -62,6 +62,10 @@ export default function Dashboard() {
       toast.error('Minimum deposit amount is $10');
       return;
     }
+    if (!TX_ID_RE.test(depositTxId)) {
+      toast.error('Transaction ID must be exactly 12 digits');
+      return;
+    }
     if (!screenshot) {
       toast.error('Please upload a proof of payment screenshot');
       return;
@@ -73,11 +77,13 @@ export default function Dashboard() {
         formData.append('amount', depositAmount);
         formData.append('payment_method', paymentMethod);
         formData.append('proof_image', screenshot);
+        formData.append('tx_id', depositTxId);
         
         await transactionService.requestDeposit(formData);
         toast.success('Deposit request submitted successfully!');
         setIsDepositModalOpen(false);
         setDepositAmount('');
+        setDepositTxId('');
         setScreenshot(null);
         setScreenshotPreview(null);
         window.location.reload(); // Reload to show pending banner
@@ -95,6 +101,7 @@ export default function Dashboard() {
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
   const [depositAmount, setDepositAmount] = useState('');
+  const [depositTxId, setDepositTxId] = useState('');
   // Same label as DepositModal — deposits are USDT on the TRC20 network.
   const paymentMethod = 'USDT_TRC20';
   const [depositStep, setDepositStep] = useState(1); // 1: Info, 2: Payment Details
@@ -709,6 +716,24 @@ export default function Dashboard() {
                 />
               </div>
 
+              <div className="amount-input-group" style={{ marginBottom: '1rem' }}>
+                <label>Transaction ID</label>
+                <input
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="off"
+                    maxLength={12}
+                    className="amount-input"
+                    placeholder="12-digit transaction ID"
+                    value={depositTxId}
+                    onChange={(e) => setDepositTxId(e.target.value.replace(/\D/g, '').slice(0, 12))}
+                    style={{ fontSize: '0.85rem', padding: '12px' }}
+                />
+                {depositTxId && depositTxId.length < 12 && (
+                  <p style={{ fontSize: '0.72rem', color: '#dc2626', marginTop: '0.4rem' }}>Exactly 12 digits ({depositTxId.length}/12)</p>
+                )}
+              </div>
+
               {/* Proof Upload */}
               <div className="amount-input-group">
                 <label>Upload Payment Proof (Screenshot)</label>
@@ -756,7 +781,7 @@ export default function Dashboard() {
               <button 
                 className="btn-deposit" 
                 onClick={handleDeposit}
-                disabled={isSubmitting || !screenshot}
+                disabled={isSubmitting || !screenshot || !TX_ID_RE.test(depositTxId)}
               >
                 {isSubmitting ? <><span className="btn-spinner dark"></span>Processing...</> : 'I Have Paid'}
               </button>

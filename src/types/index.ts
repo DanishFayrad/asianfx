@@ -111,6 +111,8 @@ export interface Transaction {
     auto_approved: boolean;
     processed_at: string | null;
     created_at: string;
+    /** 12-digit transaction ID the member entered with the deposit. */
+    tx_id?: string | null;
     /** Why the admin rejected this deposit (shown to the member). */
     reject_reason?: string | null;
     User?: TransactionUser | null;

@@ -427,7 +427,10 @@ export default function Transaction() {
                               <small>{d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}</small>
                             </div>
                           </td>
-                          <td><span className="atx-chip">{formatMethod(tx.payment_method)}</span></td>
+                          <td>
+                            <span className="atx-chip">{formatMethod(tx.payment_method)}</span>
+                            {tx.tx_id && <small className="atx-txid">TX ID: {tx.tx_id}</small>}
+                          </td>
                           <td className="atx-right atx-amount">${money(tx.amount)}</td>
                           <td>
                             <span className={`atx-status atx-status--${statusKey(tx.status)}`}>
@@ -520,6 +523,7 @@ export default function Transaction() {
                                 <div style={{ minWidth: 0 }}>
                                     <div style={{ fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{confirmModal.tx?.User?.name || 'Member'}</div>
                                     <div style={{ fontSize: '0.78rem', color: 'var(--t-text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{confirmModal.tx?.User?.email || '—'}</div>
+                                    <div style={{ fontSize: '0.78rem', marginTop: '2px' }}>TX ID: <strong style={{ letterSpacing: '0.5px' }}>{confirmModal.tx?.tx_id || '—'}</strong></div>
                                 </div>
                                 <div style={{ textAlign: 'right', flexShrink: 0 }}>
                                     <div style={{ fontSize: '0.72rem', color: 'var(--t-text-muted)' }}>Amount sent</div>

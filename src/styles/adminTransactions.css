@@ -675,3 +675,6 @@
 }
 .atx-reason-pick:has(input:checked) { border-color: rgba(var(--t-accent-rgb), 0.6); background: rgba(var(--t-accent-rgb), 0.08); }
 .atx-reason-pick input { width: 15px; height: 15px; margin: 0; accent-color: var(--t-accent); flex-shrink: 0; }
+
+/* Member's transaction ID under the method chip */
+.atx-txid { display: block; margin-top: 4px; font-size: 0.72rem; color: var(--t-text-muted); letter-spacing: 0.3px; white-space: nowrap; }

@@ -2,11 +2,12 @@
 
 import React, { useRef, useState } from 'react';
 import toast from 'react-hot-toast';
-import transactionService from '../services/transactionService';
+import transactionService, { TX_ID_RE } from '../services/transactionService';
 import { errorMessage } from '@/lib/supabaseClient';
 
 export default function DepositModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const [depositAmount, setDepositAmount] = useState('');
+  const [txId, setTxId] = useState('');
   const [screenshot, setScreenshot] = useState<File | null>(null);
   const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -44,6 +45,10 @@ export default function DepositModal({ isOpen, onClose }: { isOpen: boolean; onC
       toast.error('Minimum deposit amount is $10');
       return;
     }
+    if (!TX_ID_RE.test(txId)) {
+      toast.error('Transaction ID must be exactly 12 digits');
+      return;
+    }
     if (!screenshot) {
       toast.error('Please upload a screenshot of your transaction proof');
       return;
@@ -54,6 +59,7 @@ export default function DepositModal({ isOpen, onClose }: { isOpen: boolean; onC
       const formData = new FormData();
       formData.append('amount', depositAmount);
       formData.append('payment_method', 'USDT_TRC20');
+      formData.append('tx_id', txId);
       formData.append('proof_image', screenshot);
 
       await transactionService.requestDeposit(formData);
@@ -69,6 +75,7 @@ export default function DepositModal({ isOpen, onClose }: { isOpen: boolean; onC
 
   const handleClose = () => {
     setDepositAmount('');
+    setTxId('');
     setScreenshot(null);
     setScreenshotPreview(null);
     setIsProofViewOpen(false);
@@ -147,6 +154,25 @@ export default function DepositModal({ isOpen, onClose }: { isOpen: boolean; onC
             />
           </div>
 
+          <div style={{ marginBottom: '1rem' }}>
+            <label style={label}>Transaction ID</label>
+            <input
+              type="text"
+              inputMode="numeric"
+              autoComplete="off"
+              required
+              maxLength={12}
+              pattern="\d{12}"
+              placeholder="12-digit transaction ID"
+              value={txId}
+              onChange={(e) => setTxId(e.target.value.replace(/\D/g, '').slice(0, 12))}
+              style={field}
+            />
+            {txId && txId.length < 12 && (
+              <p style={{ fontSize: '0.72rem', color: '#dc2626', marginTop: '0.4rem' }}>Exactly 12 digits ({txId.length}/12)</p>
+            )}
+          </div>
+
           <div style={{ marginBottom: '2rem' }}>
             <label style={label}>Upload Payment Proof (Screenshot)</label>
             <input
@@ -186,7 +212,7 @@ export default function DepositModal({ isOpen, onClose }: { isOpen: boolean; onC
 
           <button
             type="submit"
-            disabled={isSubmitting || !screenshot}
+            disabled={isSubmitting || !screenshot || !TX_ID_RE.test(txId)}
             style={{ width: '100%', background: 'var(--btn-primary)', color: 'var(--t-on-accent)', border: 'none', padding: '1.25rem', borderRadius: '12px', fontWeight: 700, fontSize: '1rem', cursor: 'pointer' }}
           >
             {isSubmitting ? <><span className="btn-spinner dark"></span>Processing...</> : 'I Have Paid'}

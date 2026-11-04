@@ -64,6 +64,7 @@ create table if not exists public.transactions (
     status         text not null default 'pending',  -- pending / approved / rejected
     payment_method text,
     proof_image    text,                             -- path inside the deposit-proofs bucket
+    tx_id          text check (tx_id is null or tx_id ~ '^[0-9]{12}$'), -- member's 12-digit transaction ID
     auto_approved  boolean not null default false,
     processed_at   timestamptz,
     created_at     timestamptz not null default now()
