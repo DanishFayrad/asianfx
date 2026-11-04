@@ -3,6 +3,9 @@
 //   MAILTRAP_API_TOKEN     Mailtrap → Sending Domains → asianfxsignals.com → Integration → API token
 //   MAILTRAP_SENDER_EMAIL  any address on the verified domain, e.g. no-reply@asianfxsignals.com
 //   MAILTRAP_SENDER_NAME   optional, defaults to "AsianFX"
+//   MAILTRAP_REPLY_TO      optional, where member replies go — defaults to fxasians@gmail.com
+//   MAILTRAP_SANDBOX_INBOX_ID  local testing only: when set, every email lands in that Mailtrap
+//                              Sandbox inbox instead of reaching anyone. Never set it on Vercel.
 
 export interface MailOptions {
     to: { email: string; name?: string | null };
@@ -26,7 +29,11 @@ export const sendMail = async (opts: MailOptions): Promise<{ ok: boolean; error?
     const config = mailConfig();
     if (!config) return { ok: false, error: MAIL_NOT_CONFIGURED };
     try {
-        const res = await fetch('https://send.api.mailtrap.io/api/send', {
+        const sandboxInbox = process.env.MAILTRAP_SANDBOX_INBOX_ID?.trim();
+        const endpoint = sandboxInbox
+            ? `https://sandbox.api.mailtrap.io/api/send/${encodeURIComponent(sandboxInbox)}`
+            : 'https://send.api.mailtrap.io/api/send';
+        const res = await fetch(endpoint, {
             method: 'POST',
             headers: { authorization: `Bearer ${config.token}`, 'content-type': 'application/json' },
             body: JSON.stringify({
@@ -34,7 +41,7 @@ export const sendMail = async (opts: MailOptions): Promise<{ ok: boolean; error?
                 to: [{ email: opts.to.email.trim(), ...(opts.to.name ? { name: opts.to.name } : {}) }],
                 subject: opts.subject,
                 html: opts.html,
-                ...(opts.replyTo ? { headers: { 'Reply-To': opts.replyTo } } : {}),
+                headers: { 'Reply-To': opts.replyTo || process.env.MAILTRAP_REPLY_TO || 'fxasians@gmail.com' },
             }),
         });
         if (res.ok) return { ok: true };
