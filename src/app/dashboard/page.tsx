@@ -206,7 +206,7 @@ export default function Dashboard() {
   };
   const [addressCopied, setAddressCopied] = useState(false);
 
-  const DEPOSIT_ADDRESS = 'TA199GDmT2ybpMKdHwZkjMgo2awuk1N1fV';
+  const DEPOSIT_ADDRESS = 'TLAYP9rqja1FMFKz8ZTUvgi5ezFwyDJVdS';
   const copyDepositAddress = async () => {
     try {
       await navigator.clipboard.writeText(DEPOSIT_ADDRESS);

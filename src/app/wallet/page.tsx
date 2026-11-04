@@ -95,7 +95,7 @@ export default function Wallet() {
             {/* KPI ROW */}
             <section className="atx-kpis" aria-label="Platform totals" aria-busy={statsLoading}>
               <div className="atx-kpi">
-                <span className="atx-kpi-label awl-in"><IconArrowDown size={15} /> Deposits received</span>
+                {/* <span className="atx-kpi-label awl-in"><IconArrowDown size={15} /> Deposits received</span> */}
                 <strong>{sv(`$${money(stats?.total_deposit)}`)}</strong>
                 <small>{sn(`${stats?.deposit_count || 0} approved`)}</small>
               </div>

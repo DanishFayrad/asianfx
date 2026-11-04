@@ -14,7 +14,7 @@ export default function DepositModal({ isOpen, onClose }: { isOpen: boolean; onC
   const [isProofViewOpen, setIsProofViewOpen] = useState(false);
   const proofInputRef = useRef<HTMLInputElement>(null);
 
-  const walletAddress = "TA199GDmT2ybpMKdHwZkjMgo2awuk1N1fV";
+  const walletAddress = "TLAYP9rqja1FMFKz8ZTUvgi5ezFwyDJVdS";
   
 
   if (!isOpen) return null;
