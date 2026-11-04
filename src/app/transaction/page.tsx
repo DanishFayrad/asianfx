@@ -158,7 +158,7 @@ export default function Transaction() {
     setConfirmModal({
         isOpen: true,
         title: 'Reject Deposit',
-        message: 'Are you sure you want to reject this deposit request?',
+        message: 'Tell the member why — they will see this reason in their notification.',
         type: 'reject',
         data: id,
         inputValue: ''
@@ -179,8 +179,18 @@ export default function Transaction() {
             await transactionService.approveTransaction(data, amount);
             toast.success("Deposit approved and wallet credited.");
         } else if (type === 'reject') {
-            await transactionService.rejectTransaction(data);
+            const reason = confirmModal.inputValue.trim();
+            await transactionService.rejectTransaction(data, reason);
             toast.success("Deposit request rejected.");
+            // Tell the member right away, even if the site is closed (when they turned alerts on).
+            const rejected = userTransactions.find((t) => t.id === data) || pendingDeposits.find((t) => t.id === data);
+            if (rejected?.user_id) {
+                transactionService.pushToMember(
+                    rejected.user_id,
+                    'Deposit rejected',
+                    reason ? `Your $${money(rejected.amount)} deposit was rejected. Reason: ${reason}` : `Your $${money(rejected.amount)} deposit was rejected. Please contact support.`,
+                );
+            }
         } else if (type === 'delete') {
             await transactionService.deleteTransaction(data);
             toast.success("Transaction deleted successfully.");
@@ -464,6 +474,21 @@ export default function Transaction() {
                         <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '0.5rem' }}>{confirmModal.title}</h2>
                         <p style={{ color: 'var(--t-text-muted)', fontSize: '0.95rem', lineHeight: '1.5' }}>{confirmModal.message}</p>
                     </div>
+                    )}
+
+                    {confirmModal.type === 'reject' && (
+                        <label className="atx-field" style={{ marginBottom: '1.25rem' }}>
+                            <span>Reason (optional)</span>
+                            <textarea
+                                className="atx-reason"
+                                rows={3}
+                                maxLength={500}
+                                autoFocus
+                                placeholder="e.g. Screenshot is unclear, amount not received, wrong network…"
+                                value={confirmModal.inputValue}
+                                onChange={(e) => setConfirmModal({ ...confirmModal, inputValue: e.target.value })}
+                            />
+                        </label>
                     )}
 
                     {confirmModal.type === 'approve' && (

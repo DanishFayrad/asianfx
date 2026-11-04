@@ -111,6 +111,8 @@ export interface Transaction {
     auto_approved: boolean;
     processed_at: string | null;
     created_at: string;
+    /** Why the admin rejected this deposit (shown to the member). */
+    reject_reason?: string | null;
     User?: TransactionUser | null;
 }
 

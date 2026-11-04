@@ -62,8 +62,22 @@ const addManualDeposit = async (userId: string, amount: number, method: string):
     return unwrap<MessageResponse>(await supabase.rpc('admin_add_deposit', { p_user_id: userId, p_amount: amount, p_method: method }));
 };
 
-const rejectTransaction = async (id: number): Promise<MessageResponse> => {
-    return unwrap<MessageResponse>(await supabase.rpc('reject_deposit', { p_tx_id: id }));
+const rejectTransaction = async (id: number, reason?: string): Promise<MessageResponse> => {
+    return unwrap<MessageResponse>(await supabase.rpc('reject_deposit', { p_tx_id: id, p_reason: reason?.trim() || null }));
+};
+
+// Admin: browser push to one member (only reaches them if they turned alerts on). Never throws.
+const pushToMember = async (userId: string, title: string, body: string): Promise<void> => {
+    try {
+        const { data: { session } } = await supabase.auth.getSession();
+        await fetch('/api/push-member', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json', authorization: `Bearer ${session?.access_token}` },
+            body: JSON.stringify({ user_id: userId, title, body, url: '/wallet' }),
+        });
+    } catch (e) {
+        console.warn('Push not sent:', e);
+    }
 };
 
 const getAllTransactions = async (): Promise<Transaction[]> => {
@@ -188,6 +202,7 @@ const transactionService = {
     getUserTransactions,
     approveTransaction,
     addManualDeposit,
+    pushToMember,
     rejectTransaction,
     getAllTransactions,
     getAdminStats,
