@@ -1049,3 +1049,25 @@
 }
 .bsg-mail-send:hover:not(:disabled) { filter: brightness(1.08); }
 .bsg-mail-send:disabled { opacity: 0.7; cursor: wait; }
+
+/* "Close now": close an open signal early in profit at a price the admin enters */
+.asg-close-early { display: flex; flex-direction: column; gap: 6px; width: 100%; }
+.asg-close-early-row { display: flex; gap: 6px; align-items: center; }
+.asg-close-early-row input {
+  flex: 1;
+  min-width: 0;
+  height: 30px;
+  padding: 0 10px;
+  border-radius: 7px;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--t-text);
+  background: var(--t-surface);
+  border: 1px solid var(--tw-10);
+}
+.asg-close-early-row input:focus { border-color: rgba(var(--t-accent-rgb), 0.6); outline: none; }
+.asg-close-early-row .asg-result-btn { height: 30px; }
+.asg-close-early-row .asg-result-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.asg-close-gain { font-size: 0.72rem; font-weight: 700; color: #16a34a; }
+.asg-close-hint { font-size: 0.72rem; color: var(--t-text-muted); }

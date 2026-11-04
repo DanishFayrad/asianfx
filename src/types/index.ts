@@ -53,6 +53,8 @@ export interface Signal {
     release_at: string | null;
     /** When the signal closes on its own (admin's "Close after" timer); null = closed by hand. */
     close_at?: string | null;
+    /** Price the admin closed the signal at early, in profit (status 'Early TP Hit'). */
+    closed_price?: number | null;
     total_taken: number;
     created_at: string;
     /** Only on get_member_signals(): whether the caller already took this signal. */

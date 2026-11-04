@@ -115,6 +115,8 @@ alter table public.profiles add column if not exists free_signals integer not nu
 
 -- Optional auto-close time set by the admin ("Close after N minutes").
 alter table public.signals add column if not exists close_at timestamptz;
+-- Price where the admin closed a signal early in profit (status 'Early TP Hit' - counted as a win, like 'TP Hit').
+alter table public.signals add column if not exists closed_price numeric;
 
 -- Influencer programme: only approved influencers get a referral commission, at their own rate.
 alter table public.profiles add column if not exists is_influencer boolean not null default false;

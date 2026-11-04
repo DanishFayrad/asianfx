@@ -205,6 +205,13 @@ const updateSignalStatus = async (id: number, status: string): Promise<MessageRe
     return { message: 'Signal updated' };
 };
 
+// Admin: close an open signal early in profit at the given price (before TP is hit).
+// Saved as 'Early TP Hit' so members' results settle as a win, the same as 'TP Hit'.
+const closeInProfit = async (id: number, price: number): Promise<MessageResponse> => {
+    unwrap(await supabase.from('signals').update({ status: 'Early TP Hit', closed_price: price }).eq('id', id));
+    return { message: 'Signal closed in profit' };
+};
+
 // Admin: remove a signal's auto-close time (it then stays open until closed by hand).
 const removeCloseTimer = async (id: number): Promise<MessageResponse> => {
     unwrap(await supabase.from('signals').update({ close_at: null }).eq('id', id));
@@ -219,6 +226,7 @@ const getPublicStats = async (): Promise<PublicStats> => {
 const signalService = {
     getSignalsDashboard,
     createSignal,
+    closeInProfit,
     takeSignal,
     getUserSignalHistory,
     deleteSignal,

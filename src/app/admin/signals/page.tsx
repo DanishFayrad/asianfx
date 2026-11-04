@@ -71,6 +71,9 @@ export default function AdminSignals() {
   }, []);
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  // "Close now" (take profit early): which signal is being closed and at what price.
+  const [closingId, setClosingId] = useState<number | null>(null);
+  const [closePrice, setClosePrice] = useState("");
   const [type, setType] = useState("Buy");
   const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
   const [formData, setFormData] = useState({
@@ -866,7 +869,71 @@ export default function AdminSignals() {
 
                   {/* Close the signal with its result — settles every member who took it. */}
                   <div className="asg-result">
-                    {isOpen ? (
+                    {isOpen && closingId === sig.id ? (
+                      (() => {
+                        // Close early in profit: admin enters the current price; it must be in profit.
+                        const entry = Number(sig.entry_price);
+                        const p = parseFloat(closePrice);
+                        const gain = Number.isFinite(p) ? (isBuy ? p - entry : entry - p) : NaN;
+                        const valid = Number.isFinite(gain) && gain > 0;
+                        return (
+                          <div className="asg-close-early">
+                            <span className="asg-result-label">
+                              Close now at price:
+                            </span>
+                            <div className="asg-close-early-row">
+                              <input
+                                type="number"
+                                step="any"
+                                inputMode="decimal"
+                                autoFocus
+                                placeholder="Current price"
+                                value={closePrice}
+                                onChange={(e) => setClosePrice(e.target.value)}
+                                aria-label="Price to close the signal at"
+                              />
+                              <button
+                                type="button"
+                                className="asg-result-btn asg-result-btn--win"
+                                disabled={!valid}
+                                onClick={async () => {
+                                  try {
+                                    await signalService.closeInProfit(sig.id, p);
+                                    toast.success(
+                                      `${sig.symbol} closed in profit at ${p} — find it under Show: Recent`,
+                                    );
+                                    setClosingId(null);
+                                    setClosePrice("");
+                                    fetchAllAdminData();
+                                  } catch (e) {
+                                    toast.error(errorMessage(e, "Failed to close signal"));
+                                  }
+                                }}
+                              >
+                                Confirm
+                              </button>
+                              <button
+                                type="button"
+                                className="asg-result-btn asg-result-btn--neutral"
+                                onClick={() => {
+                                  setClosingId(null);
+                                  setClosePrice("");
+                                }}
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                            <small className={valid ? "asg-close-gain" : "asg-close-hint"}>
+                              {!closePrice
+                                ? `Entry ${sig.entry_price} — enter the price to lock the profit`
+                                : valid
+                                  ? `+${gain.toFixed(2)} profit from entry ${sig.entry_price}`
+                                  : `Price must be ${isBuy ? "above" : "below"} entry ${sig.entry_price} to close in profit`}
+                            </small>
+                          </div>
+                        );
+                      })()
+                    ) : isOpen ? (
                       <>
                         <span className="asg-result-label">
                           Close with result:
@@ -899,11 +966,24 @@ export default function AdminSignals() {
                               {label}
                             </button>
                           ))}
+                          <button
+                            type="button"
+                            className="asg-result-btn asg-result-btn--neutral"
+                            title="Price is near TP and pulling back? Close the trade now and keep the profit."
+                            onClick={() => {
+                              setClosingId(sig.id);
+                              setClosePrice("");
+                            }}
+                          >
+                            Close now
+                          </button>
                         </div>
                       </>
                     ) : (
                       <span className={`asg-status asg-status--${statusClass}`}>
-                        {statusClass === "win"
+                        {sig.status === "Early TP Hit"
+                          ? `Profit · closed at ${sig.closed_price ?? "—"}`
+                          : statusClass === "win"
                           ? "Profit"
                           : statusClass === "loss"
                             ? "Loss"
