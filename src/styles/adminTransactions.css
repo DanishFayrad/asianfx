@@ -20,6 +20,7 @@
 .atx-kpi {
   display: flex;
   flex-direction: column;
+  min-width: 0;
   gap: 4px;
   padding: 16px 18px;
   border-radius: 14px;
@@ -42,6 +43,9 @@
   letter-spacing: -0.02em;
   color: var(--t-text);
   font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .atx-kpi small { font-size: 0.78rem; color: var(--t-text-dim); }
@@ -546,4 +550,10 @@
 
 @media (max-width: 600px) {
   .atx-kpi strong { font-size: var(--fs-kpi); }
+}
+
+/* Deposits summary numbers: a bit smaller so big totals fit the cards */
+.atx-kpi strong { font-size: 1.6rem; }
+@media (max-width: 600px) {
+  .atx-kpi strong { font-size: 1.3rem; }
 }

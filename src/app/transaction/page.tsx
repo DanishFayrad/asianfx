@@ -40,6 +40,13 @@ interface ConfirmModalState {
   tx?: Transaction;
 }
 const money = (n: number | string | null | undefined) => Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+// Big totals in the summary cards are shortened ($200M) so they fit; the full amount shows on hover.
+const kpiMoney = (n: number | string | null | undefined) => {
+  const v = Number(n || 0);
+  return Math.abs(v) >= 1_000_000
+    ? `$${v.toLocaleString(undefined, { notation: 'compact', maximumFractionDigits: 2 })}`
+    : `$${money(v)}`;
+};
 const statusKey = (st: string): StatusKey => (st === 'approved' || st === 'completed' ? 'approved' : st === 'pending' ? 'pending' : 'rejected');
 const statusLabel = (st: string) => ({ approved: 'Approved', pending: 'Pending', rejected: 'Rejected' }[statusKey(st)]);
 const formatMethod = (m: string | null) => (!m ? '—' : m.toUpperCase().replace(/_/g, ' '));
@@ -284,11 +291,11 @@ export default function Transaction() {
             <div className="atx-kpi atx-kpi--warn">
               <span className="atx-kpi-label"><IconClock size={15} /> Awaiting review</span>
               <strong>{kpiValue(summary.pendingCount)}</strong>
-              <small>{kpiNote(`$${money(summary.pendingAmount)} requested`)}</small>
+              <small>{kpiNote(`${kpiMoney(summary.pendingAmount)} requested`)}</small>
             </div>
             <div className="atx-kpi atx-kpi--ok">
               <span className="atx-kpi-label"><IconCheck size={15} /> Approved</span>
-              <strong>{kpiValue(`$${money(summary.approvedAmount)}`)}</strong>
+              <strong title={`$${money(summary.approvedAmount)}`}>{kpiValue(kpiMoney(summary.approvedAmount))}</strong>
               <small>{kpiNote(`${summary.approvedCount} deposit${summary.approvedCount === 1 ? '' : 's'}`)}</small>
             </div>
             <div className="atx-kpi">
