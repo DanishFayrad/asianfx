@@ -657,3 +657,21 @@
   border: 1px solid var(--tw-10);
 }
 .atx-reason:focus { border-color: rgba(var(--t-accent-rgb), 0.6); outline: none; }
+
+/* Ready-made reject reasons (checkboxes) */
+.atx-reason-picks { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 10px; }
+@media (max-width: 520px) { .atx-reason-picks { grid-template-columns: 1fr; } }
+.atx-reason-pick {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 600;
+  background: var(--t-surface);
+  border: 1px solid var(--tw-10);
+}
+.atx-reason-pick:has(input:checked) { border-color: rgba(var(--t-accent-rgb), 0.6); background: rgba(var(--t-accent-rgb), 0.08); }
+.atx-reason-pick input { width: 15px; height: 15px; margin: 0; accent-color: var(--t-accent); flex-shrink: 0; }

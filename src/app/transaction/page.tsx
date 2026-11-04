@@ -21,6 +21,13 @@ import { errorMessage } from '@/lib/supabaseClient';
 import type { Transaction } from '@/types';
 
 const PAGE_SIZE = 25;
+const REJECT_REASONS = [
+  'Screenshot is unclear',
+  'Amount not received',
+  'Wrong amount sent',
+  'Wrong network / address',
+  'Duplicate request',
+];
 const FILTERS = [
   { key: 'pending', label: 'Pending' },
   { key: 'approved', label: 'Approved' },
@@ -99,6 +106,8 @@ export default function Transaction() {
       data: null,
       inputValue: ''
   });
+  // Ready-made reject reasons the admin can tick (combined with the typed reason).
+  const [rejectPicks, setRejectPicks] = useState<string[]>([]);
 
   const closeConfirmModal = () => setConfirmModal({...confirmModal, isOpen: false});
 
@@ -155,6 +164,7 @@ export default function Transaction() {
   };
 
   const handleReject = (id: number) => {
+    setRejectPicks([]);
     setConfirmModal({
         isOpen: true,
         title: 'Reject Deposit',
@@ -179,7 +189,7 @@ export default function Transaction() {
             await transactionService.approveTransaction(data, amount);
             toast.success("Deposit approved and wallet credited.");
         } else if (type === 'reject') {
-            const reason = confirmModal.inputValue.trim();
+            const reason = [...rejectPicks, confirmModal.inputValue.trim()].filter(Boolean).join('. ');
             await transactionService.rejectTransaction(data, reason);
             toast.success("Deposit request rejected.");
             // Tell the member right away, even if the site is closed (when they turned alerts on).
@@ -465,7 +475,7 @@ export default function Transaction() {
         {/* CUSTOM CONFIRM/PROMPT MODAL */}
         {confirmModal.isOpen && (
             <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(10px)' }}>
-                <div className="modal-content" style={{ background: 'var(--t-surface)', padding: 'clamp(1.25rem, 4vw, 2.5rem)', borderRadius: '24px', color: 'var(--t-text)', width: confirmModal.type === 'approve' ? 'min(560px, 94vw)' : 'min(400px, 94vw)', maxHeight: '94vh', overflowY: 'auto', border: '1px solid var(--tw-10)', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}>
+                <div className="modal-content" style={{ background: 'var(--t-surface)', padding: 'clamp(1.25rem, 4vw, 2.5rem)', borderRadius: '24px', color: 'var(--t-text)', width: confirmModal.type === 'reject' ? 'min(640px, 94vw)' : confirmModal.type === 'approve' ? 'min(560px, 94vw)' : 'min(400px, 94vw)', maxHeight: '94vh', overflowY: 'auto', border: '1px solid var(--tw-10)', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}>
                     {confirmModal.type !== 'approve' && (
                     <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
                         <div style={{ background: 'rgba(239, 68, 68, 0.1)', width: '64px', height: '64px', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}>
@@ -477,18 +487,31 @@ export default function Transaction() {
                     )}
 
                     {confirmModal.type === 'reject' && (
-                        <label className="atx-field" style={{ marginBottom: '1.25rem' }}>
-                            <span>Reason (optional)</span>
+                        <div style={{ marginBottom: '1.25rem' }}>
+                        <div className="atx-reason-picks">
+                            {REJECT_REASONS.map((r) => (
+                                <label key={r} className="atx-reason-pick">
+                                    <input
+                                        type="checkbox"
+                                        checked={rejectPicks.includes(r)}
+                                        onChange={(e) => setRejectPicks(e.target.checked ? [...rejectPicks, r] : rejectPicks.filter((x) => x !== r))}
+                                    />
+                                    <span>{r}</span>
+                                </label>
+                            ))}
+                        </div>
+                        <label className="atx-field">
+                            <span>Other reason (optional)</span>
                             <textarea
                                 className="atx-reason"
-                                rows={3}
-                                maxLength={500}
-                                autoFocus
-                                placeholder="e.g. Screenshot is unclear, amount not received, wrong network…"
+                                rows={2}
+                                maxLength={300}
+                                placeholder="Type any other reason…"
                                 value={confirmModal.inputValue}
                                 onChange={(e) => setConfirmModal({ ...confirmModal, inputValue: e.target.value })}
                             />
                         </label>
+                        </div>
                     )}
 
                     {confirmModal.type === 'approve' && (
