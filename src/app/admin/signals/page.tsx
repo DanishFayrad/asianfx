@@ -102,6 +102,7 @@ export default function AdminSignals() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [comingSoonLoading, setComingSoonLoading] = useState(false);
+  const [mailAudience, setMailAudience] = useState<"all" | "deposited" | "not_deposited">("all");
   const signalsQuery = useSignalsDashboard(user?.id, isAdmin);
   const recentSignals: Signal[] = signalsQuery.data?.active_signals ?? [];
   const signalsLoading = signalsQuery.isPending;
@@ -593,60 +594,74 @@ export default function AdminSignals() {
               )}
             </section>
 
-            <button
-              type="button"
-              className={`bsg-mail-alert${comingSoonLoading ? "" : " bsg-mail-alert--on"}`}
-              disabled={comingSoonLoading}
-              onClick={async () => {
-                setComingSoonLoading(true);
-                try {
-                  const {
-                    data: { session },
-                  } = await supabase.auth.getSession();
-                  const res = await fetch("/api/notify-coming", {
-                    method: "POST",
-                    headers: {
-                      "content-type": "application/json",
-                      authorization: `Bearer ${session?.access_token}`,
-                    },
-                    body: JSON.stringify({
-                      symbol: selectedAsset?.symbol,
-                      type,
-                    }),
-                  });
-                  const body = await res.json().catch(() => ({}));
-                  if (!res.ok) {
-                    toast.error(body.message || "Coming soon email failed");
-                    return;
-                  }
-                  if (!body.sent) {
-                    toast.error(
-                      body.message || "No active members to email",
-                    );
-                    return;
-                  }
-                  toast.success("Coming soon alert emailed to members");
-                } catch (e) {
-                  toast.error(errorMessage(e, "Coming soon email failed"));
-                } finally {
-                  setComingSoonLoading(false);
-                }
-              }}
-            >
-              <span className="bsg-mail-alert-icon" aria-hidden="true">
-                {comingSoonLoading ? "…" : "✉"}
-              </span>
-              <span className="bsg-mail-alert-text">
-                <strong>
-                  {comingSoonLoading
-                    ? "Sending alert…"
-                    : "Send alert for mail"}
-                </strong>
-                <small>
-                  Emails members: signal coming soon — get ready
-                </small>
-              </span>
-            </button>
+            {/* Coming-soon email: pick who receives it, then send. */}
+            <div className={`bsg-mail-card${comingSoonLoading ? "" : " bsg-mail-card--on"}`}>
+              <div className="bsg-mail-head">
+                <span className="bsg-mail-alert-icon" aria-hidden="true">✉</span>
+                <span className="bsg-mail-alert-text">
+                  <strong>Send alert for mail</strong>
+                  <small>Emails members: signal coming soon — get ready</small>
+                </span>
+              </div>
+              <div className="bsg-mail-row">
+                <label className="bsg-mail-field">
+                  <select
+                    value={mailAudience}
+                    onChange={(e) =>
+                      setMailAudience(e.target.value as typeof mailAudience)
+                    }
+                    aria-label="Who receives the alert email"
+                  >
+                    <option value="all">All members</option>
+                    <option value="deposited">Deposited members</option>
+                    <option value="not_deposited">Not deposited</option>
+                  </select>
+                </label>
+                <button
+                  type="button"
+                  className="bsg-mail-send"
+                  disabled={comingSoonLoading}
+                  onClick={async () => {
+                    setComingSoonLoading(true);
+                    try {
+                      const {
+                        data: { session },
+                      } = await supabase.auth.getSession();
+                      const res = await fetch("/api/notify-coming", {
+                        method: "POST",
+                        headers: {
+                          "content-type": "application/json",
+                          authorization: `Bearer ${session?.access_token}`,
+                        },
+                        body: JSON.stringify({
+                          symbol: selectedAsset?.symbol,
+                          type,
+                          audience: mailAudience,
+                        }),
+                      });
+                      const body = await res.json().catch(() => ({}));
+                      if (!res.ok) {
+                        toast.error(body.message || "Coming soon email failed");
+                        return;
+                      }
+                      if (!body.sent) {
+                        toast.error(
+                          body.message || "No active members to email",
+                        );
+                        return;
+                      }
+                      toast.success("Coming soon alert emailed to members");
+                    } catch (e) {
+                      toast.error(errorMessage(e, "Coming soon email failed"));
+                    } finally {
+                      setComingSoonLoading(false);
+                    }
+                  }}
+                >
+                  {comingSoonLoading ? "Sending…" : "Send email"}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 

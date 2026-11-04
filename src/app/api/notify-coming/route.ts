@@ -16,18 +16,14 @@ const buildComingSoonEmail = (opts: {
     side?: string;
 }) => {
     const symbol = opts.symbol ? String(opts.symbol).trim().toUpperCase() : '';
-    const side = opts.side ? String(opts.side).trim().toUpperCase() : '';
-    const sideColor = side === 'BUY' ? '#16a34a' : side === 'SELL' ? '#dc2626' : '#d4af37';
 
     const subject = symbol
-        ? `Signal coming soon: ${symbol}${side ? ` ${side}` : ''}`
+        ? `Signal coming soon: ${symbol}`
         : 'Signal coming soon — get ready on AsianFX';
 
     const pairBlock = symbol
         ? `<div style="background:#0c1018;border:1px solid #232a38;border-radius:12px;padding:18px;margin-bottom:20px">
-      <div style="font-size:22px;font-weight:800">${escapeHtml(symbol)}
-        ${side ? `<span style="display:inline-block;margin-left:8px;padding:4px 10px;border-radius:6px;font-size:13px;color:#fff;background:${sideColor}">${escapeHtml(side)}</span>` : ''}
-      </div>
+      <div style="font-size:22px;font-weight:800">${escapeHtml(symbol)}</div>
       <div style="color:#d4af37;font-size:14px;margin-top:8px;font-weight:700">⏳ Coming soon</div>
     </div>`
         : `<div style="background:#0c1018;border:1px solid #232a38;border-radius:12px;padding:18px;margin-bottom:20px">
@@ -67,6 +63,8 @@ export async function POST(request: Request) {
     const body = await request.json().catch(() => ({}));
     const symbol = typeof body.symbol === 'string' ? body.symbol : undefined;
     const side = typeof body.type === 'string' ? body.type : undefined;
+    // Who gets the email: everyone, only members with an approved deposit, or only those without one.
+    const audience = body.audience === 'deposited' || body.audience === 'not_deposited' ? body.audience : 'all';
 
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -83,19 +81,27 @@ export async function POST(request: Request) {
     const { data: me } = await supabase.from('profiles').select('is_admin').eq('id', user.id).single();
     if (!me?.is_admin) return Response.json({ message: 'Admin only' }, { status: 403 });
 
-    const { data: recipients, error: recipientsError } = await supabase
+    const { data: members, error: recipientsError } = await supabase
         .from('profiles')
-        .select('email, name')
+        .select('id, email, name')
         .eq('is_admin', false)
-        .eq('is_active', true)
         .not('email', 'is', null);
     if (recipientsError) return Response.json({ message: recipientsError.message }, { status: 500 });
-    if (!recipients?.length) {
-        return Response.json({
-            sent: 0,
-            failed: 0,
-            message: 'No active members to email. Activate members first.',
-        }, { status: 400 });
+
+    let recipients = members ?? [];
+    if (audience !== 'all') {
+        const { data: deposits, error: depositsError } = await supabase
+            .from('transactions')
+            .select('user_id')
+            .eq('type', 'deposit')
+            .eq('status', 'approved');
+        if (depositsError) return Response.json({ message: depositsError.message }, { status: 500 });
+        const depositors = new Set((deposits ?? []).map((d) => d.user_id));
+        recipients = recipients.filter((m) => depositors.has(m.id) === (audience === 'deposited'));
+    }
+    if (!recipients.length) {
+        const who = audience === 'deposited' ? 'members who deposited' : audience === 'not_deposited' ? 'members without a deposit' : 'members';
+        return Response.json({ sent: 0, failed: 0, message: `No ${who} to email.` }, { status: 400 });
     }
 
     const siteUrl = (process.env.SITE_URL || 'https://www.asianfxsignals.com').replace(/\/$/, '');

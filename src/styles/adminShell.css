@@ -997,3 +997,52 @@
 .ifa-info small,
 .ifa-tags span,
 .ifa-tags a { color: var(--t-text); }
+
+/* Coming-soon email card: header, then "Send to" picker + send button */
+.bsg-mail-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(var(--t-accent-rgb), 0.65);
+  background: rgba(var(--t-accent-rgb), 0.08);
+  color: var(--t-text);
+}
+.bsg-mail-head { display: flex; align-items: center; gap: 12px; }
+.bsg-mail-card--on .bsg-mail-alert-icon { background: rgba(var(--t-accent-rgb), 0.18); color: var(--t-accent); }
+.bsg-mail-row { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
+.bsg-mail-field { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 160px; font-size: 0.78rem; font-weight: 600; color: var(--t-text-muted); }
+.bsg-mail-field select {
+  height: 42px;
+  padding: 0 34px 0 12px;
+  border-radius: 10px;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--t-text);
+  background-color: var(--t-surface);
+  border: 1px solid var(--tw-10);
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+.bsg-mail-field select:focus { border-color: rgba(var(--t-accent-rgb), 0.6); outline: none; }
+.bsg-mail-send {
+  height: 42px;
+  padding: 0 20px;
+  border: none;
+  border-radius: 10px;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #111;
+  background: var(--t-gold);
+  cursor: pointer;
+  transition: filter 0.15s ease;
+}
+.bsg-mail-send:hover:not(:disabled) { filter: brightness(1.08); }
+.bsg-mail-send:disabled { opacity: 0.7; cursor: wait; }

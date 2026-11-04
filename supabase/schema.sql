@@ -137,6 +137,12 @@ create table if not exists public.influencer_applications (
 create index if not exists idx_influencer_apps_user on public.influencer_applications(user_id, created_at desc);
 alter table public.influencer_applications enable row level security;
 
+-- Admin check (defined here because the policy below already uses it).
+create or replace function public.is_admin()
+returns boolean language sql stable security definer set search_path = public as $$
+    select coalesce((select is_admin from public.profiles where id = auth.uid()), false);
+$$;
+
 drop policy if exists influencer_apps_select on public.influencer_applications;
 create policy influencer_apps_select on public.influencer_applications for select to authenticated
     using (user_id = auth.uid() or public.is_admin());
@@ -155,10 +161,6 @@ on conflict (key) do nothing;
 -- HELPERS
 -- ---------------------------------------------------------------------
 
-create or replace function public.is_admin()
-returns boolean language sql stable security definer set search_path = public as $$
-    select coalesce((select is_admin from public.profiles where id = auth.uid()), false);
-$$;
 
 -- Who receives BROADCAST signals: approved members who can actually pay for one right now
 -- (wallet ≥ $1 signal fee) or who hold a free credit from a Stop Loss.
