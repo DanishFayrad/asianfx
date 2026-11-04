@@ -41,12 +41,16 @@ export default function AdminUsersTable({ users: rawUsers = EMPTY_ROWS, loading 
     const [statusOverrides, setStatusOverrides] = useState<Record<string, boolean>>({});
     const [deletedIds, setDeletedIds] = useState<string[]>([]);
     const [pendingDelete, setPendingDelete] = useState<AdminUser | null>(null);
+    // Which tab is open: activated members or deactivated ones.
+    const [tab, setTab] = useState<'active' | 'inactive'>('active');
 
     // Memoized so the table only re-processes rows when the list really changes.
-    const users = useMemo(() => rawUsers
+    const allMembers = useMemo(() => rawUsers
         .filter((u) => !u.is_admin && !deletedIds.includes(u.id)) // admins are not members — keep them out of the list
         .map((u) => (u.id in statusOverrides ? { ...u, is_active: statusOverrides[u.id] } : u)),
     [rawUsers, deletedIds, statusOverrides]);
+    const activeCount = useMemo(() => allMembers.filter((u) => u.is_active).length, [allMembers]);
+    const users = useMemo(() => allMembers.filter((u) => !!u.is_active === (tab === 'active')), [allMembers, tab]);
 
     // Search and paging. The page goes back to 1 when the search or the list changes.
     const table = useTable({
@@ -115,6 +119,20 @@ export default function AdminUsersTable({ users: rawUsers = EMPTY_ROWS, loading 
                     <p style={{ margin: '2px 0 0', fontSize: '0.8rem', color: 'var(--admin-text-muted)' }}>
                         {loading ? <Skeleton width={90} height={12} /> : `${filtered.length} of ${users.length} member${users.length === 1 ? '' : 's'}`}
                     </p>
+                </div>
+                <div role="tablist" style={{ display: 'flex', gap: '4px', padding: '4px', background: 'var(--admin-bg-main)', border: '1px solid var(--admin-border-color)', borderRadius: '12px' }}>
+                    {([['active', 'Activated', activeCount], ['inactive', 'Deactivated', allMembers.length - activeCount]] as const).map(([key, text, count]) => (
+                        <button
+                            key={key}
+                            type="button"
+                            role="tab"
+                            aria-selected={tab === key}
+                            onClick={() => setTab(key)}
+                            style={{ border: 'none', cursor: 'pointer', padding: '8px 14px', borderRadius: '9px', fontWeight: 700, fontSize: '0.85rem', background: tab === key ? 'var(--btn-primary)' : 'transparent', color: tab === key ? 'var(--t-on-accent)' : 'var(--admin-text-muted)' }}
+                        >
+                            {text} {loading ? '' : `(${count})`}
+                        </button>
+                    ))}
                 </div>
                 <input
                     value={query}
