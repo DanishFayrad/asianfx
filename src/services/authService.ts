@@ -57,7 +57,7 @@ const adminLogin = async ({ email: username, password }: Credentials): Promise<L
     return { access_token: body.access_token, user };
 };
 
-const register = async ({ name, email, password, phone, country, referral_code }: RegisterInput): Promise<MessageResponse> => {
+const register = async ({ name, email, password, phone, country, referral_code }: RegisterInput): Promise<MessageResponse & { signedIn: boolean }> => {
     const cleanEmail = String(email || '').trim().toLowerCase();
     const data = unwrap(await supabase.auth.signUp({
         email: cleanEmail,
@@ -70,7 +70,9 @@ const register = async ({ name, email, password, phone, country, referral_code }
     if (data.user && data.user.identities?.length === 0) {
         throw toError('An account with this email already exists.');
     }
-    return { message: 'Registration successful! Verification code sent to your email.' };
+    // With "Confirm email" off in Supabase the member is signed in straight away (no OTP step).
+    if (data.session) return { message: 'Account created!', signedIn: true };
+    return { message: 'Registration successful! Verification code sent to your email.', signedIn: false };
 };
 
 const logout = async (): Promise<MessageResponse> => {

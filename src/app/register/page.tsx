@@ -47,10 +47,15 @@ export default function Register() {
 
   const { name, email, password, phone, country } = formData;
 
-  // After signing up, go verify the email with the code Supabase sent.
+  // Signed in right away → dashboard. If Supabase still asks to confirm the email → the code (OTP) page.
   const register = useMutation({
     mutationFn: authService.register,
-    onSuccess: (_data, variables) => {
+    onSuccess: (data, variables) => {
+      if (data.signedIn) {
+        toast.success('Account created!');
+        window.location.href = '/dashboard'; // full load so the new session is picked up everywhere
+        return;
+      }
       toast.success('Verification code sent to your email!');
       router.push(`/otp?email=${encodeURIComponent(variables.email)}`);
     },
