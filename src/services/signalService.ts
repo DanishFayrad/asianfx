@@ -36,7 +36,7 @@ export interface NewSignalInput {
     target_user_id?: string | null;
     /** Who a broadcast signal goes to (default: deposited members). */
     audience?: 'all' | 'deposited' | 'not_deposited';
-    /** When false, skip Brevo email after insert. Default true. */
+    /** When false, skip the email after insert. Default true. */
     send_email?: boolean;
 }
 

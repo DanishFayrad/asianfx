@@ -1,9 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 import { getSignalRecipients } from '@/lib/signalRecipients';
-import { MAIL_NOT_CONFIGURED, mailConfig, sendMail } from '@/lib/mailtrap';
+import { MAIL_NOT_CONFIGURED, mailConfig, sendMail } from '@/lib/mailer';
 import type { Signal } from '@/types';
 
-// Emails members when an admin publishes a signal (sent through Mailtrap — env vars in src/lib/mailtrap.ts).
+// Emails members when an admin publishes a signal (sent through Amazon SES — env vars in src/lib/mailer.ts).
 //   SITE_URL  optional, defaults to https://www.asianfxsignals.com
 
 // Parallel sends per wave.
@@ -117,7 +117,7 @@ export async function POST(request: Request) {
     }
 
     if (failed && !sent) {
-        return Response.json({ sent, failed, message: `Mailtrap rejected the send: ${lastError}` }, { status: 502 });
+        return Response.json({ sent, failed, message: `Email provider rejected the send: ${lastError}` }, { status: 502 });
     }
 
     return Response.json({ sent, failed });
