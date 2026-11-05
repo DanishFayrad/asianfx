@@ -104,8 +104,10 @@ export default function Register() {
   return (
     <div className="register-page-wrapper">
       <div className="register-card">
-        <Link href="/" className="back-link" style={{ position: 'absolute', top: '24px', left: '24px', color: 'var(--t-text-muted)', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px', textDecoration: 'none' }}>
-           ← Back to Home
+        <Link href="/" className="back-link auth-back" aria-label="Back to Home" title="Back to Home">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M19 12H5M12 19L5 12L12 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
         </Link>
 
         <div className="register-header">

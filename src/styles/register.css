@@ -5,9 +5,11 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    background: radial-gradient(circle at top right, rgba(var(--t-accent-rgb), 0.1), transparent 400px),
+    /* background: radial-gradient(circle at top right, rgba(var(--t-accent-rgb), 0.1), transparent 400px),
                 radial-gradient(circle at bottom left, rgba(var(--t-accent-rgb), 0.05), transparent 400px),
-                var(--t-bg);
+                var(--t-bg); */
+                background:#f1a10d;
+
     padding: 40px 20px;
     font-family: var(--font-inter), system-ui, sans-serif;
     color: var(--t-text);
@@ -244,3 +246,38 @@
 @media (max-width: 600px) {
   .register-header h1 { font-size: var(--fs-page-title); }
 }
+
+/* Login page: "Remember me" / "Forgot password?" row */
+.auth-options {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    font-size: 13px;
+    color: var(--t-text-muted);
+    margin-top: -6px;
+}
+.auth-options label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+.auth-options input { accent-color: var(--t-accent); }
+.auth-options a { color: var(--t-gold); font-weight: 600; text-decoration: none; }
+.auth-options a:hover { text-decoration: underline; }
+
+/* "Back to Home" pill on the login and signup cards */
+.auth-back {
+    position: absolute;
+    top: 24px;
+    left: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #f1a10d;
+    color: #111;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: filter 0.2s, transform 0.2s;
+}
+.auth-back:hover { filter: brightness(1.06); transform: translateX(-2px); }

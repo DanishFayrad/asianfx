@@ -9,7 +9,7 @@ import { errorMessage } from '@/lib/supabaseClient';
 import Link from 'next/link';
 import PasswordEye from '@/components/PasswordEye';
 import toast from 'react-hot-toast';
-import '../../styles/login.css';
+import '../../styles/register.css';
 
 export default function Login() {
   const router = useRouter();
@@ -45,84 +45,95 @@ export default function Login() {
     }
   };
 
+  // Same look as the Create Account page (register.css).
   return (
-    <div className="login-page">
-    <div className="login-container">
-      <div className="login-icon">
-        <Link href="/" aria-label="AsianFX home" title="Home"><img src="/images/logo-mark.png" className="login-logo" alt="AsianFX Signals" width={72} height={72} /></Link>
-      </div>
+    <div className="register-page-wrapper">
+      <div className="register-card">
+        <Link href="/" className="back-link auth-back" aria-label="Back to Home" title="Back to Home">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M19 12H5M12 19L5 12L12 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </Link>
 
-      <h1>Welcome Back</h1>
-      <p className="subtext">Sign in to your trading account</p>
-
-      <form onSubmit={handleLogin}>
-        {isError && <div style={{ color: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', padding: '10px', borderRadius: '8px', marginBottom: '20px', fontSize: '14px', textAlign: 'center' }}>{message}</div>}
-
-        <div className="input-group">
-          <label>Email</label>
-          <div className="input-wrapper">
-            <img src="/images/envelope icon.png" className="input-icon" alt="Email Icon" />
-            <input
-              type="text"
-              placeholder="Enter your email" autoComplete="username"
-              className="input-box icon-padding"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
+        <div className="register-header">
+          <div className="register-logo-icon">
+            <Link href="/" aria-label="AsianFX home" title="Home" style={{ display: 'block', width: '100%', height: '100%' }}><img src="/images/logo-mark.png" style={{ width: '100%', height: '100%' }} alt="AsianFX Signals" /></Link>
           </div>
+          <h1>Welcome Back</h1>
+          <p>Sign in to your trading account</p>
         </div>
 
-        <div className="input-group">
-          <label>Password</label>
-          <div className="input-wrapper">
-            {/*  LEFT ICON  */}
-            <img src="/images/lock.png" className="input-icon" alt="Lock Icon" />
-
-            {/*  PASSWORD INPUT  */}
-            <input
-              id="passwordField"
-              type={showPassword ? 'text' : 'password'}
-              placeholder="Enter your password"
-              className="input-box icon-padding-right"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-
-            {/*  RIGHT ICON (EYE TOGGLE)  */}
-            <button
-              type="button"
-              id="togglePassword"
-              className="input-icon-right"
-              onClick={togglePasswordVisibility}
-              aria-label={showPassword ? 'Hide password' : 'Show password'}
-              title={showPassword ? 'Hide password' : 'Show password'}
-              style={{ cursor: 'pointer', background: 'none', border: 'none', padding: 0, display: 'grid', placeItems: 'center', color: showPassword ? 'var(--t-gold)' : 'var(--t-text-muted)' }}
-            >
-              <PasswordEye visible={showPassword} />
-            </button>
+        {isError && (
+          <div style={{
+            color: '#fb7185',
+            backgroundColor: 'rgba(244, 63, 94, 0.1)',
+            padding: '12px',
+            borderRadius: '12px',
+            marginBottom: '24px',
+            fontSize: '14px',
+            textAlign: 'center',
+            border: '1px solid rgba(244, 63, 94, 0.2)'
+          }}>
+            {message}
           </div>
+        )}
+
+        <form onSubmit={handleLogin} className="register-form">
+          <div className="input-field-group">
+            <label>Email Address</label>
+            <div className="input-field-container">
+              <input
+                type="email"
+                placeholder="name@example.com"
+                autoComplete="username"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="input-field-group">
+            <label>Password</label>
+            <div className="input-field-container">
+              <input
+                id="passwordField"
+                type={showPassword ? 'text' : 'password'}
+                placeholder="Enter your password"
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+              <button
+                type="button"
+                className="password-toggle-btn"
+                onClick={togglePasswordVisibility}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                title={showPassword ? 'Hide password' : 'Show password'}
+                style={{ color: showPassword ? 'var(--t-gold)' : 'var(--t-text-muted)' }}
+              >
+                <PasswordEye visible={showPassword} />
+              </button>
+            </div>
+          </div>
+
+          <div className="auth-options">
+            <label>
+              <input type="checkbox" /> Remember me
+            </label>
+            <Link href="/forgot-password">Forgot password?</Link>
+          </div>
+
+          <button type="submit" className="signup-submit-btn" disabled={isLoading}>
+            {isLoading ? <><span className="btn-spinner dark"></span>Signing In...</> : 'Sign In'}
+          </button>
+        </form>
+
+        <div className="register-footer">
+          Don&apos;t have an account? <Link href="/register">Sign up</Link>
         </div>
-
-        <div className="options">
-          <label>
-            <input type="checkbox" /> Remember me
-          </label>
-          <Link href="/forgot-password">Forgot password?</Link>
-        </div>
-        <button type="submit" className="login-btn" id="loginBtn" disabled={isLoading}>
-          {isLoading ? <><span className="btn-spinner"></span>Signing In...</> : 'Sign In'}
-        </button>
-      </form>
-
-
-
-
-      <div className="login-footer">
-        Don't have an account? <Link href="/register">Sign up</Link>
       </div>
-    </div>
     </div>
   );
 }
