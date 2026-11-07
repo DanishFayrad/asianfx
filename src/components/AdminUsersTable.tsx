@@ -41,6 +41,7 @@ export default function AdminUsersTable({ users: rawUsers = EMPTY_ROWS, loading 
     const [statusOverrides, setStatusOverrides] = useState<Record<string, boolean>>({});
     const [deletedIds, setDeletedIds] = useState<string[]>([]);
     const [pendingDelete, setPendingDelete] = useState<AdminUser | null>(null);
+    const [pendingPurge, setPendingPurge] = useState<AdminUser | null>(null);
     // Which tab is open: current members or the ones an admin deleted.
     const [tab, setTab] = useState<'members' | 'deleted'>('members');
     // Local soft-delete / restore changes, shown right away without a page reload.
@@ -71,7 +72,8 @@ export default function AdminUsersTable({ users: rawUsers = EMPTY_ROWS, loading 
         try {
             const { message } = await transactionService.updateUserStatus(u.id, action);
             toast.success(message);
-            if (action === 'delete' || action === 'restore') {
+            if (action === 'purge') setDeletedIds((ids) => [...ids, u.id]);
+            else if (action === 'delete' || action === 'restore') {
                 setDeletedOverrides((o) => ({ ...o, [u.id]: action === 'delete' }));
                 if (action === 'delete') setStatusOverrides((o) => ({ ...o, [u.id]: false }));
             } else setStatusOverrides((o) => ({ ...o, [u.id]: action === 'activate' }));
@@ -91,6 +93,13 @@ export default function AdminUsersTable({ users: rawUsers = EMPTY_ROWS, loading 
             return;
         }
         performAction(u, value === 'active' ? 'activate' : 'deactivate');
+    };
+
+    const confirmPurge = () => {
+        const u = pendingPurge;
+        if (!u) return;
+        setPendingPurge(null);
+        performAction(u, 'purge');
     };
 
     const confirmDelete = () => {
@@ -236,12 +245,20 @@ export default function AdminUsersTable({ users: rawUsers = EMPTY_ROWS, loading 
                                     {u.is_admin ? (
                                         <span style={{ color: 'var(--admin-text-muted)' }}>—</span>
                                     ) : u.deleted_at ? (
-                                        <button
-                                            type="button"
-                                            disabled={busyId === u.id}
-                                            onClick={() => performAction(u, 'restore')}
-                                            style={{ background: 'var(--btn-primary)', color: 'var(--t-on-accent)', border: 'none', padding: '6px 12px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 700, cursor: busyId === u.id ? 'wait' : 'pointer' }}
-                                        >Restore</button>
+                                        <div style={{ display: 'flex', gap: '6px' }}>
+                                            <button
+                                                type="button"
+                                                disabled={busyId === u.id}
+                                                onClick={() => performAction(u, 'restore')}
+                                                style={{ background: 'var(--btn-primary)', color: 'var(--t-on-accent)', border: 'none', padding: '6px 12px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 700, cursor: busyId === u.id ? 'wait' : 'pointer' }}
+                                            >Restore</button>
+                                            <button
+                                                type="button"
+                                                disabled={busyId === u.id}
+                                                onClick={() => setPendingPurge(u)}
+                                                style={{ background: 'rgba(220,38,38,0.1)', color: '#dc2626', border: '1px solid rgba(220,38,38,0.35)', padding: '6px 12px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 700, cursor: busyId === u.id ? 'wait' : 'pointer' }}
+                                            >Delete permanently</button>
+                                        </div>
                                     ) : (
                                         <select
                                             value={u.is_active ? 'active' : 'inactive'}
@@ -306,6 +323,17 @@ export default function AdminUsersTable({ users: rawUsers = EMPTY_ROWS, loading 
                 )}
                 onConfirm={confirmDelete}
                 onCancel={() => setPendingDelete(null)}
+            />
+
+            <ConfirmDialog
+                open={!!pendingPurge}
+                title="Delete this account permanently?"
+                message={pendingPurge && (
+                    <><strong>{pendingPurge.name || pendingPurge.email}</strong> — their account, deposits, wallet and signal history will be erased for good. This cannot be undone.</>
+                )}
+                confirmLabel="Delete permanently"
+                onConfirm={confirmPurge}
+                onCancel={() => setPendingPurge(null)}
             />
         </div>
     );

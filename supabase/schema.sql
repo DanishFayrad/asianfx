@@ -210,6 +210,12 @@ declare
     v_code text;
     v_input_code text := nullif(trim(new.raw_user_meta_data->>'referral_code'), '');
 begin
+    -- A member is created only once their email is verified (OTP entered), not at sign-up.
+    if new.email_confirmed_at is null
+       or exists (select 1 from public.profiles where id = new.id) then
+        return new;
+    end if;
+
     if v_input_code is not null then
         select id into v_ref from public.profiles where upper(referral_code) = upper(v_input_code);
     end if;
@@ -243,7 +249,7 @@ end $$;
 
 drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
-    after insert on auth.users
+    after insert or update of email_confirmed_at on auth.users
     for each row execute function public.handle_new_user();
 
 -- Fan out a notification to the right users whenever a signal is created.

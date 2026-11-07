@@ -4,7 +4,7 @@ import type { AdminStats, AdminUser, MessageResponse, Profile, Transaction, Wall
 
 const WITH_USER = '*, User:profiles(user_id, name, email, wallet_balance)';
 
-export type UserAction = 'activate' | 'deactivate' | 'delete' | 'restore';
+export type UserAction = 'activate' | 'deactivate' | 'delete' | 'restore' | 'purge';
 
 interface SignalCounts {
     taken: number;
