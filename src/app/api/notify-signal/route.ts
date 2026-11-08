@@ -14,16 +14,14 @@ const HTML_ESCAPES: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '
 const escapeHtml = (s: unknown = '') =>
     String(s).replace(/[&<>"']/g, (c) => HTML_ESCAPES[c]);
 
-// Only the pair and direction are emailed — entry/TP/SL stay behind the $1 unlock on the dashboard.
+// Only the pair is emailed — direction, entry/TP/SL stay behind the $1 unlock on the dashboard.
 const buildEmail = (signal: Signal, siteUrl: string) => {
-    const side = String(signal.type || '').toUpperCase();
-    const sideColor = side === 'BUY' ? '#16a34a' : '#dc2626';
     const isPrivate = !!signal.target_user_id;
     const releaseAt = signal.release_at ? new Date(signal.release_at) : null;
     const locked = releaseAt && releaseAt.getTime() > Date.now();
     const minutes = locked ? Math.max(1, Math.ceil((releaseAt.getTime() - Date.now()) / 60000)) : 0;
 
-    const subject = `${isPrivate ? 'Private signal' : 'New signal'}: ${signal.symbol} ${side}${locked ? ` — unlocks in ${minutes} min` : ' is live'}`;
+    const subject = `${isPrivate ? 'Private signal' : 'New signal'}: ${signal.symbol}${locked ? ` — unlocks in ${minutes} min` : ' is live'}`;
 
     const html = `
 <div style="background:#07090e;padding:32px 16px;font-family:Arial,Helvetica,sans-serif;color:#eef1f6">
@@ -31,9 +29,7 @@ const buildEmail = (signal: Signal, siteUrl: string) => {
     <div style="font-size:20px;font-weight:700;margin-bottom:4px">Asian<span style="color:#d4af37">FX</span></div>
     <div style="color:#8b95a7;font-size:13px;margin-bottom:24px">${isPrivate ? 'A private signal was sent to you' : 'A new trading signal was just published'}</div>
     <div style="background:#0c1018;border:1px solid #232a38;border-radius:12px;padding:18px;margin-bottom:20px">
-      <div style="font-size:22px;font-weight:800">${escapeHtml(signal.symbol)}
-        <span style="display:inline-block;margin-left:8px;padding:4px 10px;border-radius:6px;font-size:13px;color:#fff;background:${sideColor}">${escapeHtml(side)}</span>
-      </div>
+      <div style="font-size:22px;font-weight:800">${escapeHtml(signal.symbol)}</div>
       <div style="color:#8b95a7;font-size:14px;margin-top:8px">
         ${locked ? `⏳ Unlocks in about <b style="color:#ffffff">${minutes} minute${minutes > 1 ? 's' : ''}</b>` : '🟢 Live now'}
       </div>
