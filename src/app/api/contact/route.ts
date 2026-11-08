@@ -3,9 +3,9 @@ import { mailConfig, sendMail } from '@/lib/mailer';
 
 // Landing-page contact form: saves the message and emails it to the AsianFX inbox (via Amazon SES,
 // the same account used for signal emails — env vars in src/lib/mailer.ts).
-//   CONTACT_EMAIL  optional, where messages go — defaults to fxasians@gmail.com
+//   CONTACT_EMAIL  optional, where messages go — defaults to info@asianfxsignals.com
 
-const INBOX = process.env.CONTACT_EMAIL || 'fxasians@gmail.com';
+const INBOX = process.env.CONTACT_EMAIL || 'info@asianfxsignals.com';
 
 const HTML_ESCAPES: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
 const escapeHtml = (s: string) => s.replace(/[&<>"']/g, (c) => HTML_ESCAPES[c]);

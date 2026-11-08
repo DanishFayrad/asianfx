@@ -4,7 +4,7 @@ export const SITE = {
     name: 'AsianFX',
     // WhatsApp number in international format without + or spaces, e.g. '923001234567'
     whatsapp: '',
-    email: '',
+    email: 'info@asianfxsignals.com',
     telegram: '', // e.g. 'https://t.me/yourchannel'
     facebook: 'https://www.facebook.com/share/1FG31rJR5R/',
     instagram: 'https://www.instagram.com/fx_asians',

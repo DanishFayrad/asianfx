@@ -8,7 +8,7 @@ import nodemailer, { type Transporter } from 'nodemailer';
 //   SMTP_PASS        SES SMTP password
 //   MAIL_FROM_EMAIL  an address on the verified domain, e.g. no-reply@asianfxsignals.com
 //   MAIL_FROM_NAME   optional, defaults to "AsianFX"
-//   MAIL_REPLY_TO    optional, where member replies go — defaults to fxasians@gmail.com
+//   MAIL_REPLY_TO    optional, where member replies go — defaults to info@asianfxsignals.com
 
 export interface MailOptions {
     to: { email: string; name?: string | null };
@@ -51,7 +51,7 @@ export const sendMail = async (opts: MailOptions): Promise<{ ok: boolean; error?
         await getTransporter(config).sendMail({
             from: { address: config.from.email, name: config.from.name },
             to: opts.to.name ? { address: opts.to.email.trim(), name: opts.to.name } : opts.to.email.trim(),
-            replyTo: opts.replyTo || process.env.MAIL_REPLY_TO || 'fxasians@gmail.com',
+            replyTo: opts.replyTo || process.env.MAIL_REPLY_TO || 'info@asianfxsignals.com',
             subject: opts.subject,
             html: opts.html,
         });
