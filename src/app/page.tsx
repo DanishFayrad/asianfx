@@ -5,7 +5,6 @@ import ContactForm from '@/components/home/ContactForm';
 import ReferralCapture from '@/components/home/ReferralCapture';
 import { SITE, PRICING } from '@/config/site';
 import styles from './home.module.css';
-import WhatsAppButton from '@/components/WhatsAppButton';
 import SignalNotification from '@/components/SignalNotification';
 
 export const metadata = {
@@ -301,7 +300,6 @@ export default function Home() {
 
             {/* RISK + FOOTER */}
             <footer className={styles.footer}>
-                 <WhatsAppButton/> 
                 {/* <SignalNotification/>  */}
                 <div className={styles.container}>
                     <div className={styles.risk}>
