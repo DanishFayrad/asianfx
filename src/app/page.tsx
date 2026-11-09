@@ -301,8 +301,8 @@ export default function Home() {
 
             {/* RISK + FOOTER */}
             <footer className={styles.footer}>
-                {/* <WhatsAppButton/>
-                <SignalNotification/> */}
+                 <WhatsAppButton/> 
+                {/* <SignalNotification/>  */}
                 <div className={styles.container}>
                     <div className={styles.risk}>
                         <strong>Risk warning:</strong> Trading Forex, metals and crypto involves substantial risk and may not be

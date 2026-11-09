@@ -5,7 +5,7 @@ import "@/styles/whatsapp.css";
 
 const WhatsAppButton = () => {
   // Agar SITE config mein WhatsApp number available hai toh wo use hoga
-  const phoneNumber = "";
+  const phoneNumber = "923325191625";
   const message = "Hello! I need more information about AsianFX signals.";
   const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
 
