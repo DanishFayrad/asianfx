@@ -253,7 +253,7 @@ export default function AdminSignals() {
         toast.error(`Signal sent, but email failed: ${created.email.error}`);
       else if (created.email?.sent)
         toast.success("Email sent to members");
-      else toast.error("Signal sent, but no emails went out (no active members?)");
+      else toast.error("Signal sent, but no member is in the chosen audience, so no emails went out.");
       setMessage(
         releaseLabel
           ? `Signal scheduled for release in ${releaseLabel}`

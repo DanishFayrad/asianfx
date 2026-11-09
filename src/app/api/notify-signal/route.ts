@@ -82,7 +82,7 @@ export async function POST(request: Request) {
         return Response.json({
             sent: 0,
             failed: 0,
-            message: 'No active members to email. Activate members (is_active) first.',
+            message: 'No members in the chosen audience to email.',
         }, { status: 400 });
     }
 

@@ -196,7 +196,7 @@ returns boolean language sql stable security definer set search_path = public as
         select not p.is_admin and case coalesce(p_audience, 'deposited')
             when 'all'           then true
             when 'not_deposited' then not public.has_deposit(p.id)
-            else p.is_active
+            else public.has_deposit(p.id) -- 'deposited': has an approved deposit
         end
         from public.profiles p where p.id = p_user_id), false);
 $$;
