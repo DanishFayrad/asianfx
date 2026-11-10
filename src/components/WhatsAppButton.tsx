@@ -1,6 +1,6 @@
 'use client';
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { FaWhatsapp } from "react-icons/fa";
 import { useCurrentUser } from "@/hooks/useAuth";
@@ -12,7 +12,11 @@ const HIDDEN_ROUTES = ['/admin', '/bossjutt'];
 const WhatsAppButton = () => {
   const pathname = usePathname();
   const { user } = useCurrentUser();
-  if (user?.is_admin) return null;
+  // The server doesn't know who is signed in, so draw the button only in the browser —
+  // otherwise an admin could still get it from the server-rendered page.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  if (!mounted || user?.is_admin) return null;
   if (HIDDEN_ROUTES.some((p) => pathname === p || pathname?.startsWith(`${p}/`))) return null;
 
   const phoneNumber = "923325191625";
