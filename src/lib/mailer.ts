@@ -43,6 +43,24 @@ const getTransporter = (c: NonNullable<ReturnType<typeof mailConfig>>) => {
     return transporter;
 };
 
+/** Plain-text copy of an HTML email. Gmail/Outlook trust mails that carry both versions more. */
+const htmlToText = (html: string) =>
+    html
+        .replace(/<a\b[^>]*href="([^"]*)"[^>]*>([\s\S]*?)<\/a>/gi, '$2: $1\n')
+        .replace(/<br\s*\/?>/gi, '\n')
+        .replace(/<\/(p|div|h[1-6]|li|tr)>/gi, '\n')
+        .replace(/<[^>]+>/g, '')
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/[ \t]+/g, ' ')
+        .replace(/ *\n */g, '\n')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
+
 /** Send one email. Never throws — returns the error text when it fails. */
 export const sendMail = async (opts: MailOptions): Promise<{ ok: boolean; error?: string }> => {
     const config = mailConfig();
@@ -54,6 +72,7 @@ export const sendMail = async (opts: MailOptions): Promise<{ ok: boolean; error?
             replyTo: opts.replyTo || process.env.MAIL_REPLY_TO || 'info@asianfxsignals.com',
             subject: opts.subject,
             html: opts.html,
+            text: htmlToText(opts.html),
         });
         return { ok: true };
     } catch (e) {
