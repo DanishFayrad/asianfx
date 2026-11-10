@@ -1,5 +1,6 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import webpush from 'web-push';
+import { fetchAll } from '@/lib/fetchAll';
 
 // Shared server-side helpers for the web-push routes (signal alerts, deposit updates…).
 
@@ -59,10 +60,12 @@ export const pushToMembers = async (
 ): Promise<{ sent: number; failed: number; removed: number; error?: string }> => {
     const subs: { endpoint: string; p256dh: string; auth: string }[] = [];
     for (let i = 0; i < userIds.length; i += ID_CHUNK) {
-        const { data, error } = await supabase
-            .from('push_subscriptions').select('endpoint, p256dh, auth').in('user_id', userIds.slice(i, i + ID_CHUNK));
-        if (error) return { sent: 0, failed: 0, removed: 0, error: error.message };
-        subs.push(...(data ?? []));
+        const ids = userIds.slice(i, i + ID_CHUNK);
+        const { data, error } = await fetchAll<{ endpoint: string; p256dh: string; auth: string }>((from, to) => supabase
+            .from('push_subscriptions').select('endpoint, p256dh, auth').in('user_id', ids)
+            .order('id').range(from, to));
+        if (error) return { sent: 0, failed: 0, removed: 0, error };
+        subs.push(...data);
     }
 
     const payload = JSON.stringify({ url: '/dashboard', ...message });

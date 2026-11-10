@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { MAIL_NOT_CONFIGURED, mailConfig, sendBulk } from '@/lib/mailer';
+import { fetchAll } from '@/lib/fetchAll';
 
 // Admin "coming soon" alert — emails active members that a signal is about to drop.
 // Sent through Amazon SES (env vars in src/lib/mailer.ts).
@@ -77,23 +78,28 @@ export async function POST(request: Request) {
     const { data: me } = await supabase.from('profiles').select('is_admin').eq('id', user.id).single();
     if (!me?.is_admin) return Response.json({ message: 'Admin only' }, { status: 403 });
 
-    const { data: members, error: recipientsError } = await supabase
+    // Every member, page by page (Supabase caps one request at 1000 rows).
+    const { data: members, error: recipientsError } = await fetchAll<{ id: string; email: string; name: string | null }>((from, to) => supabase
         .from('profiles')
         .select('id, email, name')
         .eq('is_admin', false)
         .is('deleted_at', null)
-        .not('email', 'is', null);
-    if (recipientsError) return Response.json({ message: recipientsError.message }, { status: 500 });
+        .not('email', 'is', null)
+        .order('id')
+        .range(from, to));
+    if (recipientsError) return Response.json({ message: recipientsError }, { status: 500 });
 
-    let recipients = members ?? [];
+    let recipients = members;
     if (audience !== 'all') {
-        const { data: deposits, error: depositsError } = await supabase
+        const { data: deposits, error: depositsError } = await fetchAll<{ user_id: string }>((from, to) => supabase
             .from('transactions')
             .select('user_id')
             .eq('type', 'deposit')
-            .eq('status', 'approved');
-        if (depositsError) return Response.json({ message: depositsError.message }, { status: 500 });
-        const depositors = new Set((deposits ?? []).map((d) => d.user_id));
+            .eq('status', 'approved')
+            .order('id')
+            .range(from, to));
+        if (depositsError) return Response.json({ message: depositsError }, { status: 500 });
+        const depositors = new Set(deposits.map((d) => d.user_id));
         recipients = recipients.filter((m) => depositors.has(m.id) === (audience === 'deposited'));
     }
     if (!recipients.length) {

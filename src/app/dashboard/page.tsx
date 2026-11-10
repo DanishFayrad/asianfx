@@ -919,10 +919,15 @@ export default function Dashboard() {
                                                         </div>
                                                     </td>
                                                     <td className="sig-cell-type">
-                                                        <span className={signal.type.toLowerCase()}>
-                                                            <img src={getTypeIcon(signal.type)} alt={signal.type} />
-                                                            {signal.type}
-                                                        </span>
+                                                        {/* Buy / Sell is revealed only after the member takes the signal (same as Entry, TP & SL) */}
+                                                        {signal.entry_price == null ? (
+                                                            <span style={{ color: 'var(--t-text-muted)' }} title="Take this signal to see Buy / Sell">🔒</span>
+                                                        ) : (
+                                                            <span className={signal.type.toLowerCase()}>
+                                                                <img src={getTypeIcon(signal.type)} alt={signal.type} />
+                                                                {signal.type}
+                                                            </span>
+                                                        )}
                                                     </td>
                                                     {signal.entry_price == null ? (
                                                         <td colSpan={3} className="sig-cell-locked" style={{ color: 'var(--t-text-muted)', fontSize: '0.85rem' }}>
@@ -1060,7 +1065,6 @@ export default function Dashboard() {
 
         {/* TAKE SIGNAL CONFIRMATION MODAL — same look as the "New signal" popup */}
         {isTakeSignalModalOpen && signalToTake && (() => {
-            const side = (signalToTake.type || '').toLowerCase() === 'sell' ? 'sell' : 'buy';
             const isFree = !!user && user.free_signals > 0;
             const lockIcon = (
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -1083,7 +1087,6 @@ export default function Dashboard() {
                                 <h2 id="tsc-title">{signalToTake.symbol}</h2>
                                 <small>{getSymbolName(signalToTake.symbol)}</small>
                             </div>
-                            <span className={`nsa-side nsa-side--${side}`}>{side.toUpperCase()}</span>
                         </div>
 
                         <div className="nsa-levels">
@@ -1149,7 +1152,6 @@ export default function Dashboard() {
         {isSignalAlertOpen && incomingSignal && (
             <div className="nsa-overlay" onClick={() => setIsSignalAlertOpen(false)}>
                 {(() => {
-                    const side = (incomingSignal.type || '').toLowerCase() === 'sell' ? 'sell' : 'buy';
                     const lockedUntil = incomingSignal.release_at && new Date(incomingSignal.release_at) > currentTime
                         ? incomingSignal.release_at : null;
                     const isFree = !!user && user.free_signals > 0;
@@ -1174,7 +1176,6 @@ export default function Dashboard() {
                                     <h2 id="nsa-title">{incomingSignal.symbol}</h2>
                                     <small>{getSymbolName(incomingSignal.symbol)}</small>
                                 </div>
-                                <span className={`nsa-side nsa-side--${side}`}>{side.toUpperCase()}</span>
                             </div>
 
                             <div className="nsa-levels">
