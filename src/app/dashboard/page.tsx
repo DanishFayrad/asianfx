@@ -472,9 +472,14 @@ export default function Dashboard() {
 
   // Live signals table (TanStack Table): hidden signals are left out, the symbol search is the
   // global filter, and the table pages the rows (rowsPerPage per page).
+  // Members see only signals that are still open: once the admin closes a signal or its
+  // "Close after" timer runs out, it drops off the list (bought ones still count in their win/loss stats).
+  // openKey changes only when a signal opens/closes, so the table isn't rebuilt every second.
+  const openKey = signals.filter((s) => isAdmin || isSignalOpen(s)).map((s) => s.id).join(',');
   const listedSignals = useMemo(
-    () => signals.filter((s) => !rejectedSignalIds.includes(s.id)),
-    [signals, rejectedSignalIds],
+    () => signals.filter((s) => !rejectedSignalIds.includes(s.id) && (isAdmin || isSignalOpen(s))),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [signals, rejectedSignalIds, openKey, isAdmin],
   );
   const signalsTable = useTable({
     features: listTableFeatures,
