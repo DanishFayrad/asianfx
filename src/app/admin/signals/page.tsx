@@ -10,7 +10,7 @@ import signalService, {
 import { serverTimeOffset } from "../../../services/serverTime";
 import { connectRealtime } from "../../../services/realtimeService";
 import { useCurrentUser, useLogout } from "@/hooks/useAuth";
-import { useAdminStats, useSignalsDashboard } from "@/hooks/queries";
+import { useAdminStats, useAdminUsers, useSignalsDashboard } from "@/hooks/queries";
 import toast from "react-hot-toast";
 import ThemeToggle from "@/components/ThemeToggle";
 import AdminSidebar from "../../../components/AdminSidebar";
@@ -105,7 +105,19 @@ export default function AdminSignals() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [comingSoonLoading, setComingSoonLoading] = useState(false);
-  const [signalAudience, setSignalAudience] = useState<"all" | "deposited" | "not_deposited">("deposited");
+  const [signalAudience, setSignalAudience] = useState<"all" | "deposited" | "not_deposited" | "member">("deposited");
+  // "Specific member": the one member who gets this signal (private signal).
+  const [targetMember, setTargetMember] = useState<{ id: string; name: string; email: string } | null>(null);
+  const [memberSearch, setMemberSearch] = useState("");
+  const membersQuery = useAdminUsers(isAdmin && signalAudience === "member");
+  const memberMatches = (() => {
+    const q = memberSearch.trim().toLowerCase();
+    if (!q) return [];
+    return (membersQuery.data ?? [])
+      .filter((u) => !u.is_admin && !u.deleted_at)
+      .filter((u) => [u.name, u.email, u.phone, String(u.user_id ?? "")].some((v) => v && String(v).toLowerCase().includes(q)))
+      .slice(0, 6);
+  })();
   const [mailAudience, setMailAudience] = useState<"all" | "deposited" | "not_deposited">("all");
   const signalsQuery = useSignalsDashboard(user?.id, isAdmin);
   const recentSignals: Signal[] = signalsQuery.data?.active_signals ?? [];
@@ -226,6 +238,11 @@ export default function AdminSignals() {
       setLoading(false);
       return;
     }
+    if (signalAudience === "member" && !targetMember) {
+      toast.error("Choose the member who should get this signal");
+      setLoading(false);
+      return;
+    }
     if (closeTotalSec <= 0) {
       toast.error("Please set close timer (minutes and/or seconds)");
       setLoading(false);
@@ -245,14 +262,17 @@ export default function AdminSignals() {
         close_minutes: formData.close_minutes,
         close_seconds: formData.close_seconds,
         description: `Signal for ${selectedAsset.name}`,
-        audience: signalAudience,
+        // Specific member → a private signal for that member only.
+        ...(signalAudience === "member"
+          ? { target_user_id: targetMember!.id }
+          : { audience: signalAudience }),
       };
 
       const created = await signalService.createSignal(payload);
       if (created.email?.error)
         toast.error(`Signal sent, but email failed: ${created.email.error}`);
       else if (created.email?.sent)
-        toast.success("Email sent to members");
+        toast.success(signalAudience === "member" ? `Email sent to ${targetMember?.name || targetMember?.email}` : "Email sent to members");
       else toast.error("Signal sent, but no member is in the chosen audience, so no emails went out.");
       setMessage(
         releaseLabel
@@ -353,8 +373,55 @@ export default function AdminSignals() {
                 <option value="deposited">Deposited members</option>
                 <option value="not_deposited">Not deposited</option>
                 <option value="all">All members</option>
+                <option value="member">Specific member</option>
               </select>
             </div>
+
+            {signalAudience === "member" && (
+              <div className="bsg-field">
+                <span className="bsg-label">Member</span>
+                {targetMember ? (
+                  <div className="bsg-member-picked">
+                    <div>
+                      <strong>{targetMember.name || "Member"}</strong>
+                      <span>{targetMember.email}</span>
+                    </div>
+                    <button type="button" onClick={() => { setTargetMember(null); setMemberSearch(""); }}>Change</button>
+                  </div>
+                ) : (
+                  <div className="bsg-member-search">
+                    <input
+                      type="text"
+                      value={memberSearch}
+                      onChange={(e) => setMemberSearch(e.target.value)}
+                      placeholder="Search name, email, phone or ID…"
+                      aria-label="Search member"
+                    />
+                    {memberSearch.trim() && (
+                      <ul className="bsg-member-list">
+                        {membersQuery.isPending ? (
+                          <li className="bsg-member-empty">Loading members…</li>
+                        ) : memberMatches.length ? (
+                          memberMatches.map((u) => (
+                            <li key={u.id}>
+                              <button
+                                type="button"
+                                onClick={() => setTargetMember({ id: u.id, name: u.name || "", email: u.email || "" })}
+                              >
+                                <strong>{u.name || "Member"}</strong>
+                                <span>{u.email}</span>
+                              </button>
+                            </li>
+                          ))
+                        ) : (
+                          <li className="bsg-member-empty">No member found</li>
+                        )}
+                      </ul>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="bsg-field">
               <span className="bsg-label">Asset</span>
