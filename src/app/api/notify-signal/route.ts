@@ -1,13 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
 import { getSignalRecipients } from '@/lib/signalRecipients';
-import { MAIL_NOT_CONFIGURED, mailConfig, sendMail } from '@/lib/mailer';
+import { MAIL_NOT_CONFIGURED, mailConfig, sendBulk } from '@/lib/mailer';
 import type { Signal } from '@/types';
 
 // Emails members when an admin publishes a signal (sent through Amazon SES — env vars in src/lib/mailer.ts).
 //   SITE_URL  optional, defaults to https://www.asianfxsignals.com
 
-// Parallel sends per wave.
-const PARALLEL = 15;
 
 const HTML_ESCAPES: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
 
@@ -95,26 +93,15 @@ export async function POST(request: Request) {
         return Response.json({ sent: 0, failed: 0, message: 'No active members with a valid email to notify.' }, { status: 400 });
     }
 
-    let sent = 0;
-    let failed = 0;
-    let lastError = '';
-
-    const sendOne = async (r: { email: string | null; name: string | null }) => {
-        const res = await sendMail({ to: { email: String(r.email), name: r.name }, subject, html });
-        if (res.ok) sent += 1;
-        else {
-            failed += 1;
-            lastError = res.error || '';
-        }
-    };
-
-    for (let i = 0; i < valid.length; i += PARALLEL) {
-        await Promise.all(valid.slice(i, i + PARALLEL).map(sendOne));
-    }
+    const { sent, failed, error: lastError } = await sendBulk(
+        valid.map((r) => ({ email: String(r.email), name: r.name })),
+        { subject, html },
+    );
 
     if (failed && !sent) {
         return Response.json({ sent, failed, message: `Email provider rejected the send: ${lastError}` }, { status: 502 });
     }
 
+    if (failed) console.error(`Could not email ${failed} member(s): ${lastError}`);
     return Response.json({ sent, failed });
 }

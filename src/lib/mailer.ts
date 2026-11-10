@@ -1,11 +1,12 @@
 import nodemailer, { type Transporter } from 'nodemailer';
 
-// Sends email through Amazon SES over SMTP (the same SMTP login Supabase uses for signup emails).
+// Sends email through Resend (smtp.resend.com). Bulk sends (signal / coming-soon emails) use
+// Resend's batch API with the same key, so a big member list never trips the per-second limit.
 // Server-only env vars (set in Vercel / .env, NEVER prefixed with NEXT_PUBLIC_):
-//   SMTP_HOST        e.g. email-smtp.us-east-1.amazonaws.com (SES → SMTP settings)
-//   SMTP_PORT        optional, defaults to 587
-//   SMTP_USER        SES SMTP username (SES → SMTP settings → Create SMTP credentials)
-//   SMTP_PASS        SES SMTP password
+//   SMTP_HOST        smtp.resend.com (any other SMTP server also works, sent one by one)
+//   SMTP_PORT        465 for Resend, defaults to 587
+//   SMTP_USER        "resend"
+//   SMTP_PASS        the Resend API key
 //   MAIL_FROM_EMAIL  an address on the verified domain, e.g. no-reply@asianfxsignals.com
 //   MAIL_FROM_NAME   optional, defaults to "AsianFX"
 //   MAIL_REPLY_TO    optional, where member replies go — defaults to info@asianfxsignals.com
@@ -80,4 +81,116 @@ export const sendMail = async (opts: MailOptions): Promise<{ ok: boolean; error?
         console.error('Email send failed', error);
         return { ok: false, error };
     }
+};
+
+export interface BulkRecipient {
+    email: string;
+    name?: string | null;
+}
+
+export interface BulkResult {
+    sent: number;
+    failed: number;
+    /** The last error text, when something failed. */
+    error?: string;
+}
+
+const RESEND_BATCH_SIZE = 100; // Resend's maximum emails per batch call
+const MAX_TRIES = 4;
+const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+const fromHeader = (c: NonNullable<ReturnType<typeof mailConfig>>) =>
+    `"${c.from.name.replace(/["\\]/g, '')}" <${c.from.email}>`;
+
+/** One Resend call — a batch (array, up to 100) or a single email — retried when Resend says "slow down" or has a hiccup. */
+const callResend = async (apiKey: string, payload: object | object[]): Promise<{ ok: boolean; retryable?: boolean; error?: string }> => {
+    let error = 'Send failed';
+    for (let attempt = 1; attempt <= MAX_TRIES; attempt += 1) {
+        try {
+            const res = await fetch(`https://api.resend.com/emails${Array.isArray(payload) ? '/batch' : ''}`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+            });
+            if (res.ok) return { ok: true };
+            const body = await res.json().catch(() => ({}));
+            error = body?.message || `Resend error ${res.status}`;
+            // Only rate limits (429) and server errors (5xx) are worth retrying; anything else won't change.
+            if (res.status !== 429 && res.status < 500) return { ok: false, retryable: false, error };
+            const retryAfter = Number(res.headers.get('retry-after'));
+            await wait(retryAfter > 0 ? retryAfter * 1000 : 1000 * attempt);
+        } catch (e) {
+            error = (e as Error).message || error;
+            await wait(1000 * attempt);
+        }
+    }
+    return { ok: false, retryable: true, error };
+};
+
+/**
+ * Send the same email to many members. Never throws.
+ * Resend → batch API, 100 per call (a few calls even for hundreds of members).
+ * Other SMTP servers → one by one, 3 at a time, each retried a few times.
+ */
+export const sendBulk = async (
+    recipients: BulkRecipient[],
+    mail: { subject: string; html: string; replyTo?: string },
+): Promise<BulkResult> => {
+    const config = mailConfig();
+    if (!config) return { sent: 0, failed: recipients.length, error: MAIL_NOT_CONFIGURED };
+
+    const replyTo = mail.replyTo || process.env.MAIL_REPLY_TO || 'info@asianfxsignals.com';
+    const text = htmlToText(mail.html);
+    let sent = 0;
+    let failed = 0;
+    let error: string | undefined;
+
+    if (config.host.toLowerCase() === 'smtp.resend.com') {
+        for (let i = 0; i < recipients.length; i += RESEND_BATCH_SIZE) {
+            const chunk = recipients.slice(i, i + RESEND_BATCH_SIZE);
+            const emailFor = (r: BulkRecipient) => ({
+                from: fromHeader(config),
+                to: [r.email.trim()],
+                reply_to: replyTo,
+                subject: mail.subject,
+                html: mail.html,
+                text,
+            });
+            const res = await callResend(config.pass, chunk.map(emailFor));
+            if (res.ok) {
+                sent += chunk.length;
+                continue;
+            }
+            error = res.error;
+            if (res.retryable) {
+                failed += chunk.length;
+                continue;
+            }
+            // Resend refused the whole batch (usually one bad address) → send this chunk one by one
+            // (about 5 per second, under Resend's limit) so the good addresses still get it.
+            for (const r of chunk) {
+                const one = await callResend(config.pass, emailFor(r));
+                if (one.ok) sent += 1;
+                else {
+                    failed += 1;
+                    error = one.error;
+                }
+                await wait(200);
+            }
+        }
+        return { sent, failed, error };
+    }
+
+    const sendOne = async (r: BulkRecipient) => {
+        for (let attempt = 1; attempt <= MAX_TRIES; attempt += 1) {
+            const res = await sendMail({ to: r, subject: mail.subject, html: mail.html, replyTo });
+            if (res.ok) return void (sent += 1);
+            error = res.error;
+            await wait(1000 * attempt);
+        }
+        failed += 1;
+    };
+    for (let i = 0; i < recipients.length; i += 3) {
+        await Promise.all(recipients.slice(i, i + 3).map(sendOne));
+    }
+    return { sent, failed, error };
 };

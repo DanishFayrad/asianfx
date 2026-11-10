@@ -1,10 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
-import { MAIL_NOT_CONFIGURED, mailConfig, sendMail } from '@/lib/mailer';
+import { MAIL_NOT_CONFIGURED, mailConfig, sendBulk } from '@/lib/mailer';
 
 // Admin "coming soon" alert — emails active members that a signal is about to drop.
 // Sent through Amazon SES (env vars in src/lib/mailer.ts).
 
-const PARALLEL = 15;
 
 const HTML_ESCAPES: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
 
@@ -110,26 +109,15 @@ export async function POST(request: Request) {
         return Response.json({ sent: 0, failed: 0, message: 'No active members with a valid email.' }, { status: 400 });
     }
 
-    let sent = 0;
-    let failed = 0;
-    let lastError = '';
-
-    const sendOne = async (r: { email: string; name: string | null }) => {
-        const res = await sendMail({ to: { email: String(r.email), name: r.name }, subject, html });
-        if (res.ok) sent += 1;
-        else {
-            failed += 1;
-            lastError = res.error || '';
-        }
-    };
-
-    for (let i = 0; i < valid.length; i += PARALLEL) {
-        await Promise.all(valid.slice(i, i + PARALLEL).map(sendOne));
-    }
+    const { sent, failed, error: lastError } = await sendBulk(
+        valid.map((r) => ({ email: String(r.email), name: r.name })),
+        { subject, html },
+    );
 
     if (failed && !sent) {
         return Response.json({ sent, failed, message: `Email provider rejected the send: ${lastError}` }, { status: 502 });
     }
 
+    if (failed) console.error(`Could not email ${failed} member(s): ${lastError}`);
     return Response.json({ sent, failed });
 }
