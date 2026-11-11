@@ -29,11 +29,7 @@ const SIGNALS_PAGE = 9;
 
 /** Filter tabs for the signals list. */
 const SIGNAL_FILTERS = [
-  {
-    key: "active",
-    label: "Active",
-    hint: "Open signals you still need to close",
-  },
+  { key: "active", label: "Active", hint: "Open signals you still need to close",},
   { key: "profit", label: "Profit Trade", hint: "Signals closed as profit (TP Hit)" },
   { key: "loss", label: "Lose Trade", hint: "Signals closed as loss (Stop Loss)" },
   { key: "recent", label: "Recent", hint: "Signals sent in the last 24 hours" },
