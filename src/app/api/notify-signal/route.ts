@@ -6,6 +6,9 @@ import type { Signal } from '@/types';
 // Emails members when an admin publishes a signal (sent through Resend — env vars in src/lib/mailer.ts).
 //   SITE_URL  optional, defaults to https://www.asianfxsignals.com
 
+// Big member lists take a few seconds of batch calls — give the function room on Vercel.
+export const maxDuration = 60;
+
 
 const HTML_ESCAPES: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
 
@@ -58,7 +61,7 @@ export async function POST(request: Request) {
     const token = request.headers.get('authorization')?.replace(/^Bearer\s+/i, '');
     if (!token) return Response.json({ message: 'Not authenticated' }, { status: 401 });
 
-    const { signal_id: signalId } = await request.json().catch(() => ({}));
+    const { signal_id: signalId, attempt_id: attemptId } = await request.json().catch(() => ({}));
     if (!signalId) return Response.json({ message: 'signal_id is required' }, { status: 400 });
 
     // Act as the calling admin, so RLS decides what we can read — no service-role key needed.
@@ -100,15 +103,20 @@ export async function POST(request: Request) {
         return Response.json({ sent: 0, failed: 0, message: 'No active members with a valid email to notify.' }, { status: 400 });
     }
 
-    const { sent, failed, error: lastError } = await sendBulk(
+    // One attempt = one publish click. Repeating the request with the same attempt_id (a network
+    // retry) re-uses the same Resend idempotency keys, so nobody gets the email twice.
+    // A deliberate resend sends a new attempt_id.
+    const attempt = typeof attemptId === 'string' && /^[A-Za-z0-9_-]{1,64}$/.test(attemptId) ? attemptId : crypto.randomUUID();
+
+    const { sent, failed, unknown, error: lastError } = await sendBulk(
         valid.map((r) => ({ email: String(r.email), name: r.name })),
-        { subject, html },
+        { subject, html, idempotencyKey: `signal-${signal.id}/${attempt}` },
     );
 
-    if (failed && !sent) {
-        return Response.json({ sent, failed, message: `Email provider rejected the send: ${lastError}` }, { status: 502 });
+    if (!sent && (failed || unknown)) {
+        return Response.json({ sent, failed, unknown, message: `Email provider rejected the send: ${lastError}` }, { status: 502 });
     }
 
-    if (failed) console.error(`Could not email ${failed} member(s): ${lastError}`);
-    return Response.json({ sent, failed });
+    if (failed || unknown) console.error(`Signal ${signal.id}: ${failed} email(s) refused, ${unknown} unconfirmed — ${lastError}`);
+    return Response.json({ sent, failed, unknown });
 }

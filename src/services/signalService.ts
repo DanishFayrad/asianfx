@@ -137,18 +137,25 @@ const createSignal = async (signalData: NewSignalInput): Promise<Signal> => {
 // Ask the server to email the signal's recipients. Never throws — the signal is
 // already published, so an email problem must not look like a failed broadcast.
 const notifySignalByEmail = async (signalId: number): Promise<EmailResult> => {
-    try {
-        const { data: { session } } = await supabase.auth.getSession();
-        const res = await fetch('/api/notify-signal', {
-            method: 'POST',
-            headers: { 'content-type': 'application/json', authorization: `Bearer ${session?.access_token}` },
-            body: JSON.stringify({ signal_id: signalId }),
-        });
-        const body = await res.json().catch(() => ({}));
-        return res.ok ? { sent: body.sent || 0, failed: body.failed || 0 } : { error: body.message || 'Email failed' };
-    } catch (e) {
-        return { error: errorMessage(e) };
+    // One id per publish. If the connection drops we ask again with the same id — the server
+    // then skips emails that already went out, so a retry never sends anyone a second copy.
+    const attemptId = crypto.randomUUID();
+    let lastError = 'Email failed';
+    for (let attempt = 1; attempt <= 2; attempt += 1) {
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            const res = await fetch('/api/notify-signal', {
+                method: 'POST',
+                headers: { 'content-type': 'application/json', authorization: `Bearer ${session?.access_token}` },
+                body: JSON.stringify({ signal_id: signalId, attempt_id: attemptId }),
+            });
+            const body = await res.json().catch(() => ({}));
+            return res.ok ? { sent: body.sent || 0, failed: body.failed || 0 } : { error: body.message || 'Email failed' };
+        } catch (e) {
+            lastError = errorMessage(e); // network error — try once more with the same attempt id
+        }
     }
+    return { error: lastError };
 };
 
 // Ask the server to send a browser push notification to members with signal alerts on. Never throws.

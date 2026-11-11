@@ -13,33 +13,38 @@ interface SignalTarget {
 }
 
 /**
- * Members who should hear about a signal — used by both the email and the web-push routes,
+ * Members who should hear about a signal — used by the email, coming-soon and web-push routes,
  * and the same rule the database uses (signal_audience_match):
  *   private signal → that member;
  *   broadcast → 'deposited' = has an approved deposit, 'not_deposited' = no approved deposit, 'all' = everyone.
+ * The deposit check runs inside the database (a join on transactions), so only the members we
+ * actually email come back — not every profile plus every deposit row.
  * `supabase` must act as the calling admin (RLS lets admins read profiles and transactions).
  */
 export const getSignalRecipients = async (
     supabase: SupabaseClient,
     signal: SignalTarget,
 ): Promise<{ recipients: SignalRecipient[]; error?: string }> => {
-    const audience = signal.audience || 'deposited';
-    // Every member, page by page (Supabase caps one request at 1000 rows).
-    const { data: members, error } = await fetchAll<SignalRecipient>((from, to) => {
-        let query = supabase.from('profiles').select('id, email, name').eq('is_admin', false).is('deleted_at', null);
+    const audience = signal.target_user_id ? 'all' : signal.audience || 'deposited';
+
+    const { data, error } = await fetchAll<SignalRecipient>((from, to) => {
+        let query = audience === 'all'
+            ? supabase.from('profiles').select('id, email, name')
+            : audience === 'deposited'
+                // inner join: keep members with at least one approved deposit (one row is enough to know).
+                ? supabase.from('profiles').select('id, email, name, transactions!inner(id)')
+                    .eq('transactions.type', 'deposit').eq('transactions.status', 'approved')
+                    .limit(1, { referencedTable: 'transactions' })
+                // anti-join: keep members with no approved deposit.
+                : supabase.from('profiles').select('id, email, name, transactions(id)')
+                    .eq('transactions.type', 'deposit').eq('transactions.status', 'approved')
+                    .is('transactions', null);
+        query = query.eq('is_admin', false).is('deleted_at', null);
         if (signal.target_user_id) query = query.eq('id', signal.target_user_id);
         return query.order('id').range(from, to);
     });
     if (error) return { recipients: [], error };
-    let recipients = members;
 
-    if (!signal.target_user_id && audience !== 'all') {
-        const { data: deposits, error: depositsError } = await fetchAll<{ user_id: string }>((from, to) => supabase
-            .from('transactions').select('user_id').eq('type', 'deposit').eq('status', 'approved')
-            .order('id').range(from, to));
-        if (depositsError) return { recipients: [], error: depositsError };
-        const depositors = new Set(deposits.map((d) => d.user_id));
-        recipients = recipients.filter((m) => depositors.has(m.id) === (audience === 'deposited'));
-    }
-    return { recipients };
+    // Drop the joined deposit column — callers only need who to contact.
+    return { recipients: data.map(({ id, email, name }) => ({ id, email, name })) };
 };

@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { MAIL_NOT_CONFIGURED, mailConfig, sendBulk } from '@/lib/mailer';
-import { fetchAll } from '@/lib/fetchAll';
+import { getSignalRecipients } from '@/lib/signalRecipients';
 
 // Admin "coming soon" alert — emails active members that a signal is about to drop.
 // Sent through Amazon SES (env vars in src/lib/mailer.ts).
@@ -51,6 +51,9 @@ const buildComingSoonEmail = (opts: {
     return { subject, html };
 };
 
+// Big member lists take a few seconds of batch calls — give the function room on Vercel.
+export const maxDuration = 60;
+
 export async function POST(request: Request) {
     if (!mailConfig()) return Response.json({ message: MAIL_NOT_CONFIGURED }, { status: 503 });
 
@@ -78,30 +81,10 @@ export async function POST(request: Request) {
     const { data: me } = await supabase.from('profiles').select('is_admin').eq('id', user.id).single();
     if (!me?.is_admin) return Response.json({ message: 'Admin only' }, { status: 403 });
 
-    // Every member, page by page (Supabase caps one request at 1000 rows).
-    const { data: members, error: recipientsError } = await fetchAll<{ id: string; email: string; name: string | null }>((from, to) => supabase
-        .from('profiles')
-        .select('id, email, name')
-        .eq('is_admin', false)
-        .is('deleted_at', null)
-        .not('email', 'is', null)
-        .order('id')
-        .range(from, to));
+    // Same audience rule as signal emails; the deposit check runs in the database.
+    const { recipients: members, error: recipientsError } = await getSignalRecipients(supabase, { target_user_id: null, audience });
     if (recipientsError) return Response.json({ message: recipientsError }, { status: 500 });
-
-    let recipients = members;
-    if (audience !== 'all') {
-        const { data: deposits, error: depositsError } = await fetchAll<{ user_id: string }>((from, to) => supabase
-            .from('transactions')
-            .select('user_id')
-            .eq('type', 'deposit')
-            .eq('status', 'approved')
-            .order('id')
-            .range(from, to));
-        if (depositsError) return Response.json({ message: depositsError }, { status: 500 });
-        const depositors = new Set(deposits.map((d) => d.user_id));
-        recipients = recipients.filter((m) => depositors.has(m.id) === (audience === 'deposited'));
-    }
+    const recipients = members.filter((m) => m.email);
     if (!recipients.length) {
         const who = audience === 'deposited' ? 'members who deposited' : audience === 'not_deposited' ? 'members without a deposit' : 'members';
         return Response.json({ sent: 0, failed: 0, message: `No ${who} to email.` }, { status: 400 });
@@ -115,15 +98,15 @@ export async function POST(request: Request) {
         return Response.json({ sent: 0, failed: 0, message: 'No active members with a valid email.' }, { status: 400 });
     }
 
-    const { sent, failed, error: lastError } = await sendBulk(
+    const { sent, failed, unknown, error: lastError } = await sendBulk(
         valid.map((r) => ({ email: String(r.email), name: r.name })),
         { subject, html },
     );
 
-    if (failed && !sent) {
-        return Response.json({ sent, failed, message: `Email provider rejected the send: ${lastError}` }, { status: 502 });
+    if (!sent && (failed || unknown)) {
+        return Response.json({ sent, failed, unknown, message: `Email provider rejected the send: ${lastError}` }, { status: 502 });
     }
 
-    if (failed) console.error(`Could not email ${failed} member(s): ${lastError}`);
-    return Response.json({ sent, failed });
+    if (failed || unknown) console.error(`Coming-soon email: ${failed} refused, ${unknown} unconfirmed — ${lastError}`);
+    return Response.json({ sent, failed, unknown });
 }
