@@ -3,7 +3,7 @@ import { getSignalRecipients } from '@/lib/signalRecipients';
 import { MAIL_NOT_CONFIGURED, mailConfig, sendBulk } from '@/lib/mailer';
 import type { Signal } from '@/types';
 
-// Emails members when an admin publishes a signal (sent through Amazon SES — env vars in src/lib/mailer.ts).
+// Emails members when an admin publishes a signal (sent through Resend — env vars in src/lib/mailer.ts).
 //   SITE_URL  optional, defaults to https://www.asianfxsignals.com
 
 
@@ -17,9 +17,15 @@ const buildEmail = (signal: Signal, siteUrl: string) => {
     const isPrivate = !!signal.target_user_id;
     const releaseAt = signal.release_at ? new Date(signal.release_at) : null;
     const locked = releaseAt && releaseAt.getTime() > Date.now();
-    const minutes = locked ? Math.max(1, Math.ceil((releaseAt.getTime() - Date.now()) / 60000)) : 0;
 
-    const subject = `${isPrivate ? 'Private signal' : 'New signal'}: ${signal.symbol}${locked ? ` — unlocks in ${minutes} min` : ' is live'}`;
+    // An email can't run a live countdown, so show the clock time the signal unlocks —
+    // it stays correct whenever the member opens the email.
+    const clock = (timeZone: string, hour12: boolean) =>
+        releaseAt ? releaseAt.toLocaleTimeString('en-US', { timeZone, hour: hour12 ? 'numeric' : '2-digit', minute: '2-digit', hour12 }) : '';
+    const unlockPkt = clock('Asia/Karachi', true); // e.g. "12:03 PM"
+    const unlockGmt = clock('UTC', false);         // e.g. "07:03"
+
+    const subject = `${isPrivate ? 'Private signal' : 'New signal'}: ${signal.symbol}${locked ? ` — unlocks at ${unlockPkt} PKT` : ' is live'}`;
 
     const html = `
 <div style="background:#07090e;padding:32px 16px;font-family:Arial,Helvetica,sans-serif;color:#eef1f6">
@@ -29,8 +35,9 @@ const buildEmail = (signal: Signal, siteUrl: string) => {
     <div style="background:#0c1018;border:1px solid #232a38;border-radius:12px;padding:18px;margin-bottom:20px">
       <div style="font-size:22px;font-weight:800">${escapeHtml(signal.symbol)}</div>
       <div style="color:#8b95a7;font-size:14px;margin-top:8px">
-        ${locked ? `⏳ Unlocks in about <b style="color:#ffffff">${minutes} minute${minutes > 1 ? 's' : ''}</b>` : '🟢 Live now'}
+        ${locked ? `⏳ Unlocks at <b style="color:#ffffff">${unlockPkt}</b> Pakistan time (${unlockGmt} GMT)` : '🟢 Live now'}
       </div>
+      ${locked ? '<div style="color:#5f6878;font-size:12px;margin-top:6px">Already past this time? The signal is live on your dashboard.</div>' : ''}
     </div>
     <p style="color:#c5cbd6;font-size:14px;line-height:1.6;margin:0 0 22px">
       Open your dashboard to see the Entry, Take Profit and Stop Loss and take the signal.
