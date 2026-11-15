@@ -39,6 +39,9 @@ const signalColumns = signalColumnHelper.columns([
   signalColumnHelper.accessor('symbol', { id: 'search' }),
 ]);
 
+// A closed signal shows up in the member's list (as history) this long after it closed.
+const HISTORY_DELAY_MS = 60 * 60 * 1000; // 1 hour
+
 export default function Dashboard() {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -472,14 +475,21 @@ export default function Dashboard() {
 
   // Live signals table (TanStack Table): hidden signals are left out, the symbol search is the
   // global filter, and the table pages the rows (rowsPerPage per page).
-  // Members see only signals that are still open: once the admin closes a signal or its
-  // "Close after" timer runs out, it drops off the list (bought ones still count in their win/loss stats).
-  // openKey changes only when a signal opens/closes, so the table isn't rebuilt every second.
-  const openKey = signals.filter((s) => isAdmin || isSignalOpen(s)).map((s) => s.id).join(',');
+  // Members: open signals show right away. A closed signal (admin's Profit / Loss / Close, or its
+  // "Close after" timer) leaves the list and comes back as history 1 hour after it closed.
+  // The admin always sees everything.
+  const isListed = (s: Partial<Signal>) => {
+    if (isAdmin || isSignalOpen(s)) return true;
+    const closedAt = s.status === 'Active' ? s.close_at : s.closed_at; // timer close vs admin close
+    if (!closedAt) return true; // closed before close times were recorded → already history
+    return new Date(closedAt).getTime() + HISTORY_DELAY_MS <= currentTime.getTime();
+  };
+  // listedKey changes only when a signal enters/leaves the list, so the table isn't rebuilt every second.
+  const listedKey = signals.filter(isListed).map((s) => s.id).join(',');
   const listedSignals = useMemo(
-    () => signals.filter((s) => !rejectedSignalIds.includes(s.id) && (isAdmin || isSignalOpen(s))),
+    () => signals.filter((s) => !rejectedSignalIds.includes(s.id) && isListed(s)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [signals, rejectedSignalIds, openKey, isAdmin],
+    [signals, rejectedSignalIds, listedKey],
   );
   const signalsTable = useTable({
     features: listTableFeatures,

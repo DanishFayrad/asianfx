@@ -121,6 +121,8 @@ alter table public.profiles add column if not exists free_signals integer not nu
 alter table public.signals add column if not exists close_at timestamptz;
 -- Price where the admin closed a signal early in profit (status 'Early TP Hit' - counted as a win, like 'TP Hit').
 alter table public.signals add column if not exists closed_price numeric;
+-- When the signal was closed (stamped by on_signal_closed_stamp); members see it in history 1 hour later.
+alter table public.signals add column if not exists closed_at timestamptz;
 
 -- Influencer programme: only approved influencers get a referral commission, at their own rate.
 alter table public.profiles add column if not exists is_influencer boolean not null default false;
@@ -659,7 +661,7 @@ returns json language sql stable security definer set search_path = public as $$
     select coalesce(json_agg(x order by x.created_at desc), '[]'::json)
     from (
         select s.id, s.symbol, s.type, s.signal_type, s.description, s.status,
-               s.target_user_id, s.release_at, s.close_at, s.total_taken, s.created_at,
+               s.target_user_id, s.release_at, s.close_at, s.closed_at, s.total_taken, s.created_at,
                (us.id is not null) as purchased,
                case when public.is_admin() or us.id is not null or s.status <> 'Active' then s.entry_price  end as entry_price,
                case when public.is_admin() or us.id is not null or s.status <> 'Active' then s.target_price end as target_price,
@@ -825,6 +827,21 @@ begin
     end if;
     return new;
 end $$;
+
+-- Stamp closed_at whenever the status changes (Active again → cleared).
+create or replace function public.stamp_signal_closed_at()
+returns trigger language plpgsql set search_path = public as $$
+begin
+    if new.status is distinct from old.status then
+        new.closed_at := case when new.status = 'Active' then null else now() end;
+    end if;
+    return new;
+end $$;
+
+drop trigger if exists on_signal_closed_stamp on public.signals;
+create trigger on_signal_closed_stamp
+    before update of status on public.signals
+    for each row execute function public.stamp_signal_closed_at();
 
 drop trigger if exists on_signal_status_change on public.signals;
 create trigger on_signal_status_change
