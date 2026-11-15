@@ -26,6 +26,7 @@ import Skeleton, { SkeletonRows } from '@/components/Skeleton';
 import AssetBadge from '@/components/AssetBadge';
 import ReferEarnSection from '@/components/ReferEarnSection';
 import PushAlerts from '@/components/PushAlerts';
+import RecentSignals from '@/components/RecentSignals';
 import { assetFor } from '@/config/assets';
 import '../../styles/dashboard.css';
 import { errorMessage } from '@/lib/supabaseClient';
@@ -642,6 +643,7 @@ export default function Dashboard() {
                 {requestStatus && requestStatus !== 'pending' && <span className="gtm-chip-ok">✓ Access</span>}
               </div>
             )}
+            {mounted && <RecentSignals />}
             {mounted && !user?.is_admin && (
                 <button className="deposit" onClick={() => setIsDepositModalOpen(true)}>Deposit</button>
             )}

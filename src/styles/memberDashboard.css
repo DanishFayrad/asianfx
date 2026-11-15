@@ -538,6 +538,49 @@
   .nsa-overlay, .nsa-card, .nsa-badge i { animation: none; }
 }
 
+/* ---------- "Recent signals" button + popup (.rsg-*) ---------- */
+.rsg-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0.75rem 1.2rem;
+  border-radius: 8px;
+  font-size: var(--fs-btn);
+  font-weight: 600;
+  cursor: pointer;
+  /* Same look as the Deposit button next to it */
+  color: var(--t-on-accent);
+  background: var(--btn-primary);
+  border: none;
+  transition: var(--transition);
+}
+.rsg-open:hover { background: var(--primary-hover); }
+
+.rsg-card { width: min(560px, 100%); max-height: min(720px, calc(100vh - 32px)); gap: 12px; }
+.rsg-title { margin: 0; font-size: 1.15rem; font-weight: 700; color: var(--t-text); }
+.rsg-sub { margin: -4px 0 0; font-size: 0.8rem; color: var(--t-text-muted); }
+
+.rsg-list { display: flex; flex-direction: column; gap: 10px; overflow-y: auto; min-height: 0; padding-right: 2px; }
+.rsg-empty { margin: 0; padding: 32px 0; text-align: center; color: var(--t-text-muted); }
+
+.rsg-row { display: flex; flex-direction: column; gap: 10px; padding: 12px; border-radius: 14px; background: var(--t-surface-2); border: 1px solid var(--tw-10); }
+.rsg-top { display: flex; align-items: center; gap: 10px; }
+.rsg-pair { display: flex; flex-direction: column; min-width: 0; margin-right: auto; }
+.rsg-pair b { font-size: 0.95rem; color: var(--t-text); }
+.rsg-pair small { font-size: 0.75rem; color: var(--t-text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rsg-top .nsa-side { padding: 4px 10px; font-size: 0.75rem; }
+
+.rsg-levels { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; font-size: 0.75rem; color: var(--t-text-muted); }
+.rsg-levels span { display: flex; flex-direction: column; gap: 2px; }
+.rsg-levels b { font-size: 0.9rem; color: var(--t-text); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.rsg-levels--locked { display: block; font-size: 0.8rem; }
+
+@media (max-width: 600px) {
+  .rsg-open { justify-content: center; width: 100%; }
+  .rsg-card { padding: 16px; }
+  .rsg-top { flex-wrap: wrap; }
+}
+
 /* ---------- Refer & Earn: locked until the member is an approved influencer ---------- */
 .mdb-refer--locked .mdb-refer-link { opacity: 0.55; }
 .mdb-refer--locked .mdb-refer-link input { cursor: not-allowed; font-style: italic; }

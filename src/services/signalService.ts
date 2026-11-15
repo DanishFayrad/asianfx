@@ -182,6 +182,26 @@ const getUserSignalHistory = async (_userId?: string | number): Promise<SignalHi
     return unwrap<SignalHistoryItem[]>(await supabase.rpc('get_my_signal_history'));
 };
 
+/** A row of the "Recent signals" popup: direction and levels are null while the signal is open. */
+export interface RecentSignal {
+    id: number;
+    symbol: string;
+    status: string;
+    created_at: string;
+    release_at: string | null;
+    closed: boolean;
+    closed_at: string | null;
+    type: string | null;
+    entry_price: number | null;
+    target_price: number | null;
+    stop_loss: number | null;
+}
+
+// Latest broadcast signals for every member (the "Recent signals" popup).
+const getRecentSignals = async (): Promise<RecentSignal[]> => {
+    return unwrap<RecentSignal[]>(await supabase.rpc('get_recent_signals')) || [];
+};
+
 // Member: remove a signal from their own dashboard (live list + purchased history).
 const hideSignal = async (id: number): Promise<MessageResponse> => {
     return unwrap<MessageResponse>(await supabase.rpc('hide_signal', { p_signal_id: id }));
@@ -253,6 +273,7 @@ const signalService = {
     closeInProfit,
     takeSignal,
     getUserSignalHistory,
+    getRecentSignals,
     deleteSignal,
     hideSignal,
     setGlobalTimer,
