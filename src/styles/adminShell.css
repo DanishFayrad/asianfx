@@ -380,18 +380,13 @@
 
 .asg-extend:disabled { opacity: 0.45; cursor: not-allowed; }
 
-/* Custom "extend close timer" box on an open signal card */
-.asg-extend-row { display: inline-flex; align-items: center; gap: 6px; }
-.asg-extend-row input {
-  width: 78px;
-  padding: 3px 8px;
-  border-radius: 6px;
-  font-size: 0.75rem;
-  color: var(--t-text);
-  background: var(--t-surface);
-  border: 1px solid var(--tw-10);
+/* "+ 30 sec" close-timer button: same filled colour as the Deposit button */
+.asg-extend--solid {
+  background: var(--btn-primary, #fcd34d);
+  color: var(--t-on-accent);
+  border-color: transparent;
 }
-.asg-extend-row input:focus { outline: none; border-color: var(--t-gold); }
+.asg-extend--solid:hover:not(:disabled) { background: var(--t-accent-strong); }
 
 .asg-result {
   display: flex;

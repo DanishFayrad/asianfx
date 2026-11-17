@@ -71,7 +71,7 @@ export default function AdminSignals() {
   const [closingId, setClosingId] = useState<number | null>(null);
   const [closePrice, setClosePrice] = useState("");
   // Minutes typed in each open signal's "extend close timer" box, by signal id.
-  const [extendMinutes, setExtendMinutes] = useState<Record<number, string>>({});
+  const [extendingId, setExtendingId] = useState<number | null>(null);
   const [type, setType] = useState("Buy");
   const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
   const [formData, setFormData] = useState({
@@ -931,41 +931,26 @@ export default function AdminSignals() {
                         >
                           ⏱ Closes in {countdown(sig.close_at, currentTime)}
                         </span>
-                        {/* Give members more time to take the signal: any number of minutes. */}
-                        {(() => {
-                          const minutes = Number(extendMinutes[sig.id]);
-                          const valid = Number.isInteger(minutes) && minutes >= 1 && minutes <= 1440;
-                          const extend = async () => {
-                            if (!valid) return;
+                        {/* Give members more time to take the signal: every click adds 30 seconds. */}
+                        <button
+                          type="button"
+                          className="asg-extend asg-extend--solid"
+                          disabled={extendingId === sig.id}
+                          onClick={async () => {
+                            setExtendingId(sig.id);
                             try {
-                              await signalService.extendCloseTimer(sig.id, sig.close_at, minutes);
-                              setExtendMinutes((m) => ({ ...m, [sig.id]: "" }));
-                              fetchAllAdminData();
-                              toast.success(`${sig.symbol} now closes ${minutes} min later`);
+                              await signalService.extendCloseTimer(sig.id, 30);
+                              await fetchAllAdminData();
+                              toast.success(`${sig.symbol}: +30 sec added`);
                             } catch (e) {
                               toast.error(errorMessage(e, "Failed to extend timer"));
+                            } finally {
+                              setExtendingId(null);
                             }
-                          };
-                          return (
-                            <span className="asg-extend-row">
-                              <input
-                                type="number"
-                                min={1}
-                                max={1440}
-                                step={1}
-                                inputMode="numeric"
-                                placeholder="Minutes"
-                                value={extendMinutes[sig.id] ?? ""}
-                                onChange={(e) => setExtendMinutes((m) => ({ ...m, [sig.id]: e.target.value }))}
-                                onKeyDown={(e) => { if (e.key === "Enter") extend(); }}
-                                aria-label={`Minutes to extend ${sig.symbol} close timer`}
-                              />
-                              <button type="button" className="asg-extend" disabled={!valid} onClick={extend}>
-                                + Extend
-                              </button>
-                            </span>
-                          );
-                        })()}
+                          }}
+                        >
+                          + 30 sec
+                        </button>
                       </div>
                     )}
 

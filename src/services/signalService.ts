@@ -256,11 +256,14 @@ const closeInProfit = async (id: number, price: number): Promise<MessageResponse
     return { message: 'Signal closed in profit' };
 };
 
-// Admin: push an open signal's auto-close time later by `minutes` (counted from now if it already passed).
-const extendCloseTimer = async (id: number, closeAt: string | null | undefined, minutes: number): Promise<MessageResponse> => {
+// Admin: push an open signal's auto-close time later by `seconds` (counted from now if it already passed).
+// Reads the latest close time from the database first, so quick repeated clicks each add their time.
+const extendCloseTimer = async (id: number, seconds: number): Promise<MessageResponse> => {
+    const current = unwrap<{ close_at: string | null }>(await supabase.from('signals')
+        .select('close_at').eq('id', id).single());
     const now = Date.now() + serverTimeOffset;
-    const base = Math.max(closeAt ? new Date(closeAt).getTime() : now, now);
-    const newCloseAt = new Date(base + minutes * 60_000).toISOString();
+    const base = Math.max(current?.close_at ? new Date(current.close_at).getTime() : now, now);
+    const newCloseAt = new Date(base + seconds * 1000).toISOString();
     const rows = unwrap<{ id: number }[]>(await supabase.from('signals')
         .update({ close_at: newCloseAt }).eq('id', id).eq('status', 'Active').select('id'));
     if (!rows?.length) throw new Error('This signal is already closed.');
