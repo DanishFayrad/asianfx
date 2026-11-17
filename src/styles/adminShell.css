@@ -363,6 +363,9 @@
 
 .asg-dot { color: var(--t-text-dim); }
 .asg-timer { font-weight: 700; color: #d97706; }
+/* Close countdown + extend box: always on their own line, so the card doesn't jump as the time changes. */
+.asg-timer-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 0.72rem; }
+.asg-timer { font-variant-numeric: tabular-nums; }
 
 .asg-extend {
   padding: 2px 8px;
@@ -374,6 +377,21 @@
   background: rgba(var(--t-accent-rgb), 0.1);
   border: 1px solid rgba(var(--t-accent-rgb), 0.45);
 }
+
+.asg-extend:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* Custom "extend close timer" box on an open signal card */
+.asg-extend-row { display: inline-flex; align-items: center; gap: 6px; }
+.asg-extend-row input {
+  width: 78px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  color: var(--t-text);
+  background: var(--t-surface);
+  border: 1px solid var(--tw-10);
+}
+.asg-extend-row input:focus { outline: none; border-color: var(--t-gold); }
 
 .asg-result {
   display: flex;

@@ -70,6 +70,8 @@ export default function AdminSignals() {
   // "Close now" (take profit early): which signal is being closed and at what price.
   const [closingId, setClosingId] = useState<number | null>(null);
   const [closePrice, setClosePrice] = useState("");
+  // Minutes typed in each open signal's "extend close timer" box, by signal id.
+  const [extendMinutes, setExtendMinutes] = useState<Record<number, string>>({});
   const [type, setType] = useState("Buy");
   const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
   const [formData, setFormData] = useState({
@@ -883,19 +885,6 @@ export default function AdminSignals() {
                       •
                     </span>
                     <span>{sig.target_user_id ? "Private" : "Broadcast"}</span>
-                    {closesSoon && (
-                      <>
-                        <span className="asg-dot" aria-hidden="true">
-                          •
-                        </span>
-                        <span
-                          className="asg-timer"
-                          title="This signal closes automatically"
-                        >
-                          ⏱ Closes in {countdown(sig.close_at, currentTime)}
-                        </span>
-                      </>
-                    )}
                     {locked && (
                       <>
                         <span className="asg-dot" aria-hidden="true">
@@ -933,6 +922,52 @@ export default function AdminSignals() {
                       </>
                     )}
                   </div>
+
+                    {closesSoon && (
+                      <div className="asg-timer-row">
+                        <span
+                          className="asg-timer"
+                          title="This signal closes automatically"
+                        >
+                          ⏱ Closes in {countdown(sig.close_at, currentTime)}
+                        </span>
+                        {/* Give members more time to take the signal: any number of minutes. */}
+                        {(() => {
+                          const minutes = Number(extendMinutes[sig.id]);
+                          const valid = Number.isInteger(minutes) && minutes >= 1 && minutes <= 1440;
+                          const extend = async () => {
+                            if (!valid) return;
+                            try {
+                              await signalService.extendCloseTimer(sig.id, sig.close_at, minutes);
+                              setExtendMinutes((m) => ({ ...m, [sig.id]: "" }));
+                              fetchAllAdminData();
+                              toast.success(`${sig.symbol} now closes ${minutes} min later`);
+                            } catch (e) {
+                              toast.error(errorMessage(e, "Failed to extend timer"));
+                            }
+                          };
+                          return (
+                            <span className="asg-extend-row">
+                              <input
+                                type="number"
+                                min={1}
+                                max={1440}
+                                step={1}
+                                inputMode="numeric"
+                                placeholder="Minutes"
+                                value={extendMinutes[sig.id] ?? ""}
+                                onChange={(e) => setExtendMinutes((m) => ({ ...m, [sig.id]: e.target.value }))}
+                                onKeyDown={(e) => { if (e.key === "Enter") extend(); }}
+                                aria-label={`Minutes to extend ${sig.symbol} close timer`}
+                              />
+                              <button type="button" className="asg-extend" disabled={!valid} onClick={extend}>
+                                + Extend
+                              </button>
+                            </span>
+                          );
+                        })()}
+                      </div>
+                    )}
 
                   {/* Close the signal with its result — settles every member who took it. */}
                   <div className="asg-result">

@@ -256,6 +256,17 @@ const closeInProfit = async (id: number, price: number): Promise<MessageResponse
     return { message: 'Signal closed in profit' };
 };
 
+// Admin: push an open signal's auto-close time later by `minutes` (counted from now if it already passed).
+const extendCloseTimer = async (id: number, closeAt: string | null | undefined, minutes: number): Promise<MessageResponse> => {
+    const now = Date.now() + serverTimeOffset;
+    const base = Math.max(closeAt ? new Date(closeAt).getTime() : now, now);
+    const newCloseAt = new Date(base + minutes * 60_000).toISOString();
+    const rows = unwrap<{ id: number }[]>(await supabase.from('signals')
+        .update({ close_at: newCloseAt }).eq('id', id).eq('status', 'Active').select('id'));
+    if (!rows?.length) throw new Error('This signal is already closed.');
+    return { message: 'Close timer extended' };
+};
+
 // Admin: remove a signal's auto-close time (it then stays open until closed by hand).
 const removeCloseTimer = async (id: number): Promise<MessageResponse> => {
     unwrap(await supabase.from('signals').update({ close_at: null }).eq('id', id));
@@ -283,6 +294,7 @@ const signalService = {
     getSignalRequests,
     approveSignalRequest,
     extendSignalTimer,
+    extendCloseTimer,
     updateSignalStatus,
     removeCloseTimer,
     getPublicStats
